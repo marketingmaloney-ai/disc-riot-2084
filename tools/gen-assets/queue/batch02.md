@@ -1,5 +1,5 @@
 # batch02: arena courts and backdrops (4 arenas)
-STATUS: READY
+STATUS: REVIEWED (done; missing backdrops moved to batch04)
 
 Variants per job: **2**. These jobs are independent of batch01 and can run right after it.
 Model for all: Nano Banana Pro (`gemini-3-pro-image`). No refs.
