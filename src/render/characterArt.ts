@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { hasAsset } from './assets';
 import { charById, type CharacterDef } from '../sim/characters';
 
 export interface AtlasMeta {
@@ -38,15 +39,7 @@ export function loadCharacterArt(id: string): Promise<CharacterArt> {
   return cache.get(id)!;
 }
 
-async function exists(url: string) {
-  try {
-    const r = await fetch(url, { method: 'HEAD' });
-    const ct = r.headers.get('content-type') ?? '';
-    return r.ok && !ct.includes('text/html');
-  } catch {
-    return false;
-  }
-}
+const exists = hasAsset;
 
 async function load(id: string): Promise<CharacterArt> {
   const base = `assets/characters/${id}/`;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { hasAsset } from './assets';
 import * as C from '../sim/constants';
 
 export interface ArenaDef {
@@ -39,8 +40,7 @@ export const ARENAS: ArenaDef[] = [
 
 async function tryTexture(url: string): Promise<THREE.Texture | null> {
   try {
-    const head = await fetch(url, { method: 'HEAD' });
-    if (!head.ok || !(head.headers.get('content-type') ?? '').startsWith('image')) return null;
+    if (!(await hasAsset(url))) return null;
     const tex = await new THREE.TextureLoader().loadAsync(url);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;

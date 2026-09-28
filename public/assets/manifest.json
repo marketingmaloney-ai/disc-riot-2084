@@ -1,0 +1,16 @@
+{
+ "files": [
+  "assets/characters/brick/atlas.json",
+  "assets/characters/brick/atlas.png",
+  "assets/characters/brick/portrait.png",
+  "assets/characters/kaito/atlas.json",
+  "assets/characters/kaito/atlas.png",
+  "assets/characters/kaito/portrait.png",
+  "assets/characters/roxy/atlas.json",
+  "assets/characters/roxy/atlas.png",
+  "assets/characters/roxy/portrait.png",
+  "assets/characters/vega/atlas.json",
+  "assets/characters/vega/atlas.png",
+  "assets/characters/vega/portrait.png"
+ ]
+}

@@ -88,8 +88,12 @@ def clean_frame(crop):
     n, lbl, stats, _ = cv2.connectedComponentsWithStats((a > 40).astype(np.uint8), 8)
     if n > 2:
         areas = stats[1:, cv2.CC_STAT_AREA]
+        main = 1 + int(areas.argmax())
+        feet = stats[main, cv2.CC_STAT_TOP] + stats[main, cv2.CC_STAT_HEIGHT]
         keep = np.zeros(n, bool)
         keep[1:] = areas >= areas.max() * 0.02
+        # color-swatch rows on ref sheets sit below the feet: never part of the figure
+        keep[1:] &= stats[1:, cv2.CC_STAT_TOP] < feet - stats[main, cv2.CC_STAT_HEIGHT] * 0.03
         crop[..., 3] = np.where(keep[lbl], a, 0)
     ys, xs = np.where(crop[..., 3] > 8)
     return crop[ys.min():ys.max() + 1, xs.min():xs.max() + 1]

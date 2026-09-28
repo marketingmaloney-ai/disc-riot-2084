@@ -109,7 +109,8 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [ ] Re-screenshot every arena × character combo and do the director review pass
 - [ ] Balance pass: speeds, powers, curve, super strength, CPU difficulty
 - [ ] Performance check on mobile (target 60 fps; drop bloom resolution if needed)
-- [ ] Production build (`npm run build`) and a hosted playable link
+- [x] Production build (`npm run build`, which also writes `public/assets/manifest.json`)
+- [x] Playable link (private Claude artifact): https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU. To update: `npm run build`, then republish `dist/index.html` + `dist/assets/**` to that URL.
 
 ## Phase 5: Stretch
 - [ ] More arenas / characters

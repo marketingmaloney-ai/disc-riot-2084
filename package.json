@@ -4,11 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
+    "dev": "node tools/asset-manifest.mjs && vite --host",
+    "build": "node tools/asset-manifest.mjs && tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
-    "gen": "node tools/gen-assets/gen.mjs"
+    "gen": "node tools/gen-assets/gen.mjs",
+    "manifest": "node tools/asset-manifest.mjs"
   },
   "dependencies": {
     "@fontsource/monoton": "^5.3.0",

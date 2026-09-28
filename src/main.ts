@@ -306,7 +306,7 @@ function arenaSelect() {
   const cards = ARENAS.map((a, i) => {
     const d = document.createElement('div');
     d.className = 'arena-card';
-    d.style.backgroundImage = `url(assets/arenas/${a.id}/preview.jpg), linear-gradient(180deg, ${a.sky[0]}, ${a.sky[1]} 55%, ${a.sky[2]} 60%, ${a.sand[0]} 62%, ${a.sand[1]})`;
+    d.style.backgroundImage = `linear-gradient(180deg, ${a.sky[0]}, ${a.sky[1]} 55%, ${a.sky[2]} 60%, ${a.sand[0]} 62%, ${a.sand[1]})`;
     d.innerHTML = `<div class="nm">${a.name}<br><span class="nation">${a.subtitle}</span></div>`;
     d.addEventListener('pointerenter', () => { arenaIdx = i; paint(); });
     d.addEventListener('click', () => { arenaIdx = i; audio.play('confirm'); vsScreen(); });
