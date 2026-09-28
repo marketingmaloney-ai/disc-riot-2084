@@ -23,6 +23,7 @@
 
 ## Art generation route
 - **Primary: Antigravity bridge.** Claude writes `tools/gen-assets/queue/batchNN.md` (STATUS: READY). The user's Antigravity agent follows `ANTIGRAVITY_HANDOFF.md`, generates with Nano Banana on the user's subscription, pushes `tools/gen-assets/raw/...` and sets STATUS: GENERATED. Claude pulls, reviews, keys, and approves or writes a revision batch.
+- **Flow mode:** when the Antigravity API quota runs out, its browser agent generates in Google Flow (see handoff). Manual fallback: the user drops files into `tools/gen-assets/inbox/<batch>/` and Claude sorts them visually.
 - Fallback: `gen.mjs` with an API key, once billing is enabled on the key's Cloud project.
 
 ## Blockers / user actions
