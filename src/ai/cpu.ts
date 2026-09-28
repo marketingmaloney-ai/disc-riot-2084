@@ -12,9 +12,9 @@ export interface Difficulty {
 }
 
 export const DIFFICULTIES: Record<'easy' | 'normal' | 'hard', Difficulty> = {
-  easy: { reaction: 18, error: 0.9, supersonic: 0.03, dash: 0.3, variety: 0.25, holdMin: 14, holdMax: 40 },
+  easy: { reaction: 15, error: 0.75, supersonic: 0.03, dash: 0.3, variety: 0.25, holdMin: 14, holdMax: 40 },
   normal: { reaction: 10, error: 0.45, supersonic: 0.15, dash: 0.7, variety: 0.5, holdMin: 6, holdMax: 26 },
-  hard: { reaction: 5, error: 0.18, supersonic: 0.4, dash: 1, variety: 0.7, holdMin: 2, holdMax: 14 },
+  hard: { reaction: 6, error: 0.24, supersonic: 0.4, dash: 1, variety: 0.7, holdMin: 2, holdMax: 14 },
 };
 
 export class CpuPlayer {
@@ -68,7 +68,10 @@ export class CpuPlayer {
       this.lastThrower = d.thrower;
       this.lastThrowTick = g.tick;
       this.reactUntil = g.tick + this.diff.reaction;
-      this.aimErr = (this.rand() * 2 - 1) * this.diff.error;
+      // Harder shots are harder to read: error grows with speed, curve and supers.
+      const spd = Math.hypot(d.vx, d.vz);
+      const read = 1 + Math.abs(d.az) / 22 + Math.max(0, spd - 18) / 10 + (d.kind === 'super' ? 0.3 : 0);
+      this.aimErr = (this.rand() * 2 - 1) * this.diff.error * read;
       this.triedSS = false;
     }
     if (d.mode === 'held' || d.mode === 'dead') this.lastThrowTick = -1;
@@ -85,7 +88,9 @@ export class CpuPlayer {
         timeToArrive = (d.lob.T - d.lob.t) / C.DT;
         urgent = true;
       } else if ((d.mode === 'flight' || d.mode === 'ground') && d.thrower !== this.idx) {
-        const pred = predictIntercept(g, me.x);
+        // Curves are read late: until the bend is visible, assume the disc flies straight.
+        const readsCurve = g.tick - this.lastThrowTick > this.diff.reaction * 2.5;
+        const pred = predictIntercept(g, me.x, readsCurve);
         if (pred) {
           tz = pred.z + this.aimErr;
           tx = me.x;
@@ -149,9 +154,15 @@ export class CpuPlayer {
 }
 
 /** Roll the disc forward (ignoring supers' exotic paths) to where it crosses x = lineX. */
-function predictIntercept(g: GameState, lineX: number): { z: number; ticks: number } | null {
+function predictIntercept(g: GameState, lineX: number, knowsCurve = true): { z: number; ticks: number } | null {
   const d = g.disc;
-  let x = d.x, z = d.z, vx = d.vx, vz = d.vz, az = d.az;
+  let x = d.x, z = d.z, vx = d.vx, vz = d.vz, az = knowsCurve ? d.az : 0;
+  // Oscillating supers: defend the center line of the wave/zigzag, not its current swing.
+  if (d.kind === 'super' && (d.superKind === 'wave' || d.superKind === 'zigzag')) {
+    vz = 0;
+    az = 0;
+    if (d.superKind === 'wave') z = d.z - C.WAVE_AMP * Math.sin(C.WAVE_FREQ * d.superT) * d.zigSign;
+  }
   if (vx === 0) return null;
   const zLim = C.COURT_HALF_WID - C.DISC_RADIUS;
   for (let i = 0; i < 150; i++) {

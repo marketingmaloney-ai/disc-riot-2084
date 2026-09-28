@@ -225,7 +225,8 @@ function tryCatch(g: GameState, p: Player) {
   if (d.mode !== 'flight' && d.mode !== 'ground') return;
   if (d.thrower === p.idx && d.mode === 'flight') return;
   if (d.h > C.CATCH_HEIGHT) return;
-  if (Math.hypot(d.x - p.x, d.z - p.z) > C.CATCH_RADIUS) return;
+  const reach = d.kind === 'super' ? C.CATCH_RADIUS * C.SUPER_CATCH_MULT : C.CATCH_RADIUS;
+  if (Math.hypot(d.x - p.x, d.z - p.z) > reach) return;
   catchDisc(g, p, false);
 }
 
@@ -238,7 +239,7 @@ function catchDisc(g: GameState, p: Player, fromLob: boolean) {
   d.superKind = null;
   p.holdT = 0;
   p.serving = false;
-  if (fromLob) {
+  if (fromLob && d.thrower === p.idx) {
     p.charged = true;
     g.events.push({ type: 'charge', p: p.idx, x: p.x, z: p.z });
   }
@@ -290,10 +291,12 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
     p.charged = false;
     d.kind = 'super';
     d.superKind = p.superKind;
-    d.zigSign = inp.mz >= 0 ? 1 : -1;
+    const opp = g.players[1 - p.idx];
+    d.zigSign = inp.mz !== 0 ? Math.sign(inp.mz) : opp.z > 0 ? -1 : 1; // default: break away from the defender
     sp = p.power * 1.12;
     const ang = inp.mz * C.ANGLE_SHOT * 0.6;
-    if (p.superKind === 'fireball') sp = p.power * 1.55;
+    if (p.superKind === 'fireball') sp = p.power * 1.3;
+    if (p.superKind === 'meteor') sp = p.power * C.METEOR_AIR; // hangs in the air, then slams mid-court
     d.vx = fwd * Math.cos(ang) * sp;
     d.vz = Math.sin(ang) * sp;
     if (p.superKind === 'wave' || p.superKind === 'zigzag') d.vz = 0;
@@ -303,9 +306,12 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
     const cv = detectCurve(p);
     if (cv !== 0) {
       d.kind = 'curve';
+      // Swing out toward the input side, then break hard across to the opposite goal corner.
       d.vx = fwd * sp * 0.86;
-      d.vz = cv * sp * 0.55;
-      d.az = -cv * sp * 1.0 * p.curve;
+      d.vz = cv * sp * 0.45;
+      const T = Math.max(0.25, (C.COURT_HALF_LEN - fwd * d.x) / Math.abs(d.vx));
+      const zEnd = -cv * Math.min(C.COURT_HALF_WID - 0.5, C.CURVE_END_BASE + C.CURVE_END_PER * p.curve);
+      d.az = (2 * (zEnd - d.z - d.vz * T)) / (T * T);
       g.events.push({ type: 'curve', p: p.idx });
     } else {
       d.kind = supersonic ? 'supersonic' : 'normal';
@@ -387,16 +393,24 @@ function updateDisc(g: GameState) {
     const t = d.superT;
     switch (d.superKind) {
       case 'wave':
-        d.vz = 2.4 * 9 * Math.cos(9 * t) * d.zigSign;
+        d.vz = C.WAVE_AMP * C.WAVE_FREQ * Math.cos(C.WAVE_FREQ * t) * d.zigSign;
         break;
       case 'zigzag':
-        d.vz = (Math.floor(t / 0.17) % 2 === 0 ? 1 : -1) * 13 * d.zigSign;
+        d.vz = ((Math.floor(t / C.ZIG_PERIOD) % 2 === 0 ? 1 : -1) * C.ZIG_VZ + C.ZIG_DRIFT) * d.zigSign;
         break;
       case 'meteor':
-        d.h = t < 0.45 ? 1 + 3.2 * (t / 0.45) : Math.max(0.3, 4.2 - (t - 0.45) * 18);
-        if (t > 0.45 && t - C.DT <= 0.45) { d.vx *= 1.6; }
+        // rise, slam down just past the net, then skid along the ground (catchable) toward the goal
+        d.h = t < C.METEOR_RISE ? 1 + (C.METEOR_PEAK - 1) * (t / C.METEOR_RISE) : Math.max(0.3, C.METEOR_PEAK - (t - C.METEOR_RISE) * C.METEOR_DROP);
+        if (t > C.METEOR_RISE && t - C.DT <= C.METEOR_RISE) {
+          d.vx *= C.METEOR_BOOST;
+          d.vz = C.METEOR_KICK * d.zigSign; // ricochets off the slam, away from the defender
+        }
         break;
       case 'fireball':
+        // THUNDER KISS: a lightning-bolt kink — snaps diagonally across the court once, then straightens.
+        if (t < C.BOLT_AT) d.vz = 0;
+        else if (t < C.BOLT_AT + C.BOLT_LEN) d.vz = C.BOLT_VZ * d.zigSign;
+        else d.vz = 0;
         break;
     }
   } else {

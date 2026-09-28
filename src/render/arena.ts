@@ -19,22 +19,22 @@ export const ARENAS: ArenaDef[] = [
   {
     id: 'sunset', name: 'SUNSET STRIP', subtitle: 'MIAMI 2084',
     sky: ['#1a0638', '#8a1f7a', '#ff8a3d'], sand: ['#f0b98a', '#d98a6a'],
-    neonA: '#ff2e9a', neonB: '#19e6ff', night: false, scene: 'sunset', bigZone: 1.3,
+    neonA: '#ff2e9a', neonB: '#19e6ff', night: false, scene: 'sunset', bigZone: 1.65,
   },
   {
     id: 'pier', name: 'NEON PIER', subtitle: 'NEO-TOKYO BAY',
     sky: ['#03020d', '#1b0a3a', '#5a1a6e'], sand: ['#3a2a52', '#221a36'],
-    neonA: '#19e6ff', neonB: '#ff2e9a', night: true, scene: 'city', bigZone: 1.0,
+    neonA: '#19e6ff', neonB: '#ff2e9a', night: true, scene: 'city', bigZone: 1.35,
   },
   {
     id: 'lagoon', name: 'LASER LAGOON', subtitle: 'VENICE BEACH 2084',
     sky: ['#2a7bff', '#ff8ad8', '#ffd28a'], sand: ['#f6d2a0', '#e0a878'],
-    neonA: '#b6ff2e', neonB: '#ff2e9a', night: false, scene: 'boardwalk', bigZone: 1.7,
+    neonA: '#b6ff2e', neonB: '#ff2e9a', night: false, scene: 'boardwalk', bigZone: 2.05,
   },
   {
     id: 'orbital', name: 'ORBITAL CABANA', subtitle: 'LOW EARTH ORBIT',
     sky: ['#000000', '#07051a', '#1a0f4a'], sand: ['#cfd6ff', '#8a8fc0'],
-    neonA: '#ffe600', neonB: '#19e6ff', night: true, scene: 'space', bigZone: 0.8,
+    neonA: '#ffe600', neonB: '#19e6ff', night: true, scene: 'space', bigZone: 1.1,
   },
 ];
 
