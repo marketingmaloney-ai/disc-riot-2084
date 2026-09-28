@@ -1,5 +1,5 @@
 # batch04: remaining animations + 2 landscape backdrops
-STATUS: READY
+STATUS: PARTIAL
 
 Variants per job: **2**. Characters use **Nano Banana 2**; backdrops use **Nano Banana Pro** if Flow offers it.
 **Every character job MUST attach its `refs:` image** (the approved reference sheet).
