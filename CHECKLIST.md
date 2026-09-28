@@ -13,7 +13,7 @@
 
 ## Decisions locked with the user
 - [x] Title: **DISC RIOT 2084**
-- [x] Theme: 80s cyberpunk beach, smooth anime, pin-up heavy but non-explicit, all characters adult (25+)
+- [x] Theme: 80s cyberpunk beach, **bold pop-comic style (locked after batch01)**, pin-up heavy but non-explicit, all characters adult (25+)
 - [x] Platforms: desktop (keyboard + gamepad) and mobile (touch, landscape)
 - [x] Roster: 4 characters (Vega Starr, Kaito "Riptide" Mori, Roxy Voltage, Brick Diamond)
 - [x] Audio: procedurally generated (Web Audio SFX + synthwave)
@@ -58,7 +58,7 @@
 Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅ approved and integrated · ❌ rejected (see notes)
 
 ### Style
-- ✅ Style test: keyart **v2** approved as the reference (see `queue/batch01_review.md`). ⚠️ Pop-comic vs smooth-anime direction is pending the user's call.
+- ✅ Style test: keyart **v2** approved as the reference (see `queue/batch01_review.md`). **User locked the bold pop-comic style** (style_bible.txt rewritten to match).
 
 ### Character reference sheets (gemini-3-pro-image, 16:9 2K)
 - ✅ Vega Starr: design approved (**ref_v3**)
@@ -67,6 +67,7 @@ Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅
 - ✅ Brick Diamond: design approved (**ref_v1**)
 
 ### Animation sheets (gemini-3.1-flash-image + ref), per character
+batch03 = idle/run/hold/throw ×4 (queued). batch04 = dash/lob/block/knock/win/lose ×4 (write after reviewing batch03). batch05 = portraits + cut-ins.
 Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2)
 
 | Character | idle | run | dash | hold | throw | lob | block | knock | win | lose | packed atlas |
