@@ -50,20 +50,21 @@
 ## Phase 2: Art pipeline
 - [x] `gen.mjs` (Gemini REST, proxy-aware, refs, sidecar prompt log)
 - [x] `process.py` (chroma key + despill, content-aware slice, foot-anchored atlas pack, preview)
-- [ ] 🔸 First real run: validate keying/slicing on an actual Nano Banana output and tune the thresholds
+- [x] First real run: keying ✅, slicer rewritten (gap projection) ✅, pack + in-game render ✅
+- [ ] Raise PLAYER_HEIGHT to about 3.0 when the real animations land (sprites read small)
 - [ ] Update the backdrop plane geometry to fit the generated backdrop aspect (only about the lower 55% shows in-game)
 
 ## Phase 3: Art production (one subagent per piece, director approval required)
 Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅ approved and integrated · ❌ rejected (see notes)
 
 ### Style
-- 🔄 Style test: queued in batch01 (job 1.1)
+- ✅ Style test: keyart **v2** approved as the reference (see `queue/batch01_review.md`). ⚠️ Pop-comic vs smooth-anime direction is pending the user's call.
 
 ### Character reference sheets (gemini-3-pro-image, 16:9 2K)
-- 🔄 Vega Starr (queued in batch01)
-- 🔄 Kaito Mori (queued in batch01)
-- 🔄 Roxy Voltage (queued in batch01)
-- 🔄 Brick Diamond (queued in batch01)
+- ✅ Vega Starr: design approved (**ref_v3**)
+- ✅ Kaito Mori: design approved (**ref_v1**)
+- ✅ Roxy Voltage: design approved (**ref_v3**, tattoo locked to the left arm)
+- ✅ Brick Diamond: design approved (**ref_v1**)
 
 ### Animation sheets (gemini-3.1-flash-image + ref), per character
 Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2)

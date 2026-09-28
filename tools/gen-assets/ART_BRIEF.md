@@ -19,13 +19,13 @@ An asset is **rejected** if any of these are true:
 Woman, 28. Long voluminous 80s hair in a hot-pink to magenta gradient, side-swept. Mirrored chrome visor sunglasses. Chrome-silver bandeau bikini top with a hot-pink neon trim line. High-waisted holographic iridescent bikini bottoms. White leg warmers with pink stripes over white high-top sneakers. Fingerless pink gloves. A small cyan circuit tattoo on her shoulder. Confident smirk. Signature colors: hot pink #ff2e9a and chrome.
 
 ### 2. KAITO "RIPTIDE" MORI, Neo-Tokyo (speed; super: GLITCH STORM)
-Man, 30. Lean swimmer's build. Black spiky hair with electric-cyan tips. A yellow cyber-visor over one eye. Unbuttoned short-sleeve Hawaiian shirt with a cyan-and-yellow neon palm print, worn open. Black board shorts with cyan side stripes. A glowing chrome cybernetic left forearm. Barefoot with ankle tape. Cocky grin. Signature colors: cyan #19e6ff and yellow #ffe600.
+Man, 30. Lean swimmer's build. Black spiky hair with electric-cyan tips. A yellow cyber-visor over one eye. Unbuttoned short-sleeve Hawaiian shirt with a cyan-and-yellow neon palm print, worn open. Black board shorts with cyan side stripes. A glowing chrome cybernetic LEFT arm (visible when facing right). Barefoot with ankle tape. Cocky grin. Signature colors: cyan #19e6ff and yellow #ffe600.
 
 ### 3. ROXY VOLTAGE, Rio (power/curve; super: THUNDER KISS)
-Woman, 27. Brown skin, athletic and curvy. A tall electric-blue mohawk with shaved sides and lightning-bolt shaved patterns. Glowing blue lightning tattoos down one arm. Retro 80s high-cut one-piece swimsuit in electric blue with lime-green geometric stripes. Big gold hoop earrings. Lime wristbands. Chunky white-and-lime sneakers. Fierce and playful expression. Signature colors: electric blue #2f6bff and lime #b6ff2e.
+Woman, 27. Brown skin, athletic and curvy. A tall electric-blue mohawk with shaved sides and lightning-bolt shaved patterns. Glowing blue lightning tattoos down her LEFT arm (visible when facing right). Retro 80s high-cut one-piece swimsuit in electric blue with lime-green geometric stripes. Big gold hoop earrings. Lime wristbands. Chunky white-and-lime sneakers. Fierce and playful expression. Signature colors: electric blue #2f6bff and lime #b6ff2e.
 
 ### 4. BRICK DIAMOND, Gold Coast (power, slow; super: METEOR SLAM)
-Man, 34. Huge bodybuilder physique. A blond flat-top and handlebar mustache. Orange mirrored aviators. A sleeveless cropped black leather vest with a chrome shoulder pad on one side. Orange-and-black striped retro swim trunks. Black wrist wraps. Orange high-tops. Big confident laugh. Signature colors: sunset orange #ff7a1a and black.
+Man, 34. Huge bodybuilder physique. A blond flat-top, a short blond beard and a mustache. Orange mirrored aviators. A sleeveless cropped black leather vest with a chrome shoulder pad on one side. Orange-and-black striped retro swim trunks. Black wrist wraps. Orange high-tops. Big confident laugh. Signature colors: sunset orange #ff7a1a and black.
 
 ## Sprite rules
 - Pure flat #00FF00 background with no floor, shadows or ground line.

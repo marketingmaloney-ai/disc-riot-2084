@@ -64,50 +64,50 @@ def cmd_key(inp, out):
     print("keyed ->", out)
 
 
-def components(alpha, min_area):
-    m = (alpha > 40).astype(np.uint8)
-    # merge nearby parts of the same figure (hair strands, disc in hand)
-    m = cv2.dilate(m, np.ones((25, 25), np.uint8))
-    n, lbl, stats, _ = cv2.connectedComponentsWithStats(m, 8)
-    boxes = []
-    for i in range(1, n):
-        x, y, w, h, a = stats[i]
-        if a >= min_area:
-            boxes.append((x, y, w, h))
-    return boxes
+def runs(occ, min_gap):
+    """Contiguous True runs in a 1-D boolean array, bridging gaps shorter than min_gap."""
+    out, start, gap = [], None, 0
+    for i, v in enumerate(occ):
+        if v:
+            if start is None:
+                start = i
+            gap = 0
+        elif start is not None:
+            gap += 1
+            if gap >= min_gap:
+                out.append((start, i - gap + 1))
+                start, gap = None, 0
+    if start is not None:
+        out.append((start, len(occ) - gap))
+    return out
 
 
 def cmd_slice(inp, outdir, expect=None):
+    """Split a sheet into frames: row bands by empty rows, then frames by empty columns."""
     img = load_rgba(inp)
-    alpha = img[..., 3]
-    min_area = alpha.size * 0.004
-    boxes = components(alpha, min_area)
+    m = img[..., 3] > 40
+    H, W = m.shape
+    boxes = []
+    for y0, y1 in runs(m.any(axis=1), max(4, H // 150)):
+        band = m[y0:y1]
+        for x0, x1 in runs(band.any(axis=0), max(3, W // 400)):
+            sub = band[:, x0:x1]
+            ys = np.where(sub.any(axis=1))[0]
+            by0, by1 = y0 + ys.min(), y0 + ys.max() + 1
+            # ignore tiny bits (swatches, specks): need a figure-like height
+            if (by1 - by0) < H * 0.12 or sub.sum() < m.size * 0.002:
+                continue
+            boxes.append((x0, by0, x1 - x0, by1 - by0))
     if not boxes:
         sys.exit("no sprites found")
-    # order in rows: cluster by vertical center
-    boxes.sort(key=lambda b: b[1] + b[3] / 2)
-    rows, cur = [], [boxes[0]]
-    for b in boxes[1:]:
-        prev = cur[-1]
-        if abs((b[1] + b[3] / 2) - (prev[1] + prev[3] / 2)) < max(b[3], prev[3]) * 0.5:
-            cur.append(b)
-        else:
-            rows.append(cur)
-            cur = [b]
-    rows.append(cur)
-    ordered = [b for row in rows for b in sorted(row, key=lambda b: b[0])]
     Path(outdir).mkdir(parents=True, exist_ok=True)
     stem = Path(inp).stem.replace("_keyed", "")
-    for i, (x, y, w, h) in enumerate(ordered):
-        crop = img[y:y + h, x:x + w].copy()
-        # zero pixels that belong to neighbours bleeding into the box? keep simple: trim to own alpha bbox
-        a = crop[..., 3]
-        ys, xs = np.where(a > 8)
-        crop = crop[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    for i, (x, y, w, h) in enumerate(boxes):
+        crop = img[y:y + h, x:x + w]
         Image.fromarray(crop, "RGBA").save(Path(outdir) / f"{stem}_{i}.png")
-    print(f"{len(ordered)} frames -> {outdir}")
-    if expect and len(ordered) != expect:
-        print(f"WARNING: expected {expect} frames, found {len(ordered)}", file=sys.stderr)
+    print(f"{len(boxes)} frames -> {outdir}")
+    if expect and len(boxes) != expect:
+        print(f"WARNING: expected {expect} frames, found {len(boxes)}", file=sys.stderr)
         sys.exit(4)
 
 
