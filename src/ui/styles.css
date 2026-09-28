@@ -143,7 +143,7 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .touch-a { right: max(4vw, env(safe-area-inset-right)); bottom: 8vh; background: radial-gradient(circle at 35% 35%, #ff86c4, var(--pink)); box-shadow: 0 0 18px var(--pink); }
 .touch-b { right: calc(max(4vw, env(safe-area-inset-right)) + clamp(76px, 15vh, 112px)); bottom: 3vh; background: radial-gradient(circle at 35% 35%, #9ff4ff, #0a9fc0); box-shadow: 0 0 18px var(--cyan); }
 .touch-btn.down { transform: scale(0.9); filter: brightness(1.4); }
-.pause-btn { position: absolute; top: 8px; right: 10px; pointer-events: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-family: 'Orbitron'; font-size: 12px; padding: 6px 10px; }
+.pause-btn { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); pointer-events: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-family: 'Orbitron'; font-size: 12px; padding: 6px 10px; }
 
 #rotate { display: none; position: absolute; inset: 0; background: var(--violet); z-index: 50; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-weight: 900; letter-spacing: 0.2em; }
 .rotate-icon { font-size: 64px; color: var(--pink); animation: spin 2s linear infinite; }
