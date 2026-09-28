@@ -23,13 +23,16 @@ If image generation through your API/tool quota fails, generate through **Google
 4. Work at a steady, human pace (one job at a time). Don't run parallel tabs.
 5. At the top of the log, write `Generated via Google Flow`, plus the resolution you were able to download.
 
+## Video jobs (queue files named `videoNN.md`)
+Same loop, but use Flow's **video** generation in **image-to-video** mode: upload the job's `start:` image as the first frame, pick 16:9 landscape and the shortest duration, paste the prompt exactly, and save the MP4 to the job's output path (or into the inbox, named by job number).
+
 ## Inbox (manual fallback)
 If files can't be named and placed per job, just drop every downloaded image into `tools/gen-assets/inbox/<batch>/` with any filenames and push. The director will identify and sort them.
 
 ## Rules
 - **Use the exact model and resolution each job names.** If that model isn't available to you, say so at the top of the log instead of silently substituting (batch01 came back as Nano Banana 2 at 1K instead of Pro at 2K).
 - Batches can be large. If you hit a quota limit, push what you have, set `STATUS: PARTIAL`, and list the remaining job numbers in the log. The next run resumes from there.
-- **Never** modify files outside `tools/gen-assets/raw/` and `tools/gen-assets/queue/`.
+- **Never** modify files outside `tools/gen-assets/raw/`, `tools/gen-assets/inbox/` and `tools/gen-assets/queue/`.
 - Save full-resolution PNGs. Don't compress them, convert to JPEG or resize.
 - Don't remove or alter the green background. The director's pipeline does the keying.
 - Don't generate anything that isn't in the queue.

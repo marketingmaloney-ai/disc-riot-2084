@@ -72,7 +72,13 @@ def build_character(cid: str, spec: dict):
     anims, flags = {}, {}
     for name, fps, loop in ANIMS:
         a = spec.get("anims", {}).get(name)
-        if a:
+        if a and "video" in a:
+            # video source: frames are indices into the keyed video frames (see process.py video + sheet.jpg)
+            vdir = work / (Path(a["video"]).stem + "_video")
+            run("video", HERE / a["video"], vdir, "--fps", a.get("fps", 24), "--start", a.get("start", 0))
+            anims[name] = {"frames": [str(vdir / f"k_{i:04d}.png") for i in a["frames"]], "fps": a.get("playFps", fps), "loop": loop}
+            flags[name] = {"discInArt": bool(a.get("discInArt"))}
+        elif a:
             fr = frames_of(HERE / a["src"], a["expect"], work, a.get("groundLine", False))
             anims[name] = {"frames": [str(fr[i]) for i in a["frames"]], "fps": fps, "loop": loop}
             flags[name] = {"discInArt": bool(a.get("discInArt"))}

@@ -36,11 +36,30 @@ def cmd_key(inp, out):
     rgb = img[..., :3] / 255.0
     hsv = cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(np.float32)
     h, s, v = hsv[..., 0] * 2, hsv[..., 1] / 255, hsv[..., 2] / 255  # h in degrees
-    green = (np.abs(h - 120) < 28) & (s > 0.28) & (v > 0.25)
+    green = (np.abs(h - 122) < 22) & (s > 0.45) & (v > 0.3)
+    # Background = green regions connected to the image border (or very large). Green enclosed by a
+    # figure (costume stripes, lime trims) stays opaque instead of being punched out as holes.
+    ng, glbl, gstats, _ = cv2.connectedComponentsWithStats(green.astype(np.uint8), 8)
+    border = set(np.unique(np.concatenate([glbl[0], glbl[-1], glbl[:, 0], glbl[:, -1]])).tolist())
+    # Enclosed pockets (gaps between arm and body) are still background if their colour matches the
+    # sampled screen colour; costume greens (e.g. lime, R≈180) sit far from it.
+    edge_px = np.concatenate([img[0, :, :3], img[-1, :, :3], img[:, 0, :3], img[:, -1, :3]])
+    bg_rgb = np.median(edge_px, axis=0)  # borders are (almost) all screen green
+    bgk = np.zeros(ng, bool)
+    for i in range(1, ng):
+        if i in border or gstats[i, cv2.CC_STAT_AREA] > green.size * 0.01:
+            bgk[i] = True
+        else:
+            mean = img[..., :3][glbl == i].mean(axis=0)
+            bgk[i] = np.abs(mean - bg_rgb).max() < 60
+    green = bgk[glbl]
     # "greenness": how much G dominates R and B -> soft matte on edges
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     dom = np.clip((g - np.maximum(r, b)) * 2.2, 0, 1)
-    alpha = 1 - np.where(green, 1.0, dom * 0.9)
+    # Only colours whose hue is near the key count as "spill". Without this, legit costume greens
+    # (Roxy's lime #b6ff2e, hue ~83°) were matted semi-transparent and despilled to grey.
+    keyish = (np.abs(h - 122) < 30) & (s > 0.3) & ~cv2.erode((~green).astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+    alpha = 1 - np.where(green, 1.0, np.where(keyish, dom * 0.9, 0.0))
     # remove isolated noise, keep only large components
     hard = (alpha > 0.5).astype(np.uint8)
     n, lbl, stats, _ = cv2.connectedComponentsWithStats(hard, 8)
@@ -56,8 +75,8 @@ def cmd_key(inp, out):
     a8 = cv2.erode(a8, np.ones((2, 2), np.uint8))
     a8 = cv2.GaussianBlur(a8, (3, 3), 0)
     # despill: clamp green to max(r,b) near edges
-    edge = (a8 > 0) & (a8 < 255) | (dom > 0.05)
-    g2 = np.where(edge | (a8 > 0), np.minimum(g, np.maximum(r, b) * 1.05), g)
+    edge = (a8 > 0) & (a8 < 250)
+    g2 = np.where(edge | keyish, np.minimum(g, np.maximum(r, b) * 1.05), g)
     out_rgb = np.stack([r, g2, b], -1)
     res = np.dstack([(out_rgb * 255).clip(0, 255).astype(np.uint8), a8])
     Image.fromarray(res, "RGBA").save(out)
@@ -186,6 +205,48 @@ def cmd_pack(manifest, out):
     print("atlas ->", out, atlas.size)
 
 
+def cmd_video(inp, outdir, fps=24, start=0.0, dur=None):
+    """Video (green screen) -> keyed, trimmed frames k_0000.png... + numbered contact sheet.jpg."""
+    import subprocess
+    import imageio_ffmpeg
+
+    out = Path(outdir)
+    out.mkdir(parents=True, exist_ok=True)
+    for f in out.glob("*.png"):
+        f.unlink()
+    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-ss", str(start)]
+    if dur:
+        cmd += ["-t", str(dur)]
+    cmd += ["-i", str(inp), "-vf", f"fps={fps}", str(out / "raw_%04d.png")]
+    subprocess.run(cmd, check=True)
+    raws = sorted(out.glob("raw_*.png"))
+    thumbs = []
+    for i, r in enumerate(raws):
+        k = out / f"k_{i:04d}.png"
+        cmd_key(r, k)
+        arr = np.array(Image.open(k))
+        if (arr[..., 3] > 40).sum() < arr[..., 3].size * 0.002:
+            k.unlink()  # empty frame (character left the shot)
+        else:
+            Image.fromarray(clean_frame(arr), "RGBA").save(k)
+            thumbs.append((i, k))
+        r.unlink()
+    # contact sheet with frame numbers, for picking
+    from PIL import ImageDraw
+    cols, tw, th = 10, 150, 220
+    rows = (len(thumbs) + cols - 1) // cols
+    sheet = Image.new("RGB", (cols * tw, max(1, rows) * th), (70, 70, 80))
+    d = ImageDraw.Draw(sheet)
+    for n, (i, k) in enumerate(thumbs):
+        t = Image.open(k)
+        t.thumbnail((tw - 6, th - 22))
+        x, y = (n % cols) * tw, (n // cols) * th
+        sheet.paste(t, (x + 3, y + 18), t)
+        d.text((x + 4, y + 2), str(i), fill=(255, 230, 0))
+    sheet.save(out / "sheet.jpg", quality=85)
+    print(f"{len(thumbs)} frames ({len(raws)} extracted) -> {out}")
+
+
 def cmd_sheet(inp, out):
     img = Image.open(inp).convert("RGBA")
     w, h = img.size
@@ -212,6 +273,9 @@ if __name__ == "__main__":
         cmd_slice(a[1], a[2], exp)
     elif cmd == "pack":
         cmd_pack(a[1], a[2])
+    elif cmd == "video":
+        opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d  # noqa: E731
+        cmd_video(a[1], a[2], float(opt("--fps", 24)), float(opt("--start", 0)), opt("--dur"))
     elif cmd == "sheet":
         cmd_sheet(a[1], a[2])
     else:

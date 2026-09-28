@@ -104,6 +104,8 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - ✅ Courts: all 4 arenas. ✅ Backdrops: Neon Pier, Laser Lagoon. ❌ Sunset and Orbital backdrops came back portrait: re-queued.
 - Pipeline: the slicer now splits overlapping figures (`--expect`), strips floor lines, and drops neighbour slivers. The renderer hides the 3D disc when the hold art shows it and tones painted courts down.
 - **batch04 READY:** Roxy/Brick throw, dash/lob/block/knock/win/lose for all 4, and 2 landscape backdrops (28 jobs).
+- **video01 READY (pilot):** Flow image-to-video, then `process.py video` extracts, keys, trims and makes a numbered sheet.jpg; `approved.json` anims accept `{"video": ..., "frames": [...]}`. Start frames live in `tools/gen-assets/video_starts/`. If the pilot looks good, switch the remaining animations to video.
+- Keying fixed: only border-connected green (or enclosed pockets matching the screen colour) is removed, so costume greens (Roxy's lime) survive.
 - **batch05 READY:** 4 portraits (3:4) + 4 super cut-ins (16:9, green screen). Independent of batch04.
 
 ## Pending art batches (quota exhausted; resume any time)
