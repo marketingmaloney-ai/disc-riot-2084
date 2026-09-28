@@ -37,10 +37,10 @@
   },
   "throw": {
    "row": 4,
-   "frames": 1,
+   "frames": 3,
    "fps": 14,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "lob": {
    "row": 5,

@@ -23,10 +23,10 @@
   },
   "dash": {
    "row": 2,
-   "frames": 1,
+   "frames": 2,
    "fps": 14,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "hold": {
    "row": 3,
@@ -44,38 +44,38 @@
   },
   "lob": {
    "row": 5,
-   "frames": 1,
+   "frames": 2,
    "fps": 10,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "block": {
    "row": 6,
-   "frames": 1,
+   "frames": 2,
    "fps": 12,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "knock": {
    "row": 7,
-   "frames": 1,
+   "frames": 2,
    "fps": 10,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "win": {
    "row": 8,
-   "frames": 1,
+   "frames": 2,
    "fps": 3,
    "loop": true,
-   "interim": true
+   "discInArt": false
   },
   "lose": {
    "row": 9,
-   "frames": 1,
+   "frames": 2,
    "fps": 3,
    "loop": true,
-   "interim": true
+   "discInArt": false
   }
  },
  "heightScale": 1.0

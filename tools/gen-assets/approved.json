@@ -56,6 +56,64 @@
             24
           ],
           "playFps": 30
+        },
+        "dash": {
+          "src": "raw/vega/anim_dash_v1.jpg",
+          "mode": "components",
+          "frames": [
+            {
+              "c": 1,
+              "x0": 640
+            },
+            2
+          ],
+          "scale": 0.62
+        },
+        "lob": {
+          "src": "raw/vega/anim_lob_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            1
+          ]
+        },
+        "block": {
+          "src": "raw/vega/anim_block_v1.jpg",
+          "mode": "components",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "knock": {
+          "src": "raw/vega/anim_knock_v1.jpg",
+          "mode": "components",
+          "frames": [
+            {
+              "c": 0,
+              "x1": 420
+            },
+            {
+              "c": 1,
+              "x1": 1040
+            }
+          ]
+        },
+        "win": {
+          "src": "raw/vega/anim_win_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            3
+          ]
+        },
+        "lose": {
+          "src": "raw/vega/anim_lose_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            1
+          ]
         }
       }
     },
@@ -101,6 +159,55 @@
             1,
             2
           ]
+        },
+        "dash": {
+          "src": "raw/kaito/anim_dash_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            1,
+            2
+          ]
+        },
+        "lob": {
+          "src": "raw/kaito/anim_lob_v1.jpg",
+          "mode": "components",
+          "frames": [
+            1,
+            2
+          ]
+        },
+        "block": {
+          "src": "raw/kaito/anim_block_v1.jpg",
+          "mode": "components",
+          "frames": [
+            1,
+            2
+          ]
+        },
+        "knock": {
+          "src": "raw/kaito/anim_knock_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            2
+          ]
+        },
+        "win": {
+          "src": "raw/kaito/anim_win_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            2
+          ]
+        },
+        "lose": {
+          "src": "raw/kaito/anim_lose_v1.jpg",
+          "mode": "components",
+          "frames": [
+            2
+          ],
+          "scale": 0.72
         }
       }
     },
@@ -135,6 +242,15 @@
             2
           ],
           "discInArt": true
+        },
+        "throw": {
+          "src": "raw/roxy/anim_throw_v1.jpg",
+          "mode": "components",
+          "frames": [
+            0,
+            1,
+            2
+          ]
         }
       }
     },

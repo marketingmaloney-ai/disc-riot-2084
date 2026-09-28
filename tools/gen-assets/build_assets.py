@@ -65,6 +65,41 @@ def frames_of(src: Path, expect: int, work: Path, ground_line=False):
     return sorted(fdir.glob("*.png"), key=lambda p: int(p.stem.rsplit("_", 1)[1]))
 
 
+def component_frames(src: Path, work: Path, picks: list, ground_line=False):
+    """Frames = separate connected figures (sorted left->right), for strips whose figures overlap
+    horizontally. A pick is a component index, or {"c": idx, "x0": .., "x1": ..} to trim a figure
+    that touches its neighbour (x in source-image pixels)."""
+    sys.path.insert(0, str(HERE))
+    import cv2
+    import process
+
+    work.mkdir(parents=True, exist_ok=True)
+    keyed = work / (src.stem + "_keyed.png")
+    run("key", src, keyed)
+    if ground_line:
+        strip_ground_line(keyed)
+    img = np.array(Image.open(keyed))
+    a = (img[..., 3] > 40).astype(np.uint8)
+    n, lbl, st, _ = cv2.connectedComponentsWithStats(a, 8)
+    comps = sorted([i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] > a.size * 0.003], key=lambda i: st[i, cv2.CC_STAT_LEFT])
+    out = []
+    for k, p in enumerate(picks):
+        spec = p if isinstance(p, dict) else {"c": p}
+        mask = lbl == comps[spec["c"]]
+        if "x0" in spec or "x1" in spec:
+            xs = np.arange(img.shape[1])
+            mask &= (xs >= spec.get("x0", 0))[None, :] & (xs < spec.get("x1", img.shape[1]))[None, :]
+        # keep nearby soft edge pixels of this figure
+        mask = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
+        fr = img.copy()
+        fr[..., 3] = np.where(mask, fr[..., 3], 0)
+        fr = process.clean_frame(fr)
+        f = work / f"{src.stem}_c{k}.png"
+        Image.fromarray(fr, "RGBA").save(f)
+        out.append(f)
+    return out
+
+
 def build_character(cid: str, spec: dict):
     work = WORK / cid
     ref_frames = frames_of(HERE / spec["ref"], 4, work)
@@ -80,6 +115,10 @@ def build_character(cid: str, spec: dict):
                 vargs += ["--dur", a["dur"]]
             run(*vargs)
             anims[name] = {"frames": [str(vdir / f"k_{i:04d}.png") for i in a["frames"]], "fps": a.get("playFps", fps), "loop": loop}
+            flags[name] = {"discInArt": bool(a.get("discInArt"))}
+        elif a and a.get("mode") == "components":
+            fr = component_frames(HERE / a["src"], work, a["frames"], a.get("groundLine", False))
+            anims[name] = {"frames": [str(f) for f in fr], "fps": fps, "loop": loop, "scale": a.get("scale", 1.0)}
             flags[name] = {"discInArt": bool(a.get("discInArt"))}
         elif a:
             fr = frames_of(HERE / a["src"], a["expect"], work, a.get("groundLine", False))
