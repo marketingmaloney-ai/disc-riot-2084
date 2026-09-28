@@ -104,6 +104,13 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - batch03 core animations: READY, not generated
 - Resume: tell the Antigravity agent "Follow ANTIGRAVITY_HANDOFF.md (Flow mode if needed). Do batch02 and batch03."
 
+## Phase 3c: Progression ✅
+- [x] 4 attributes (SPEED, POWER, TECHNIQUE, REFLEX), +5 levels each (~+15%), applied in **VS CPU only** (2P uses base stats)
+- [x] 18 achievements per character (24 pts; maxing costs 20), tracked by `src/meta/tracker.ts`, saved on-device (`localStorage`, key `discriot2084.profile.v1`)
+- [x] FIGHTER UPGRADES screen (mode menu + "SPEND POINTS" on results), LV badges and bonus bars on character select, unlock panel on results
+- [x] Tests: `src/meta/progress.test.ts`
+- [ ] Later: cloud save when online play lands; optional per-achievement toast mid-match
+
 ## Phase 4: Integration and polish
 - [ ] Tune sprite height/anchor per character after the real atlases land
 - [ ] Re-screenshot every arena × character combo and do the director review pass

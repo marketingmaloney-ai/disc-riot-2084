@@ -19,6 +19,11 @@ import {
 import { isTouchDevice, TouchSource } from './input/touch';
 import { audio } from './audio/audio';
 import { Hud } from './ui/hud';
+import { MatchTracker } from './meta/tracker';
+import type { Achievement } from './meta/achievements';
+import { charProfile, freePoints, totalLevel } from './meta/progress';
+import { upgradeScreen } from './ui/upgrades';
+import * as SC from './sim/constants';
 
 type Controller = { kind: 'human'; src: InputSource } | { kind: 'cpu'; ai: CpuPlayer };
 
@@ -43,12 +48,19 @@ let arenaIdx = 0;
 let onMenuInput: ((e: ReturnType<MenuInput['poll']>) => void) | null = null;
 
 // ---------------------------------------------------------------- game setup
+let tracker: MatchTracker | null = null;
+let newAchievements: Achievement[] = [];
+
 async function startMatch(p1: string, p2: string, arena: number, ctrls: [Controller, Controller], isDemo: boolean) {
   demo = isDemo;
   paused = false;
   controllers = ctrls;
   await renderer.setup(ARENAS[arena], p1, p2);
-  game = createGame(p1, p2, ARENAS[arena].bigZone);
+  // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
+  const upgraded = !isDemo && mode === '1p';
+  game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : []);
+  tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
+  newAchievements = [];
   acc = 0;
   if (!isDemo) {
     const lbl = (c: Controller, i: number) => (c.kind === 'cpu' ? `CPU · ${difficulty.toUpperCase()}` : `PLAYER ${i + 1}`);
@@ -107,6 +119,8 @@ function tick() {
     if (!demo) {
       audio.handleEvents(game.events);
       hud.events(game.events, game);
+      const unlocked = tracker?.onEvents(game.events, game);
+      if (unlocked) newAchievements = unlocked;
       if (game.events.some((e) => e.type === 'matchEnd')) window.setTimeout(showResults, 1600);
     }
   }
@@ -119,8 +133,12 @@ function frame(now: number) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
 
-  const edge = menuInput.poll();
+  let edge = menuInput.poll();
   if (onMenuInput) onMenuInput(edge);
+  for (let n = 0; n < 8 && menuInput.hasQueued(); n++) {
+    edge = menuInput.poll();
+    if (onMenuInput) onMenuInput(edge);
+  }
 
   // pause toggle (Esc / Start)
   const padStart = (navigator.getGamepads?.() ?? []).some((p) => p?.buttons[9]?.pressed);
@@ -207,6 +225,7 @@ function modeScreen() {
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
     { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; charSelect(); } },
+    { label: 'FIGHTER UPGRADES', action: () => upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
@@ -230,6 +249,7 @@ function howTo() {
       <b>LOB</b><span>B WHILE HOLDING — WAIT LONGER TO DROP IT SHORTER</span>
       <b>SUPER</b><span>B JUST BEFORE A DISC HITS YOU TO POP IT UP, OR ← + B TO TOSS. STAND ON THE RING TO CHARGE, THEN THROW!</span>
       <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS · DROPPED DISC = 2 PTS FOR THE OTHER SIDE</span>
+      <b>UPGRADES</b><span>WIN MATCHES & UNLOCK ACHIEVEMENTS IN VS CPU TO EARN POINTS · SPEND THEM IN FIGHTER UPGRADES</span>
       <b>PAUSE</b><span>ESC / P · START</span>
     </div>`);
   menu(s, [{ label: 'BACK', action: modeScreen }], modeScreen);
@@ -255,7 +275,9 @@ async function charSelect() {
   const cards = CHARACTERS.map((c, i) => {
     const d = document.createElement('div');
     d.className = 'card';
-    d.innerHTML = `${visuals[i]}<div class="nm">${c.name}<br><span class="nation">${c.nation}</span></div>`;
+    const cp = charProfile(c.id);
+    const badge = mode === '1p' ? `<div class="lvl">LV ${totalLevel(cp)}${freePoints(cp) > 0 ? ` <b>+${freePoints(cp)}</b>` : ''}</div>` : '';
+    d.innerHTML = `${visuals[i]}${badge}<div class="nm">${c.name}<br><span class="nation">${c.nation}</span></div>`;
     grid.appendChild(d);
     return d;
   });
@@ -272,9 +294,13 @@ async function charSelect() {
       if (mode === '2p' && who === 1 && cursor[1] === i) c.insertAdjacentHTML('beforeend', `<div class="tag t2">2P</div>`);
     });
     const ch = CHARACTERS[cursor[who]];
-    const bar = (v: number, lo: number, hi: number) => `<div class="bar"><i style="width:${Math.round(((v - lo) / (hi - lo)) * 80 + 20)}%"></i></div>`;
+    // base bar + bonus segment from upgrades (VS CPU only)
+    const lv = mode === '1p' && who === 0 ? charProfile(ch.id).levels : { speed: 0, power: 0, technique: 0, reflex: 0 };
+    const w = (v: number, lo: number, hi: number) => Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20));
+    const bar = (v: number, lo: number, hi: number, bonus: number) =>
+      `<div class="bar"><i style="width:${w(v, lo, hi)}%"></i>${bonus > 0 ? `<em style="width:${w(v * (1 + bonus), lo, hi) - w(v, lo, hi)}%"></em>` : ''}</div>`;
     info.innerHTML = `<div class="who"><div class="n ${who ? 'p2c' : 'p1c'}">${ch.name}</div><div class="sp">SUPER: ${ch.superName}</div><div class="hint">${ch.tagline.toUpperCase()}</div></div>
-      <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.2)}<span>POWER</span>${bar(ch.power, 15, 21)}<span>CURVE</span>${bar(ch.curve, 0.7, 1.35)}</div>`;
+      <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.6, SC.ATTR_SPEED * lv.speed)}<span>POWER</span>${bar(ch.power, 20, 26, SC.ATTR_POWER * lv.power)}<span>TECHNIQUE</span>${bar(ch.curve, 0.6, 1.6, SC.ATTR_TECH_CURVE * lv.technique)}<span>REFLEX</span>${bar(1, 0.8, 1.3, SC.ATTR_REFLEX_REACH * lv.reflex)}</div>`;
   };
   const confirm = () => {
     audio.play('confirm');
@@ -348,9 +374,17 @@ function togglePause() {
 }
 
 function showResults() {
+  hudEl.classList.add('hidden');
   const w = charById(game.players[game.matchWinner].charId);
-  const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>`, 'results clear');
+  const ach = newAchievements.length
+    ? `<div class="ach-unlocked"><div class="ach-h">ACHIEVEMENTS UNLOCKED</div>${newAchievements
+        .map((a) => `<div class="ach-row"><b>${a.name}</b><span>${a.desc}</span><i>+${a.points} PT${a.points > 1 ? 'S' : ''}</i></div>`)
+        .join('')}</div>`
+    : '';
+  const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>${ach}`, 'results clear');
+  const pts = tracker ? freePoints(charProfile(picks[0])) : 0;
   menu(s, [
+    ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { void startDemo(); upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, modeScreen, picks[0]); } }] : []),
     { label: 'REMATCH', action: () => beginVersus() },
     { label: 'CHARACTER SELECT', action: () => { void startDemo(); charSelect(); } },
     { label: 'TITLE', action: () => { audio.stopMusic(); void startDemo(); titleScreen(); } },

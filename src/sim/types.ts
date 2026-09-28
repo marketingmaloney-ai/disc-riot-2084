@@ -1,6 +1,14 @@
 import type { SuperKind } from './characters';
 
 /** One tick of input for one player, in court space. mx>0 = toward +x (screen right), mz>0 = toward camera. */
+/** Attribute upgrade levels (0..MAX_ATTR_LEVEL) earned through achievements. VS CPU only. */
+export interface StatLevels {
+  speed: number;
+  power: number;
+  technique: number;
+  reflex: number;
+}
+
 export interface InputFrame {
   mx: number;
   mz: number;
@@ -21,6 +29,9 @@ export interface Player {
   power: number;
   curve: number;
   superKind: SuperKind;
+  catchR: number; // catch reach (REFLEX)
+  ssWindow: number; // power-shot timing window in ticks (REFLEX)
+  ssMult: number; // power-shot speed multiplier (TECHNIQUE)
   x: number;
   z: number;
   px: number; // previous tick position (render interpolation)
@@ -75,6 +86,8 @@ export interface GameEvent {
   z?: number;
   pts?: number;
   big?: boolean;
+  shot?: ShotKind; // for 'score': the kind of shot that scored
+  by?: number; // for 'score': who threw it (-1 = none)
 }
 
 export interface GameState {

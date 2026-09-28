@@ -58,6 +58,14 @@ export const POINTS_SMALL = 3;
 export const POINTS_BIG = 5;
 export const BIG_ZONE_HALF = 1.65; // |z| < this on goal wall = 5 pts
 
+// attribute upgrades (per level, VS CPU only)
+export const MAX_ATTR_LEVEL = 5;
+export const ATTR_SPEED = 0.03;
+export const ATTR_POWER = 0.03;
+export const ATTR_TECH_CURVE = 0.05;
+export const ATTR_TECH_SS = 0.02;
+export const ATTR_REFLEX_REACH = 0.03;
+
 export const SET_POINTS = 12;
 export const SET_TIME = 45;
 export const SETS_TO_WIN = 2;

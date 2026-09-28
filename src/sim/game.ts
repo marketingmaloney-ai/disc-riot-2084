@@ -1,15 +1,23 @@
 import * as C from './constants';
 import { charById } from './characters';
-import type { Disc, GameState, InputFrame, Player } from './types';
+import type { Disc, GameState, InputFrame, Player, StatLevels } from './types';
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-function makePlayer(idx: 0 | 1, charId: string): Player {
+function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels): Player {
   const c = charById(charId);
+  const L = (n = 0) => Math.max(0, Math.min(C.MAX_ATTR_LEVEL, n));
+  const sp = L(lv?.speed), pw = L(lv?.power), te = L(lv?.technique), rf = L(lv?.reflex);
   return {
     idx, side: idx === 0 ? -1 : 1, charId,
-    speed: c.speed, power: c.power, curve: c.curve, superKind: c.superKind,
+    speed: c.speed * (1 + C.ATTR_SPEED * sp),
+    power: c.power * (1 + C.ATTR_POWER * pw),
+    curve: c.curve * (1 + C.ATTR_TECH_CURVE * te),
+    superKind: c.superKind,
+    catchR: C.CATCH_RADIUS * (1 + C.ATTR_REFLEX_REACH * rf),
+    ssWindow: C.SUPERSONIC_WINDOW + rf,
+    ssMult: C.SUPERSONIC_MULT * (1 + C.ATTR_TECH_SS * te),
     x: 0, z: 0, px: 0, pz: 0, dvx: 0, dvz: 0, moving: false,
     state: 'idle', t: 0, holdT: 0, charged: false, serving: false,
     dirHist: [], aAge: 999, bAge: 999,
@@ -24,10 +32,10 @@ function makeDisc(): Disc {
   };
 }
 
-export function createGame(p1Char: string, p2Char: string, bigZoneHalf = C.BIG_ZONE_HALF): GameState {
+export function createGame(p1Char: string, p2Char: string, bigZoneHalf = C.BIG_ZONE_HALF, levels: [StatLevels?, StatLevels?] = []): GameState {
   const g: GameState = {
     tick: 0,
-    players: [makePlayer(0, p1Char), makePlayer(1, p2Char)],
+    players: [makePlayer(0, p1Char, levels[0]), makePlayer(1, p2Char, levels[1])],
     disc: makeDisc(),
     score: [0, 0], sets: [0, 0], setNo: 1, setTime: C.SET_TIME,
     phase: 'serve', phaseT: C.SERVE_DELAY, server: 0, hitstop: 0,
@@ -225,7 +233,7 @@ function tryCatch(g: GameState, p: Player) {
   if (d.mode !== 'flight' && d.mode !== 'ground') return;
   if (d.thrower === p.idx && d.mode === 'flight') return;
   if (d.h > C.CATCH_HEIGHT) return;
-  const reach = d.kind === 'super' ? C.CATCH_RADIUS * C.SUPER_CATCH_MULT : C.CATCH_RADIUS;
+  const reach = d.kind === 'super' ? p.catchR * C.SUPER_CATCH_MULT : p.catchR;
   if (Math.hypot(d.x - p.x, d.z - p.z) > reach) return;
   catchDisc(g, p, false);
 }
@@ -251,7 +259,7 @@ function catchDisc(g: GameState, p: Player, fromLob: boolean) {
     setState(p, 'hold');
     g.hitstop = C.HITSTOP_CATCH;
     // Timed A press right before the catch => instant supersonic return.
-    if (!fromLob && p.aAge <= C.SUPERSONIC_WINDOW) {
+    if (!fromLob && p.aAge <= p.ssWindow) {
       const last = p.dirHist[p.dirHist.length - 1] ?? { mx: 0, mz: 0 };
       throwDisc(g, p, { mx: last.mx, mz: last.mz, a: true, b: false }, true);
     }
@@ -277,7 +285,7 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
   const d = g.disc;
   const fwd = fwdOf(p);
   const holdF = Math.max(C.HOLD_MIN_FACTOR, 1 - C.HOLD_DECAY * p.holdT);
-  let sp = p.power * holdF * (supersonic ? C.SUPERSONIC_MULT : 1);
+  let sp = p.power * holdF * (supersonic ? p.ssMult : 1);
   d.mode = 'flight';
   d.holder = -1;
   d.thrower = p.idx;
@@ -450,7 +458,7 @@ function landLob(g: GameState) {
   const p = g.players[landSide];
   const canCatch = p.state !== 'hold' && p.state !== 'knock';
   d.h = 0;
-  if (canCatch && Math.hypot(p.x - L.tx, p.z - L.tz) < C.CATCH_RADIUS * 1.25) {
+  if (canCatch && Math.hypot(p.x - L.tx, p.z - L.tz) < p.catchR * 1.25) {
     catchDisc(g, p, true);
     return;
   }
@@ -483,7 +491,7 @@ function award(g: GameState, scorer: number, pts: number, big: boolean) {
   g.phase = 'point';
   g.phaseT = C.SCORE_PAUSE;
   g.hitstop = 8;
-  g.events.push({ type: 'score', p: scorer, pts, big, x: d.x, z: d.z });
+  g.events.push({ type: 'score', p: scorer, pts, big, x: d.x, z: d.z, shot: d.kind, by: d.thrower });
 }
 
 /** Deep clone for AI lookahead / replays. */
