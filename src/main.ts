@@ -58,7 +58,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   await renderer.setup(ARENAS[arena], p1, p2);
   // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
   const upgraded = !isDemo && mode === '1p';
-  game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : []);
+  game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
   tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
   newAchievements = [];
   acc = 0;

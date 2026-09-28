@@ -5,7 +5,7 @@ import type { Disc, GameState, InputFrame, Player, StatLevels } from './types';
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels): Player {
+function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels, human = false): Player {
   const c = charById(charId);
   const L = (n = 0) => Math.max(0, Math.min(C.MAX_ATTR_LEVEL, n));
   const sp = L(lv?.speed), pw = L(lv?.power), te = L(lv?.technique), rf = L(lv?.reflex);
@@ -15,7 +15,7 @@ function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels): Player {
     power: c.power * (1 + C.ATTR_POWER * pw),
     curve: c.curve * (1 + C.ATTR_TECH_CURVE * te),
     superKind: c.superKind,
-    catchR: C.CATCH_RADIUS * (1 + C.ATTR_REFLEX_REACH * rf),
+    catchR: C.CATCH_RADIUS * (1 + C.ATTR_REFLEX_REACH * rf) * (human ? C.HUMAN_CATCH_MULT : 1),
     ssWindow: C.SUPERSONIC_WINDOW + rf,
     ssMult: C.SUPERSONIC_MULT * (1 + C.ATTR_TECH_SS * te),
     x: 0, z: 0, px: 0, pz: 0, dvx: 0, dvz: 0, moving: false,
@@ -32,10 +32,16 @@ function makeDisc(): Disc {
   };
 }
 
-export function createGame(p1Char: string, p2Char: string, bigZoneHalf = C.BIG_ZONE_HALF, levels: [StatLevels?, StatLevels?] = []): GameState {
+export function createGame(
+  p1Char: string,
+  p2Char: string,
+  bigZoneHalf = C.BIG_ZONE_HALF,
+  levels: [StatLevels?, StatLevels?] = [],
+  humans: [boolean, boolean] = [false, false],
+): GameState {
   const g: GameState = {
     tick: 0,
-    players: [makePlayer(0, p1Char, levels[0]), makePlayer(1, p2Char, levels[1])],
+    players: [makePlayer(0, p1Char, levels[0], humans[0]), makePlayer(1, p2Char, levels[1], humans[1])],
     disc: makeDisc(),
     score: [0, 0], sets: [0, 0], setNo: 1, setTime: C.SET_TIME,
     phase: 'serve', phaseT: C.SERVE_DELAY, server: 0, hitstop: 0,
