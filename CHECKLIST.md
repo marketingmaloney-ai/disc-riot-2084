@@ -1,0 +1,96 @@
+# DISC RIOT 2084: master checklist and resume protocol
+
+> **If a session is interrupted, read this file first.** It is the single source of truth for where the project stands. Update it and commit/push **after every completed item** so nothing is lost.
+
+## Resume protocol (do this at the start of every new session)
+1. Clone or open the repo, then run `npm install` and `pip install pillow numpy opencv-python-headless`.
+2. Read this file, `PLAN.md`, `tools/gen-assets/ART_BRIEF.md` and `tools/gen-assets/AGENT_ART_TASK.md`.
+3. Run `git log --oneline | head -20` to see the latest work, and `npm test` to confirm the sim is green.
+4. Check for the Gemini key: `test -n "$GEMINI_API_KEY" || test -f .env`. If neither exists, ask the user to add `GEMINI_API_KEY` in the environment settings. Never commit the key.
+5. Start the dev server with `npm run dev`. Screenshot with Playwright (Chromium at `/opt/pw-browsers`); `?quick=1` jumps straight into a match.
+6. Continue from the **first unchecked item** below. Any item marked 🔄 was in progress: check `tools/gen-assets/raw/` for partial outputs before regenerating.
+7. Art approval rule: the main session is creative director. One subagent per art piece. Nothing enters `public/assets/` until the director approves it against the Windjammers quality bar.
+
+## Decisions locked with the user
+- [x] Title: **DISC RIOT 2084**
+- [x] Theme: 80s cyberpunk beach, smooth anime, pin-up heavy but non-explicit, all characters adult (25+)
+- [x] Platforms: desktop (keyboard + gamepad) and mobile (touch, landscape)
+- [x] Roster: 4 characters (Vega Starr, Kaito "Riptide" Mori, Roxy Voltage, Brick Diamond)
+- [x] Audio: procedurally generated (Web Audio SFX + synthwave)
+- [x] No greybox. Go straight to a full prototype.
+- [ ] Arena count: 2 (Sunset Strip, Neon Pier) or more? *(asked, awaiting answer)*
+- [ ] Super-move character cut-ins, yes or no? *(asked, awaiting answer)*
+
+## Blockers / user actions
+- [x] Gemini API key provided (Google AI Studio)
+- [ ] **Enable billing on the Google AI Studio project.** The key works, but the free tier has 0 quota for every image model (HTTP 429, `limit: 0`). Test command:
+  `set -a; . ./.env; set +a; node tools/gen-assets/gen.mjs --model gemini-3.1-flash-image --size 1K --out tools/gen-assets/raw/test/ping.png --prompt "pink frisbee on #00FF00"`
+- [ ] Store the key as `GEMINI_API_KEY` in the environment settings, so new sessions have it. `.env` in the container is lost when the container is reclaimed.
+- [ ] Rotate the key: it was pasted in chat.
+- [ ] **GitHub repo to push to.** The container is ephemeral, and this checklist only survives if it's pushed.
+
+## Phase 1: Engine and playable prototype ✅
+- [x] Vite + TS + three.js project, fixed 60 Hz deterministic sim (`src/sim`)
+- [x] Moves: walk, dash, catch, straight/angle throw, curve (motion input), power shot, lob with reticle, block/toss, super charge, 4 supers, super-lob, knockback
+- [x] Rules: 3/5-point goals, 2-point drops, sets to 12 or 45 s, best of 3, sudden death
+- [x] CPU AI with easy/normal/hard (`src/ai/cpu.ts`)
+- [x] Input: keyboard (solo + 2P split), Gamepad API, touch joystick + A/B
+- [x] 2.5D renderer: court, walls, goal zones, net, crowd lights, bloom, trails, particles, shake, hit-stop, super zoom
+- [x] Camera framing solved (pos 0, 13.5, 15 · look 0, 0, -2.75 · fov 34)
+- [x] Procedural stand-in art (characters + 2 arenas) in the same atlas format as the final art
+- [x] Audio: SFX + 2 synthwave tracks
+- [x] Menus: title/attract demo, mode, CPU level, how-to, character select, arena select, VS, pause, results
+- [x] Mobile: landscape layout, rotate prompt, touch controls, pause button
+- [x] Tests: full CPU match, determinism, half-court bounds (`npm test`)
+
+## Phase 2: Art pipeline
+- [x] `gen.mjs` (Gemini REST, proxy-aware, refs, sidecar prompt log)
+- [x] `process.py` (chroma key + despill, content-aware slice, foot-anchored atlas pack, preview)
+- [ ] 🔸 First real run: validate keying/slicing on an actual Nano Banana output and tune the thresholds
+- [ ] Update the backdrop plane geometry to fit the generated backdrop aspect (only about the lower 55% shows in-game)
+
+## Phase 3: Art production (one subagent per piece, director approval required)
+Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅ approved and integrated · ❌ rejected (see notes)
+
+### Style
+- ⬜ Style test: 1 key-art image to lock the look before the characters
+
+### Character reference sheets (gemini-3-pro-image, 16:9 2K)
+- ⬜ Vega Starr
+- ⬜ Kaito Mori
+- ⬜ Roxy Voltage
+- ⬜ Brick Diamond
+
+### Animation sheets (gemini-3.1-flash-image + ref), per character
+Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2)
+
+| Character | idle | run | dash | hold | throw | lob | block | knock | win | lose | packed atlas |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Vega  | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Kaito | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Roxy  | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Brick | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+
+### Portraits (3:4 2K), for character select and the VS screen
+- ⬜ Vega · ⬜ Kaito · ⬜ Roxy · ⬜ Brick
+
+### Arenas
+- ⬜ Sunset Strip court (top-down 16:9 4K) · ⬜ Sunset Strip backdrop (21:9) · ⬜ arena preview.jpg
+- ⬜ Neon Pier court · ⬜ Neon Pier backdrop · ⬜ arena preview.jpg
+
+### UI art
+- ⬜ Title logo (optional; the CSS logo exists) · ⬜ super cut-ins (if approved)
+
+## Phase 4: Integration and polish
+- [ ] Tune sprite height/anchor per character after the real atlases land
+- [ ] Re-screenshot every arena × character combo and do the director review pass
+- [ ] Balance pass: speeds, powers, curve, super strength, CPU difficulty
+- [ ] Performance check on mobile (target 60 fps; drop bloom resolution if needed)
+- [ ] Production build (`npm run build`) and a hosted playable link
+
+## Phase 5: Stretch
+- [ ] More arenas / characters
+- [ ] Online play (rollback netcode over WebRTC; the sim is already deterministic)
+
+## Session log
+- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed). No repo pushed yet.
