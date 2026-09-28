@@ -1,0 +1,25 @@
+{
+  "name": "disc-riot-2084",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "gen": "node tools/gen-assets/gen.mjs"
+  },
+  "dependencies": {
+    "@fontsource/monoton": "^5.3.0",
+    "@fontsource/orbitron": "^5.3.0",
+    "@fontsource/russo-one": "^5.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
