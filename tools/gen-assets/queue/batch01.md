@@ -1,5 +1,5 @@
 # batch01: style lock and character reference sheets
-STATUS: READY
+STATUS: GENERATED
 
 Variants per job: **3** (the director will pick the best, or reject all and revise).
 The director reviews these first. Animation sheets come in batch02 and use the approved reference sheets as references.
