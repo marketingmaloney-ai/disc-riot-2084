@@ -48,7 +48,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   paused = false;
   controllers = ctrls;
   await renderer.setup(ARENAS[arena], p1, p2);
-  game = createGame(p1, p2);
+  game = createGame(p1, p2, ARENAS[arena].bigZone);
   acc = 0;
   if (!isDemo) {
     const lbl = (c: Controller, i: number) => (c.kind === 'cpu' ? `CPU · ${difficulty.toUpperCase()}` : `PLAYER ${i + 1}`);
@@ -367,6 +367,7 @@ if (touch) {
 
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
+if (import.meta.env.DEV) (window as unknown as { __game: () => GameState }).__game = () => game;
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('quick')) {

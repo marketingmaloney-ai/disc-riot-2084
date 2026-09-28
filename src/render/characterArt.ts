@@ -240,3 +240,19 @@ function placeholderAtlas(c: CharacterDef): { texture: THREE.Texture; meta: Atla
   texture.colorSpace = THREE.SRGBColorSpace;
   return { texture, meta };
 }
+
+/** Best available art for UI: cutin.png > portrait.png > a frame from the atlas. */
+export async function uiImageURL(id: string, prefer: 'cutin' | 'portrait', frameAnim = 'idle'): Promise<string> {
+  const base = `assets/characters/${id}/`;
+  if (prefer === 'cutin' && (await exists(base + 'cutin.png'))) return base + 'cutin.png';
+  const art = await loadCharacterArt(id);
+  if (art.portrait) return art.portrait;
+  const img = art.texture.image as CanvasImageSource;
+  const [cw, ch] = art.meta.cell;
+  const row = (art.meta.anims[frameAnim] ?? art.meta.anims.idle).row;
+  const c = document.createElement('canvas');
+  c.width = cw;
+  c.height = ch;
+  c.getContext('2d')!.drawImage(img, 0, row * ch, cw, ch, 0, 0, cw, ch);
+  return c.toDataURL();
+}

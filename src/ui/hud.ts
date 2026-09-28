@@ -1,6 +1,7 @@
 import { charById } from '../sim/characters';
 import * as C from '../sim/constants';
 import type { GameEvent, GameState } from '../sim/types';
+import { uiImageURL } from '../render/characterArt';
 
 export class Hud {
   private el: HTMLElement;
@@ -16,6 +17,7 @@ export class Hud {
   private announceTimer = 0;
   private last = [-1, -1];
   private lastPhase = '';
+  private cutinSrc: string[] = ['', ''];
 
   constructor(root: HTMLElement) {
     this.el = root;
@@ -45,6 +47,22 @@ export class Hud {
     this.ch2 = this.el.querySelector('[data-c="2"]')!;
     this.last = [-1, -1];
     this.lastPhase = '';
+    g.players.forEach((p, i) => void uiImageURL(p.charId, 'cutin', 'win').then((u) => (this.cutinSrc[i] = u)));
+  }
+
+  /** Full-screen super cut-in; runs while the sim is frozen for HITSTOP_CUTIN ticks. */
+  cutin(g: GameState, idx: number) {
+    const c = charById(g.players[idx].charId);
+    const side = idx === 0 ? 'l' : 'r';
+    const el = document.createElement('div');
+    el.className = `cutin cutin-${side}`;
+    el.style.setProperty('--c1', c.colors.primary);
+    el.style.setProperty('--c2', c.colors.secondary);
+    el.innerHTML = `<div class="cutin-band"><div class="cutin-lines"></div>
+      ${this.cutinSrc[idx] ? `<img class="cutin-art" src="${this.cutinSrc[idx]}" alt="">` : ''}
+      <div class="cutin-text"><div class="cutin-super">SUPER!</div><div class="cutin-name">${c.superName}</div></div></div>`;
+    this.el.appendChild(el);
+    window.setTimeout(() => el.remove(), 900);
   }
 
   announce(html: string, ms = 1300, small = false) {
@@ -64,7 +82,7 @@ export class Hud {
         const who = charById(g.players[e.p!].charId).name.split(' ')[0];
         this.announce(`${e.pts} POINTS!<span class="pts">${who}</span>`, 1500);
       } else if (e.type === 'super') {
-        this.announce(charById(g.players[e.p!].charId).superName, 900, true);
+        this.cutin(g, e.p!);
       } else if (e.type === 'supersonic') {
         this.announce('POWER SHOT!', 600, true);
       } else if (e.type === 'setEnd') {

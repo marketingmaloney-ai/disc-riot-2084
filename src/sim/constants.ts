@@ -18,6 +18,7 @@ export const SUPERSONIC_WINDOW = 7; // frames: A pressed this close before catch
 export const SUPERSONIC_MULT = 1.35;
 export const HITSTOP_CATCH = 5; // frames of freeze on catch
 export const HITSTOP_SUPER = 12;
+export const HITSTOP_CUTIN = 42; // freeze while the super cut-in plays (~0.7s)
 
 export const DASH_TIME = 0.2;
 export const DASH_RECOVER = 0.16;

@@ -24,14 +24,14 @@ function makeDisc(): Disc {
   };
 }
 
-export function createGame(p1Char: string, p2Char: string): GameState {
+export function createGame(p1Char: string, p2Char: string, bigZoneHalf = C.BIG_ZONE_HALF): GameState {
   const g: GameState = {
     tick: 0,
     players: [makePlayer(0, p1Char), makePlayer(1, p2Char)],
     disc: makeDisc(),
     score: [0, 0], sets: [0, 0], setNo: 1, setTime: C.SET_TIME,
     phase: 'serve', phaseT: C.SERVE_DELAY, server: 0, hitstop: 0,
-    lastScorer: -1, lastPts: 0, matchWinner: -1, events: [],
+    lastScorer: -1, lastPts: 0, matchWinner: -1, bigZoneHalf, events: [],
   };
   resetForServe(g);
   return g;
@@ -297,7 +297,7 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
     d.vx = fwd * Math.cos(ang) * sp;
     d.vz = Math.sin(ang) * sp;
     if (p.superKind === 'wave' || p.superKind === 'zigzag') d.vz = 0;
-    g.hitstop = C.HITSTOP_SUPER;
+    g.hitstop = C.HITSTOP_CUTIN;
     g.events.push({ type: 'super', p: p.idx, x: p.x, z: p.z });
   } else {
     const cv = detectCurve(p);
@@ -338,6 +338,7 @@ function throwLob(g: GameState, p: Player, inp: InputFrame) {
   startLob(d, tx, tz, C.LOB_TIME, C.LOB_PEAK, superLob);
   p.serving = false;
   setState(p, 'lob');
+  if (superLob) g.hitstop = C.HITSTOP_CUTIN;
   g.events.push({ type: superLob ? 'super' : 'lob', p: p.idx, x: tx, z: tz });
 }
 
@@ -422,7 +423,7 @@ function updateDisc(g: GameState) {
   if (Math.abs(d.x) > xLim) {
     const goalSide = Math.sign(d.x); // +1 = right player's goal
     const scorer = goalSide > 0 ? 0 : 1;
-    const big = Math.abs(d.z) < C.BIG_ZONE_HALF;
+    const big = Math.abs(d.z) < g.bigZoneHalf;
     d.x = goalSide * xLim;
     award(g, scorer, big ? C.POINTS_BIG : C.POINTS_SMALL, big);
   }

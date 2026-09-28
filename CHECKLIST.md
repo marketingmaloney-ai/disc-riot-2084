@@ -18,8 +18,8 @@
 - [x] Roster: 4 characters (Vega Starr, Kaito "Riptide" Mori, Roxy Voltage, Brick Diamond)
 - [x] Audio: procedurally generated (Web Audio SFX + synthwave)
 - [x] No greybox. Go straight to a full prototype.
-- [ ] Arena count: 2 (Sunset Strip, Neon Pier) or more? *(asked, awaiting answer)*
-- [ ] Super-move character cut-ins, yes or no? *(asked, awaiting answer)*
+- [x] Arenas: **4**: Sunset Strip (5-pt zone 1.3), Neon Pier (1.0), Laser Lagoon (1.7), Orbital Cabana (0.8). The zone size varies gameplay per court.
+- [x] Super cut-ins: **yes**. Implemented (`Hud.cutin`, 0.7 s freeze `HITSTOP_CUTIN`); uses `cutin.png` > `portrait.png` > atlas frame.
 
 ## Art generation route
 - **Primary: Antigravity bridge.** Claude writes `tools/gen-assets/queue/batchNN.md` (STATUS: READY). The user's Antigravity agent follows `ANTIGRAVITY_HANDOFF.md`, generates with Nano Banana on the user's subscription, pushes `tools/gen-assets/raw/...` and sets STATUS: GENERATED. Claude pulls, reviews, keys, and approves or writes a revision batch.
@@ -78,12 +78,15 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 ### Portraits (3:4 2K), for character select and the VS screen
 - ⬜ Vega · ⬜ Kaito · ⬜ Roxy · ⬜ Brick
 
-### Arenas
-- ⬜ Sunset Strip court (top-down 16:9 4K) · ⬜ Sunset Strip backdrop (21:9) · ⬜ arena preview.jpg
-- ⬜ Neon Pier court · ⬜ Neon Pier backdrop · ⬜ arena preview.jpg
+### Arenas (batch02 queued: court + backdrop each)
+- 🔄 Sunset Strip court · 🔄 backdrop · ⬜ preview.jpg
+- 🔄 Neon Pier court · 🔄 backdrop · ⬜ preview.jpg
+- 🔄 Laser Lagoon court · 🔄 backdrop · ⬜ preview.jpg
+- 🔄 Orbital Cabana court · 🔄 backdrop · ⬜ preview.jpg
 
 ### UI art
-- ⬜ Title logo (optional; the CSS logo exists) · ⬜ super cut-ins (if approved)
+- ⬜ Title logo (optional; the CSS logo exists)
+- ⬜ Super cut-in art ×4 (`public/assets/characters/<id>/cutin.png`, transparent, dramatic waist-up super pose facing right). Queue after the ref sheets are approved (batch03).
 
 ## Phase 4: Integration and polish
 - [ ] Tune sprite height/anchor per character after the real atlases land
@@ -97,4 +100,4 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [ ] Online play (rollback netcode over WebRTC; the sim is already deterministic)
 
 ## Session log
-- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed; the subscription does not cover API keys). Created the Antigravity bridge plus batch01 (style test + 4 ref sheets). Created the repo and pushed to `main`. **Next: wait for the user's Antigravity agent to push batch01, then review it.**
+- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed; the subscription does not cover API keys). Created the Antigravity bridge plus batch01 (style test + 4 ref sheets). Created the repo and pushed to `main`. Added 2 arenas + cut-ins (code done), queued batch02 (arenas). **Next: wait for the Antigravity agent to push batch01/02, then review.**

@@ -10,18 +10,30 @@ export interface ArenaDef {
   neonA: string;
   neonB: string;
   night: boolean;
+  scene: 'sunset' | 'city' | 'boardwalk' | 'space';
+  bigZone: number; // half-width of the 5-point goal zone (gameplay variety per court)
 }
 
 export const ARENAS: ArenaDef[] = [
   {
     id: 'sunset', name: 'SUNSET STRIP', subtitle: 'MIAMI 2084',
     sky: ['#1a0638', '#8a1f7a', '#ff8a3d'], sand: ['#f0b98a', '#d98a6a'],
-    neonA: '#ff2e9a', neonB: '#19e6ff', night: false,
+    neonA: '#ff2e9a', neonB: '#19e6ff', night: false, scene: 'sunset', bigZone: 1.3,
   },
   {
     id: 'pier', name: 'NEON PIER', subtitle: 'NEO-TOKYO BAY',
     sky: ['#03020d', '#1b0a3a', '#5a1a6e'], sand: ['#3a2a52', '#221a36'],
-    neonA: '#19e6ff', neonB: '#ff2e9a', night: true,
+    neonA: '#19e6ff', neonB: '#ff2e9a', night: true, scene: 'city', bigZone: 1.0,
+  },
+  {
+    id: 'lagoon', name: 'LASER LAGOON', subtitle: 'VENICE BEACH 2084',
+    sky: ['#2a7bff', '#ff8ad8', '#ffd28a'], sand: ['#f6d2a0', '#e0a878'],
+    neonA: '#b6ff2e', neonB: '#ff2e9a', night: false, scene: 'boardwalk', bigZone: 1.7,
+  },
+  {
+    id: 'orbital', name: 'ORBITAL CABANA', subtitle: 'LOW EARTH ORBIT',
+    sky: ['#000000', '#07051a', '#1a0f4a'], sand: ['#cfd6ff', '#8a8fc0'],
+    neonA: '#ffe600', neonB: '#19e6ff', night: true, scene: 'space', bigZone: 0.8,
   },
 ];
 
@@ -129,6 +141,35 @@ function proceduralCourt(a: ArenaDef) {
   });
 }
 
+function drawSpace(g: CanvasRenderingContext2D, W: number, H: number) {
+  // Earth limb below, glowing atmosphere, orbital ring structure.
+  const cx = W / 2, cy = H * 1.55, r = H * 1.05;
+  const atm = g.createRadialGradient(cx, cy, r * 0.98, cx, cy, r * 1.08);
+  atm.addColorStop(0, 'rgba(80,200,255,0.9)');
+  atm.addColorStop(1, 'rgba(80,120,255,0)');
+  g.fillStyle = atm;
+  g.beginPath(); g.arc(cx, cy, r * 1.08, 0, Math.PI * 2); g.fill();
+  const earth = g.createLinearGradient(0, cy - r, 0, H);
+  earth.addColorStop(0, '#2a7bff');
+  earth.addColorStop(0.3, '#0b3a8a');
+  earth.addColorStop(1, '#03122e');
+  g.fillStyle = earth;
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 0.5;
+  g.fillStyle = '#ffffff';
+  for (let i = 0; i < 40; i++) {
+    const a = Math.PI * 1.2 + (i / 40) * Math.PI * 0.6;
+    g.beginPath(); g.ellipse(cx + Math.cos(a) * r * 0.97, cy + Math.sin(a) * r * 0.97, 40 + (i % 5) * 20, 8, a + Math.PI / 2, 0, Math.PI * 2); g.fill();
+  }
+  g.globalAlpha = 1;
+  // ring station arcs
+  g.strokeStyle = '#ffe600'; g.lineWidth = 6; g.shadowColor = '#ffe600'; g.shadowBlur = 24;
+  g.beginPath(); g.ellipse(cx, H * 0.35, W * 0.55, 60, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+  g.strokeStyle = '#19e6ff'; g.shadowColor = '#19e6ff';
+  g.beginPath(); g.ellipse(cx, H * 0.38, W * 0.62, 80, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+  g.shadowBlur = 0;
+}
+
 function proceduralSky(a: ArenaDef) {
   return canvasTex(2048, 1024, (g) => {
     const W = 2048, H = 1024;
@@ -148,6 +189,10 @@ function proceduralSky(a: ArenaDef) {
       g.fillRect(rnd() * W, rnd() * hz * 0.6, 2, 2);
     }
     g.globalAlpha = 1;
+    if (a.scene === 'space') {
+      drawSpace(g, W, H);
+      return;
+    }
     if (!a.night) {
       // striped synthwave sun
       const r = 250;
@@ -309,9 +354,9 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   // goals: zones on back walls
   const goalZones: THREE.Mesh[][] = [[], []];
   const segs: [number, number, boolean][] = [
-    [-W, -C.BIG_ZONE_HALF, false],
-    [-C.BIG_ZONE_HALF, C.BIG_ZONE_HALF, true],
-    [C.BIG_ZONE_HALF, W, false],
+    [-W, -def.bigZone, false],
+    [-def.bigZone, def.bigZone, true],
+    [def.bigZone, W, false],
   ];
   for (const side of [0, 1]) {
     const x = side === 0 ? -L - 0.1 : L + 0.1;

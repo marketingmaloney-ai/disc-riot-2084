@@ -52,3 +52,8 @@ Man, 34. Huge bodybuilder physique. A blond flat-top and handlebar mustache. Ora
 ## Arenas (court textures are TOP-DOWN ORTHOGRAPHIC, 2:1, no people, no text)
 1. **SUNSET STRIP**, Miami 2084. Neon-lined sand court at golden hour. Chrome tile borders, holographic palm shadows, and pink/cyan painted lines. A synthwave sun and grid ocean in the backdrop.
 2. **NEON PIER**, Neo-Tokyo Bay 2084 at night. A court on a wet boardwalk pier with glossy reflections, magenta and cyan neon inlays, and a cityscape of holographic billboards in the backdrop.
+3. **LASER LAGOON**, Venice Beach 2084 on a sunny afternoon. Pastel Memphis-pattern skatepark concrete, arcade storefronts, and a laser show over the ocean.
+4. **ORBITAL CABANA**, a low-Earth-orbit space resort. A chrome hex pool deck and a glass dome with Earth filling the view.
+
+## Super cut-ins
+Each character gets one dramatic waist-up super pose facing right, with transparent background (generated on #00FF00). It shows full-screen for 0.7 s when the super fires.

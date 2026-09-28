@@ -92,5 +92,6 @@ export interface GameState {
   lastScorer: number;
   lastPts: number;
   matchWinner: number;
+  bigZoneHalf: number; // arena-specific 5-point zone half-width
   events: GameEvent[];
 }
