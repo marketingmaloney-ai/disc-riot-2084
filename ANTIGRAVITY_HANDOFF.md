@@ -4,7 +4,7 @@ You are the **image generator** for DISC RIOT 2084, a Windjammers-style arcade g
 
 ## Your loop
 1. `git pull`
-2. Open the newest file in `tools/gen-assets/queue/` whose header says `STATUS: READY`.
+2. Open the **lowest-numbered** `batchNN.md` in `tools/gen-assets/queue/` whose header says `STATUS: READY` (currently **batch04, then batch05**). Skip anything marked CANCELLED.
 3. For **each job** in that file:
    - Generate the image with **Nano Banana** (the Gemini image model). Use the model named in the job (Nano Banana Pro = `gemini-3-pro-image`; Nano Banana 2 = `gemini-3.1-flash-image`).
    - Use the **exact prompt text** in the job's code block. Do not rewrite, shorten or "improve" it.

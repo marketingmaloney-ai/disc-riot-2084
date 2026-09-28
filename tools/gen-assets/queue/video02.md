@@ -1,5 +1,5 @@
 # video02: full move set from Flow VIDEO (image-to-video), 4 clips per character
-STATUS: READY
+STATUS: CANCELLED (user paused video; do NOT run)
 
 **How:** use Flow video with image-to-video, uploading the character's **start image** as the first frame. Choose **16:9 landscape**, paste the prompt exactly, and download the MP4. Save it as `tools/gen-assets/raw/<char>/vid_<clip>_v1.mp4`, or drop it in `tools/gen-assets/inbox/video02/` named like `vega_B.mp4`.
 

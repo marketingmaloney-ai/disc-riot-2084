@@ -1,5 +1,5 @@
 # video01: pilot, animations from Flow VIDEO (image-to-video)
-STATUS: READY
+STATUS: CANCELLED (user paused video; do NOT run)
 
 A test of whether video clips make better sprites than image strips. **3 jobs, 1 video each.**
 
