@@ -91,7 +91,7 @@ def clean_frame(crop):
         main = 1 + int(areas.argmax())
         feet = stats[main, cv2.CC_STAT_TOP] + stats[main, cv2.CC_STAT_HEIGHT]
         keep = np.zeros(n, bool)
-        keep[1:] = areas >= areas.max() * 0.02
+        keep[1:] = areas >= areas.max() * 0.05  # drops slivers of neighbouring figures
         # color-swatch rows on ref sheets sit below the feet: never part of the figure
         keep[1:] &= stats[1:, cv2.CC_STAT_TOP] < feet - stats[main, cv2.CC_STAT_HEIGHT] * 0.03
         crop[..., 3] = np.where(keep[lbl], a, 0)
@@ -117,6 +117,19 @@ def cmd_slice(inp, outdir, expect=None):
             boxes.append((x0, by0, x1 - x0, by1 - by0))
     if not boxes:
         sys.exit("no sprites found")
+    # Overlapping figures merge into one wide box: split the widest box at its thinnest column
+    # (least opaque pixels) until we reach the expected frame count.
+    while expect and len(boxes) < expect:
+        i = max(range(len(boxes)), key=lambda k: boxes[k][2] / boxes[k][3])
+        x, y, w, h = boxes[i]
+        if w < h * 0.35:
+            break  # nothing wide enough to be two figures
+        cov = m[y:y + h, x:x + w].sum(axis=0).astype(float)
+        cov = np.convolve(cov, np.ones(9) / 9, mode="same")
+        lo, hi = int(w * 0.2), int(w * 0.8)
+        cut = lo + int(np.argmin(cov[lo:hi]))
+        boxes[i:i + 1] = [(x, y, cut, h), (x + cut, y, w - cut, h)]
+        boxes.sort(key=lambda b: (b[1] // max(1, H // 4), b[0]))
     Path(outdir).mkdir(parents=True, exist_ok=True)
     stem = Path(inp).stem.replace("_keyed", "")
     for i, (x, y, w, h) in enumerate(boxes):

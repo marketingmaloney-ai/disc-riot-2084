@@ -278,6 +278,11 @@ function proceduralSky(a: ArenaDef) {
   });
 }
 
+const BACKDROP_W = 34;
+const BACKDROP_LEAN = 0.62; // radians, top toward the camera
+const BACKDROP_BOTTOM_Y = -1.2;
+const BACKDROP_BACK = 1.0;
+
 export interface ArenaView {
   group: THREE.Group;
   goalZones: THREE.Mesh[][]; // [side 0 left, side 1 right] -> meshes
@@ -289,7 +294,7 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   const group = new THREE.Group();
   const L = C.COURT_HALF_LEN, W = C.COURT_HALF_WID;
   const base = `assets/arenas/${def.id}/`;
-  const [courtTex, skyTex] = await Promise.all([tryTexture(base + 'court.png'), tryTexture(base + 'backdrop.png')]);
+  const [courtTex, skyTex] = await Promise.all([tryTexture(base + 'court.jpg'), tryTexture(base + 'backdrop.jpg')]);
 
   // floor apron (outside court)
   const apron = new THREE.Mesh(
@@ -303,19 +308,36 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   // court
   const court = new THREE.Mesh(
     new THREE.PlaneGeometry(2 * L, 2 * W),
-    new THREE.MeshStandardMaterial({ map: courtTex ?? proceduralCourt(def), roughness: def.night ? 0.35 : 0.95, metalness: def.night ? 0.25 : 0 }),
+    new THREE.MeshStandardMaterial({
+      map: courtTex ?? proceduralCourt(def),
+      // painted courts already carry their own lighting: tone them down so bright ones don't bloom out
+      color: courtTex ? '#b8b8b8' : '#ffffff',
+      roughness: courtTex ? 1 : def.night ? 0.35 : 0.95,
+      metalness: courtTex ? 0 : def.night ? 0.25 : 0,
+    }),
   );
   court.rotation.x = -Math.PI / 2;
   court.receiveShadow = true;
   group.add(court);
 
   // backdrop: huge curved-ish plane far behind
-  const sky = new THREE.Mesh(
-    new THREE.PlaneGeometry(46, 20),
-    new THREE.MeshBasicMaterial({ map: skyTex ?? proceduralSky(def), toneMapped: false, fog: false }),
-  );
-  sky.position.set(0, 5.2, -10);
-  sky.rotation.x = 0.3;
+  let sky: THREE.Mesh;
+  if (skyTex) {
+    // Painted backdrop: a plane leaning back toward the camera (≈ perpendicular to the view), bottom edge
+    // tucked behind the far wall, so the image's crowd/skyline fills the band above the court.
+    const img = skyTex.image as { width: number; height: number };
+    const w = BACKDROP_W, h = w / (img.width / img.height), lean = BACKDROP_LEAN;
+    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, toneMapped: false, fog: false }));
+    sky.rotation.x = lean;
+    sky.position.set(0, BACKDROP_BOTTOM_Y + (h / 2) * Math.cos(lean), -W - 0.6 + (h / 2) * Math.sin(lean) - BACKDROP_BACK);
+  } else {
+    sky = new THREE.Mesh(
+      new THREE.PlaneGeometry(46, 20),
+      new THREE.MeshBasicMaterial({ map: proceduralSky(def), toneMapped: false, fog: false }),
+    );
+    sky.position.set(0, 5.2, -10);
+    sky.rotation.x = 0.3;
+  }
   group.add(sky);
 
   // far wall
@@ -403,6 +425,7 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     lights.setMatrixAt(i, dummy.matrix);
     lights.setColorAt(i, i % 3 === 0 ? cA : i % 3 === 1 ? cB : cW);
   }
+  lights.visible = !skyTex; // painted backdrops have their own crowd
   group.add(lights);
 
   // lighting

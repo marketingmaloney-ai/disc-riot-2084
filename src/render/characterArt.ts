@@ -9,7 +9,7 @@ export interface AtlasMeta {
   anchorY: number;
   interim?: boolean; // one pose per anim (from ref sheets) -> renderer fakes motion
   heightScale?: number; // per-character height tweak (e.g. Brick is bigger)
-  anims: Record<string, { row: number; frames: number; fps: number; loop: boolean }>;
+  anims: Record<string, { row: number; frames: number; fps: number; loop: boolean; interim?: boolean; discInArt?: boolean }>;
 }
 
 export interface CharacterArt {

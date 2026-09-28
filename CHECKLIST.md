@@ -99,9 +99,15 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [x] Fixed: menu taps shorter than one frame were ignored
 - When batch03 lands, pack real atlases **without** `interim`, and re-run portraits only if batch05 isn't done.
 
+## Art status after batch02/03 (reviewed; picks in `tools/gen-assets/approved.json`; build: `python3 tools/gen-assets/build_assets.py`)
+- ✅ Real animations: Vega and Kaito idle/run/hold/throw; Roxy and Brick idle/run/hold. The rest falls back to the interim pose with procedural motion.
+- ✅ Courts: all 4 arenas. ✅ Backdrops: Neon Pier, Laser Lagoon. ❌ Sunset and Orbital backdrops came back portrait: re-queued.
+- Pipeline: the slicer now splits overlapping figures (`--expect`), strips floor lines, and drops neighbour slivers. The renderer hides the 3D disc when the hold art shows it and tones painted courts down.
+- **batch04 READY:** Roxy/Brick throw, dash/lob/block/knock/win/lose for all 4, and 2 landscape backdrops (28 jobs).
+- Next after batch04: batch05 = portraits and super cut-ins.
+
 ## Pending art batches (quota exhausted; resume any time)
-- batch02 arenas: READY, not generated
-- batch03 core animations: READY, not generated
+- batch02 + batch03: generated via Flow and reviewed ✅
 - Resume: tell the Antigravity agent "Follow ANTIGRAVITY_HANDOFF.md (Flow mode if needed). Do batch02 and batch03."
 
 ## Phase 3c: Progression ✅

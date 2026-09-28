@@ -50,7 +50,8 @@ class PlayerView {
     this.animT += dt;
     let f = Math.floor(this.animT * a.fps);
     f = a.loop ? f % a.frames : Math.min(f, a.frames - 1);
-    if (this.art.meta.interim) this.applyMotion(anim);
+    if (this.art.meta.interim || a.interim) this.applyMotion(anim);
+    else this.resetMotion();
     const u = 1 / meta.cols, v = 1 / meta.rows;
     const row = meta.rows - 1 - a.row; // textures are bottom-up
     // Art faces right; right-side player faces left => mirror.
@@ -90,6 +91,15 @@ class PlayerView {
     (this.sprite.material as THREE.SpriteMaterial).rotation = -lean * facing;
     this.sprite.scale.set(this.baseW * sx, this.baseH * sy, 1);
     this.hop = hop;
+  }
+  private resetMotion() {
+    (this.sprite.material as THREE.SpriteMaterial).rotation = 0;
+    this.sprite.scale.set(this.baseW, this.baseH, 1);
+    this.hop = 0;
+  }
+  /** true when the current frame already shows the disc in hand (so the 3D disc is hidden) */
+  get discInArt() {
+    return this.anim === 'hold' && !!this.art.meta.anims.hold?.discInArt;
   }
   hop = 0;
   baseW = 1;
@@ -249,7 +259,7 @@ export class GameRenderer {
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.75, 0.55, 0.82);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.75, 0.55, 0.9);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
 
@@ -381,7 +391,9 @@ export class GameRenderer {
 
     const visible = d.mode !== 'dead' || g.phase === 'point';
     const dx = lerp(d.px, d.x, alpha), dz = lerp(d.pz, d.z, alpha), dh = lerp(d.ph, d.h, alpha);
-    this.disc.visible = this.discShadow.visible = this.discGlow.visible = visible;
+    const heldInArt = d.mode === 'held' && d.holder >= 0 && !!this.players[d.holder]?.discInArt;
+    this.disc.visible = this.discGlow.visible = visible && !heldInArt;
+    this.discShadow.visible = visible;
     this.disc.position.set(dx, dh + 0.05, dz);
     this.disc.rotation.y = d.spin;
     this.disc.rotation.z = d.mode === 'lob' ? 0.5 : d.mode === 'held' ? 0.25 : 0.1 * Math.sin(this.time * 20);
