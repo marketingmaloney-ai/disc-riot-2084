@@ -16,6 +16,8 @@ You are the **image generator** for DISC RIOT 2084, a Windjammers-style arcade g
 5. `git add tools/gen-assets && git commit -m "art: <batch> generated" && git push`
 
 ## Rules
+- **Use the exact model and resolution each job names.** If that model isn't available to you, say so at the top of the log instead of silently substituting (batch01 came back as Nano Banana 2 at 1K instead of Pro at 2K).
+- Batches can be large. If you hit a quota limit, push what you have, set `STATUS: PARTIAL`, and list the remaining job numbers in the log. The next run resumes from there.
 - **Never** modify files outside `tools/gen-assets/raw/` and `tools/gen-assets/queue/`.
 - Save full-resolution PNGs. Don't compress them, convert to JPEG or resize.
 - Don't remove or alter the green background. The director's pipeline does the keying.
