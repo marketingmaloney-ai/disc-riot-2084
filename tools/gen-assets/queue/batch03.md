@@ -1,5 +1,5 @@
 # batch03: core animation sheets (idle, run, hold, throw) × 4 characters
-STATUS: READY
+STATUS: PARTIAL
 
 Variants per job: **2**. Model for all: **Nano Banana 2 (`gemini-3.1-flash-image`)**, resolution **2K**.
 **Every job MUST attach its `refs:` image as a reference.** That approved reference sheet is how the character stays consistent.
