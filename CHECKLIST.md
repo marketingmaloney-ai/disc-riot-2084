@@ -31,7 +31,7 @@
   `set -a; . ./.env; set +a; node tools/gen-assets/gen.mjs --model gemini-3.1-flash-image --size 1K --out tools/gen-assets/raw/test/ping.png --prompt "pink frisbee on #00FF00"`
 - [ ] Store the key as `GEMINI_API_KEY` in the environment settings, so new sessions have it. `.env` in the container is lost when the container is reclaimed.
 - [ ] Rotate the key: it was pasted in chat.
-- [ ] **GitHub repo to push to.** The container is ephemeral, and this checklist only survives if it's pushed.
+- [x] GitHub repo: **marketingmaloney-ai/disc-riot-2084** (private, branch `main`). Always push after each item.
 
 ## Phase 1: Engine and playable prototype ✅
 - [x] Vite + TS + three.js project, fixed 60 Hz deterministic sim (`src/sim`)
@@ -97,4 +97,4 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [ ] Online play (rollback netcode over WebRTC; the sim is already deterministic)
 
 ## Session log
-- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed; the subscription does not cover API keys). Created the Antigravity bridge plus batch01 (style test + 4 ref sheets). No repo pushed yet.
+- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed; the subscription does not cover API keys). Created the Antigravity bridge plus batch01 (style test + 4 ref sheets). Created the repo and pushed to `main`. **Next: wait for the user's Antigravity agent to push batch01, then review it.**
