@@ -19,7 +19,8 @@ npm run build
 
 ## Moves
 - **Curve shot:** press ↓ (or ↑), then toward your opponent, then A.
-- **Power shot:** tap A just before the disc reaches you.
+- **Power shot:** tap A just before, or right as, the disc reaches you. The timing window widens when you're 4+ points behind in a set.
+- **Reversal:** tap A just before a super reaches you to fire your own super straight back.
 - **Lob:** press B while holding the disc. The longer you wait, the shorter it lands.
 - **Supers:** press B as a disc arrives to pop it up (block), or press ← (away from your opponent) + B to toss it yourself. Stand on the ring when it lands to charge your super, then throw.
 

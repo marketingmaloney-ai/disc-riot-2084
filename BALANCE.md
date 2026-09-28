@@ -43,3 +43,22 @@ It plays deterministic CPU-vs-CPU matches (hard vs hard, both court sides, disti
 ## Known limits
 - CPU-vs-CPU can't measure how the game *feels* to a human. The difficulty gaps look extreme in bot-vs-bot play (a small per-point edge compounds over ~40 points), so they still need a human sanity check: Easy should be beatable by a first-timer.
 - All tuning constants live in `src/sim/constants.ts` and `src/sim/characters.ts`. Re-run the harness after any change.
+
+# Pass 2: rules aligned with the original Windjammers (1994)
+
+Sources: [Windjammers (Wikipedia)](https://en.wikipedia.org/wiki/Windjammers_(video_game)), [Windjammers France: the basics](https://www.windjammers-france.fr/wiki/wiki-en/the-basics), [Windjammers France: WJ2 moves](https://www.windjammers-france.fr/wiki/wj2-buttons-and-moves), [Windjammers forum: beginner tutorial](https://windjammers.forumgaming.fr/t357-eng-windjammers-tutorial-for-beginners). The Mizuumi wiki and GameFAQs block automated access. No public source gives frame-exact timings, so the numbers below are our own tuning.
+
+| Rule | Original | Now in DISC RIOT |
+|---|---|---|
+| Set length | 30 s | `SET_TIME = 30` (was 45) |
+| Tied set | both players win the set | ✅ both awarded |
+| 2–2 in sets | sudden death, first score wins | ✅ `suddenDeath` |
+| Power shot | A as or right after the catch | ✅ also accepted up to 5 ticks after the catch (`SUPERSONIC_AFTER`) |
+| Power-shot window | wider for the losing player | ✅ +2 ticks when down 4+ in the set |
+| Reversal | a timed catch returns a super | ✅ A ≤4 ticks before catching a super fires your super back |
+| Miss | 2 pts | ✅ (unchanged) |
+| Court barriers | some stages | ⬜ idea for a future arena |
+
+Result (N=50/cell): characters 41–53%, average match 119 s (was ~150 s), supers 32% conversion, power shots 17%, curves 19%.
+
+Not adopted: WJ uses A for the block/toss; we keep it on B so A can't accidentally block when you meant a power shot. Hold-A long dash and negative-edge release would need held-button input in the sim, so they're deferred.

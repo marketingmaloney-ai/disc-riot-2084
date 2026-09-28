@@ -115,6 +115,8 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [ ] Tune sprite height/anchor per character after the real atlases land
 - [ ] Re-screenshot every arena × character combo and do the director review pass
 - [x] Balance pass 1: see `BALANCE.md` (harness `src/sim/balance.test.ts`). Characters at 45–55%, supers 34% conversion, curves 31%.
+- [x] Rules aligned with the original WJ (30 s sets, tied sets, sudden death, post-catch power shot, comeback window, reversals). See BALANCE.md pass 2.
+- [ ] Future arena idea: a court with bounce barriers (the original had some)
 - [ ] Human play-test: is Easy beatable by a first-timer? Do supers feel strong enough?
 - [ ] Performance check on mobile (target 60 fps; drop bloom resolution if needed)
 - [x] Production build (`npm run build`, which also writes `public/assets/manifest.json`)

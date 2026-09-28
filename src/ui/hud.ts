@@ -86,10 +86,12 @@ export class Hud {
       } else if (e.type === 'supersonic') {
         this.announce('POWER SHOT!', 600, true);
       } else if (e.type === 'setEnd') {
-        const who = charById(g.players[e.p!].charId).name.split(' ')[0];
-        this.announce(`SET ${g.setNo}<span class="pts">${who} WINS</span>`, 2800);
+        if (e.p! < 0) this.announce(`SET ${g.setNo}<span class="pts">DRAW · BOTH SCORE</span>`, 2800);
+        else this.announce(`SET ${g.setNo}<span class="pts">${charById(g.players[e.p!].charId).name.split(' ')[0]} WINS</span>`, 2800);
+      } else if (e.type === 'reversal') {
+        this.announce('REVERSAL!', 900, true);
       } else if (e.type === 'serve' && g.score[0] === 0 && g.score[1] === 0) {
-        this.announce(`SET ${g.setNo}`, 1100);
+        this.announce(g.suddenDeath ? 'SUDDEN DEATH' : `SET ${g.setNo}`, 1100, g.suddenDeath);
       }
     }
   }
@@ -109,7 +111,7 @@ export class Hud {
     const t = Math.ceil(g.setTime);
     this.time.textContent = String(t);
     this.time.classList.toggle('low', t <= 10);
-    this.setLbl.textContent = g.setTime <= 0 && g.score[0] === g.score[1] ? 'SUDDEN DEATH' : `SET ${g.setNo} · FIRST TO ${C.SET_POINTS}`;
+    this.setLbl.textContent = g.suddenDeath ? 'SUDDEN DEATH · NEXT SCORE WINS' : `SET ${g.setNo} · FIRST TO ${C.SET_POINTS}`;
     const pips = (n: number) => Array.from({ length: C.SETS_TO_WIN }, (_, i) => `<div class="pip ${i < n ? 'on' : ''}"></div>`).join('');
     const key = `${g.sets[0]}-${g.sets[1]}`;
     if (this.lastPhase !== key) {

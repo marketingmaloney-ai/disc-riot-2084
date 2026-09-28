@@ -45,3 +45,50 @@ describe('simulation', () => {
     }
   });
 });
+
+describe('original Windjammers rules', () => {
+  const idle = { mx: 0, mz: 0, a: false, b: false };
+  const run = (g: ReturnType<typeof createGame>, n: number) => { for (let i = 0; i < n; i++) step(g, [idle, idle]); };
+
+  it('a tied set is awarded to both players', () => {
+    const g = createGame('vega', 'kaito');
+    run(g, 80);
+    g.score = [6, 6];
+    g.setTime = 0.01;
+    run(g, 2);
+    expect(g.phase).toBe('setEnd');
+    expect(g.sets).toEqual([1, 1]);
+  });
+
+  it('two sets each goes to sudden death, next score wins', () => {
+    const g = createGame('vega', 'kaito');
+    run(g, 80);
+    g.sets = [1, 1];
+    g.score = [3, 3];
+    g.setTime = 0.01;
+    run(g, 2);
+    expect(g.sets).toEqual([2, 2]);
+    run(g, 60 * 4);
+    expect(g.suddenDeath).toBe(true);
+    expect(g.phase).not.toBe('matchEnd');
+    // server throws straight into the opponent's goal (opponent never moves)
+    const server = g.server;
+    run(g, 80);
+    step(g, server === 0 ? [{ mx: 1, mz: 0, a: true, b: false }, idle] : [idle, { mx: -1, mz: 0, a: true, b: false }]);
+    for (let i = 0; i < 400 && g.phase !== 'matchEnd'; i++) {
+      // keep the defender out of the way
+      step(g, server === 0 ? [idle, { mx: 0, mz: -1, a: false, b: false }] : [{ mx: 0, mz: -1, a: false, b: false }, idle]);
+    }
+    expect(g.phase).toBe('matchEnd');
+    expect(g.matchWinner).toBe(server);
+  });
+
+  it('pressing A right after a catch fires a power shot', () => {
+    const g = createGame('vega', 'kaito');
+    run(g, 80); // serve delay over; P1 (server) holds the disc
+    g.players[0].serving = false;
+    g.players[0].holdT = 0;
+    step(g, [{ mx: 1, mz: 0, a: true, b: false }, idle]);
+    expect(g.events.some((e) => e.type === 'supersonic')).toBe(true);
+  });
+});

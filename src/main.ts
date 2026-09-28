@@ -245,10 +245,11 @@ function howTo() {
       <b>B · LOB / BLOCK</b><span>K · Ⓑ   (2P: K  vs  /)</span>
       <b>ANGLE SHOT</b><span>HOLD ↑ OR ↓ + A</span>
       <b>CURVE SHOT</b><span>↓ THEN → (TOWARD FOE) + A — QUARTER CIRCLE</span>
-      <b>POWER SHOT</b><span>TAP A JUST BEFORE THE DISC REACHES YOU</span>
+      <b>POWER SHOT</b><span>TAP A JUST BEFORE OR RIGHT AS YOU CATCH · EASIER WHEN YOU'RE BEHIND</span>
+      <b>REVERSAL</b><span>TAP A JUST BEFORE A SUPER HITS YOU TO FIRE YOUR OWN SUPER BACK</span>
       <b>LOB</b><span>B WHILE HOLDING — WAIT LONGER TO DROP IT SHORTER</span>
       <b>SUPER</b><span>B JUST BEFORE A DISC HITS YOU TO POP IT UP, OR ← + B TO TOSS. STAND ON THE RING TO CHARGE, THEN THROW!</span>
-      <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS · DROPPED DISC = 2 PTS FOR THE OTHER SIDE</span>
+      <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS · DROPPED DISC = 2 PTS · 30 S SETS · TIED SET COUNTS FOR BOTH · 2–2 = SUDDEN DEATH</span>
       <b>UPGRADES</b><span>WIN MATCHES & UNLOCK ACHIEVEMENTS IN VS CPU TO EARN POINTS · SPEND THEM IN FIGHTER UPGRADES</span>
       <b>PAUSE</b><span>ESC / P · START</span>
     </div>`);

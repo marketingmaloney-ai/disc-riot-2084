@@ -121,6 +121,7 @@ export class AudioEngine {
         case 'curve': this.play('curve'); break;
         case 'supersonic': this.play('supersonic'); break;
         case 'super': this.play('super'); break;
+        case 'reversal': this.play('supersonic'); break;
         case 'lob': case 'toss': case 'block': this.play('lob'); break;
         case 'wall': this.play('wall'); break;
         case 'dash': this.play('dash'); break;

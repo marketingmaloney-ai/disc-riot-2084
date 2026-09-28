@@ -80,7 +80,7 @@ export type Phase = 'serve' | 'play' | 'point' | 'setEnd' | 'matchEnd';
 export interface GameEvent {
   type:
     | 'catch' | 'throw' | 'supersonic' | 'curve' | 'super' | 'lob' | 'toss' | 'block'
-    | 'wall' | 'score' | 'drop' | 'dash' | 'charge' | 'serve' | 'setEnd' | 'matchEnd' | 'land';
+    | 'wall' | 'score' | 'drop' | 'reversal' | 'dash' | 'charge' | 'serve' | 'setEnd' | 'matchEnd' | 'land';
   p?: number;
   x?: number;
   z?: number;
@@ -106,5 +106,6 @@ export interface GameState {
   lastPts: number;
   matchWinner: number;
   bigZoneHalf: number; // arena-specific 5-point zone half-width
+  suddenDeath: boolean; // sets tied at 2-2: next score wins the match
   events: GameEvent[];
 }

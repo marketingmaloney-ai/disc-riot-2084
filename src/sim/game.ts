@@ -39,7 +39,7 @@ export function createGame(p1Char: string, p2Char: string, bigZoneHalf = C.BIG_Z
     disc: makeDisc(),
     score: [0, 0], sets: [0, 0], setNo: 1, setTime: C.SET_TIME,
     phase: 'serve', phaseT: C.SERVE_DELAY, server: 0, hitstop: 0,
-    lastScorer: -1, lastPts: 0, matchWinner: -1, bigZoneHalf, events: [],
+    lastScorer: -1, lastPts: 0, matchWinner: -1, bigZoneHalf, suddenDeath: false, events: [],
   };
   resetForServe(g);
   return g;
@@ -91,24 +91,31 @@ export function step(g: GameState, inputs: [InputFrame, InputFrame]) {
       for (let i = 0; i < 2; i++) updatePlayer(g, g.players[i], inputs[i]);
       updateDisc(g);
       g.setTime = Math.max(0, g.setTime - C.DT);
-      if (g.phase === 'play' && g.setTime <= 0 && g.score[0] !== g.score[1]) endSet(g);
+      if (g.phase === 'play' && g.setTime <= 0 && !g.suddenDeath) endSet(g);
       break;
     case 'point':
       g.phaseT -= C.DT;
       settlePlayers(g);
       if (g.phaseT <= 0) {
         const [a, b] = g.score;
-        if (a >= C.SET_POINTS || b >= C.SET_POINTS || (g.setTime <= 0 && a !== b)) endSet(g);
+        if (g.suddenDeath) endMatch(g, g.lastScorer);
+        else if (a >= C.SET_POINTS || b >= C.SET_POINTS || g.setTime <= 0) endSet(g);
         else resetForServe(g);
       }
       break;
     case 'setEnd':
       g.phaseT -= C.DT;
       if (g.phaseT <= 0) {
-        if (g.sets[0] >= C.SETS_TO_WIN || g.sets[1] >= C.SETS_TO_WIN) {
-          g.phase = 'matchEnd';
-          g.matchWinner = g.sets[0] > g.sets[1] ? 0 : 1;
-          g.events.push({ type: 'matchEnd', p: g.matchWinner });
+        const done = g.sets[0] >= C.SETS_TO_WIN || g.sets[1] >= C.SETS_TO_WIN;
+        if (done && g.sets[0] !== g.sets[1]) {
+          endMatch(g, g.sets[0] > g.sets[1] ? 0 : 1);
+        } else if (done) {
+          // both reached the target through tied sets: sudden death, first score wins
+          g.suddenDeath = true;
+          g.setNo++;
+          g.score = [0, 0];
+          g.setTime = 0;
+          resetForServe(g);
         } else {
           g.setNo++;
           g.score = [0, 0];
@@ -138,15 +145,38 @@ function settlePlayers(g: GameState) {
 }
 
 function endSet(g: GameState) {
-  const w = g.score[0] > g.score[1] ? 0 : 1;
-  g.sets[w]++;
   g.phase = 'setEnd';
   g.phaseT = 3.2;
+  g.disc.mode = 'dead';
+  if (g.score[0] === g.score[1]) {
+    // tied set: both players are awarded the set (original Windjammers rule)
+    g.sets[0]++;
+    g.sets[1]++;
+    g.server = 1 - g.server;
+    for (const p of g.players) p.state = 'idle';
+    g.events.push({ type: 'setEnd', p: -1 });
+    return;
+  }
+  const w = g.score[0] > g.score[1] ? 0 : 1;
+  g.sets[w]++;
   g.server = 1 - w;
   g.players[w].state = 'win';
   g.players[1 - w].state = 'lose';
-  g.disc.mode = 'dead';
   g.events.push({ type: 'setEnd', p: w });
+}
+
+function endMatch(g: GameState, winner: number) {
+  g.phase = 'matchEnd';
+  g.matchWinner = winner;
+  g.players[winner].state = 'win';
+  g.players[1 - winner].state = 'lose';
+  g.disc.mode = 'dead';
+  g.events.push({ type: 'matchEnd', p: winner });
+}
+
+/** Power-shot timing window, widened for the player trailing in the current set. */
+function ssWindow(g: GameState, p: Player) {
+  return p.ssWindow + (g.score[1 - p.idx] - g.score[p.idx] >= C.COMEBACK_DEFICIT ? C.COMEBACK_WINDOW : 0);
 }
 
 function setState(p: Player, s: Player['state']) {
@@ -169,6 +199,8 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
         const back = inp.mx * fwd < 0;
         if (back && !p.charged) selfToss(g, p);
         else throwLob(g, p, inp);
+      } else if (p.aAge === 0 && !p.serving && p.holdT <= (C.SUPERSONIC_AFTER + (ssWindow(g, p) - p.ssWindow)) * C.DT) {
+        throwDisc(g, p, inp, true); // A right after the catch: power shot
       } else if (p.aAge === 0 || p.holdT >= maxHold) {
         throwDisc(g, p, inp, false);
       }
@@ -252,6 +284,16 @@ function catchDisc(g: GameState, p: Player, fromLob: boolean) {
     g.events.push({ type: 'charge', p: p.idx, x: p.x, z: p.z });
   }
   g.events.push({ type: 'catch', p: p.idx, x: d.x, z: d.z, big: wasSuper });
+  if (wasSuper && !fromLob && p.aAge <= C.REVERSAL_WINDOW) {
+    // REVERSAL: perfectly timed catch of a super fires your own super straight back
+    placeHeld(d, p);
+    setState(p, 'hold');
+    p.charged = true;
+    g.events.push({ type: 'reversal', p: p.idx, x: d.x, z: d.z });
+    const last = p.dirHist[p.dirHist.length - 1] ?? { mx: 0, mz: 0 };
+    throwDisc(g, p, { mx: last.mx, mz: last.mz, a: true, b: false }, false);
+    return;
+  }
   if (wasSuper) {
     setState(p, 'knock');
     g.hitstop = C.HITSTOP_SUPER;
@@ -259,7 +301,7 @@ function catchDisc(g: GameState, p: Player, fromLob: boolean) {
     setState(p, 'hold');
     g.hitstop = C.HITSTOP_CATCH;
     // Timed A press right before the catch => instant supersonic return.
-    if (!fromLob && p.aAge <= p.ssWindow) {
+    if (!fromLob && p.aAge <= ssWindow(g, p)) {
       const last = p.dirHist[p.dirHist.length - 1] ?? { mx: 0, mz: 0 };
       throwDisc(g, p, { mx: last.mx, mz: last.mz, a: true, b: false }, true);
     }
