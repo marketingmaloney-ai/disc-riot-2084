@@ -21,6 +21,10 @@
 - [ ] Arena count: 2 (Sunset Strip, Neon Pier) or more? *(asked, awaiting answer)*
 - [ ] Super-move character cut-ins, yes or no? *(asked, awaiting answer)*
 
+## Art generation route
+- **Primary: Antigravity bridge.** Claude writes `tools/gen-assets/queue/batchNN.md` (STATUS: READY). The user's Antigravity agent follows `ANTIGRAVITY_HANDOFF.md`, generates with Nano Banana on the user's subscription, pushes `tools/gen-assets/raw/...` and sets STATUS: GENERATED. Claude pulls, reviews, keys, and approves or writes a revision batch.
+- Fallback: `gen.mjs` with an API key, once billing is enabled on the key's Cloud project.
+
 ## Blockers / user actions
 - [x] Gemini API key provided (Google AI Studio)
 - [ ] **Enable billing on the Google AI Studio project.** The key works, but the free tier has 0 quota for every image model (HTTP 429, `limit: 0`). Test command:
@@ -53,13 +57,13 @@
 Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅ approved and integrated · ❌ rejected (see notes)
 
 ### Style
-- ⬜ Style test: 1 key-art image to lock the look before the characters
+- 🔄 Style test: queued in batch01 (job 1.1)
 
 ### Character reference sheets (gemini-3-pro-image, 16:9 2K)
-- ⬜ Vega Starr
-- ⬜ Kaito Mori
-- ⬜ Roxy Voltage
-- ⬜ Brick Diamond
+- 🔄 Vega Starr (queued in batch01)
+- 🔄 Kaito Mori (queued in batch01)
+- 🔄 Roxy Voltage (queued in batch01)
+- 🔄 Brick Diamond (queued in batch01)
 
 ### Animation sheets (gemini-3.1-flash-image + ref), per character
 Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2)
@@ -93,4 +97,4 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - [ ] Online play (rollback netcode over WebRTC; the sim is already deterministic)
 
 ## Session log
-- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed). No repo pushed yet.
+- **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Commits `ffaf872`, `74539f3`. The key was provided but image quota is 0 (billing needed; the subscription does not cover API keys). Created the Antigravity bridge plus batch01 (style test + 4 ref sheets). No repo pushed yet.
