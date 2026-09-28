@@ -1,9 +1,9 @@
 {
  "cell": [
-  320,
+  400,
   448
  ],
- "cols": 5,
+ "cols": 8,
  "rows": 10,
  "anchorY": 0.04,
  "anims": {
@@ -30,15 +30,15 @@
   },
   "hold": {
    "row": 3,
-   "frames": 1,
-   "fps": 6,
+   "frames": 8,
+   "fps": 10,
    "loop": true,
    "discInArt": true
   },
   "throw": {
    "row": 4,
-   "frames": 3,
-   "fps": 14,
+   "frames": 5,
+   "fps": 30,
    "loop": false,
    "discInArt": false
   },

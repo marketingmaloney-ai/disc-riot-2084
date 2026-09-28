@@ -75,7 +75,10 @@ def build_character(cid: str, spec: dict):
         if a and "video" in a:
             # video source: frames are indices into the keyed video frames (see process.py video + sheet.jpg)
             vdir = work / (Path(a["video"]).stem + "_video")
-            run("video", HERE / a["video"], vdir, "--fps", a.get("fps", 24), "--start", a.get("start", 0))
+            vargs = ["video", HERE / a["video"], vdir, "--fps", a.get("fps", 24), "--start", a.get("start", 0)]
+            if "dur" in a:
+                vargs += ["--dur", a["dur"]]
+            run(*vargs)
             anims[name] = {"frames": [str(vdir / f"k_{i:04d}.png") for i in a["frames"]], "fps": a.get("playFps", fps), "loop": loop}
             flags[name] = {"discInArt": bool(a.get("discInArt"))}
         elif a:
@@ -85,7 +88,7 @@ def build_character(cid: str, spec: dict):
         else:
             anims[name] = {"frames": [str(three_q)], "fps": fps, "loop": loop}
             flags[name] = {"interim": True}
-    man = {"cell": [320, 448], "height": 430, "heightScale": spec.get("heightScale", 1.0), "anims": anims}
+    man = {"cell": [400, 448], "height": 430, "heightScale": spec.get("heightScale", 1.0), "anims": anims}
     (work / "manifest.json").write_text(json.dumps(man))
     dst = OUT / "characters" / cid
     dst.mkdir(parents=True, exist_ok=True)

@@ -191,12 +191,19 @@ def cmd_pack(manifest, out):
             f2 = f.resize((max(1, round(f.width * k)), max(1, round(f.height * k))), Image.LANCZOS)
             arr = np.array(f2)
             fx = foot_center_x(arr[..., 3])
-            if f2.width > cw or f2.height > ch * 0.97:
-                s = min(cw / f2.width, ch * 0.97 / f2.height)
+            if f2.height > ch * 0.97:
+                s = ch * 0.97 / f2.height
                 f2 = f2.resize((round(f2.width * s), round(f2.height * s)), Image.LANCZOS)
                 fx *= s
+            # Keep one scale per animation (no per-frame shrinking = no size pulsing). Frames wider than
+            # the cell (disc trails, outstretched arms) are cropped around the foot anchor instead.
             ox = round(cw / 2 - fx + a.get("dx", 0))
-            ox = max(0, min(cw - f2.width, ox))
+            if f2.width <= cw:
+                ox = max(0, min(cw - f2.width, ox))
+            else:
+                left = max(0, -ox)
+                f2 = f2.crop((left, 0, min(f2.width, left + cw), f2.height))
+                ox = max(0, ox)
             oy = round(ch * (1 - meta["anchorY"]) - f2.height)
             atlas.paste(f2, (c * cw + ox, r * ch + max(0, oy)), f2)
         meta["anims"][name] = {"row": r, "frames": len(frames), "fps": a.get("fps", 8), "loop": a.get("loop", True)}

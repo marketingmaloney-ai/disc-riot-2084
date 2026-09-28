@@ -4,43 +4,191 @@
     "vega": {
       "ref": "raw/vega/ref_v3.png",
       "anims": {
-        "idle":  { "src": "raw/vega/anim_idle_v1.jpg",  "expect": 4, "frames": [0, 1, 2, 3] },
-        "run":   { "src": "raw/vega/anim_run_v1.jpg",   "expect": 5, "frames": [0, 1, 2, 3, 4] },
-        "hold":  { "src": "raw/vega/anim_hold_v1.jpg",  "expect": 4, "frames": [2], "discInArt": true },
-        "throw": { "src": "raw/vega/anim_throw_v1.jpg", "expect": 3, "frames": [0, 1, 2] }
+        "idle": {
+          "src": "raw/vega/anim_idle_v1.jpg",
+          "expect": 4,
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "run": {
+          "src": "raw/vega/anim_run_v1.jpg",
+          "expect": 5,
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "hold": {
+          "video": "raw/vega/vid_test_v1.mp4",
+          "fps": 12,
+          "start": 4.3,
+          "dur": 2.6,
+          "frames": [
+            6,
+            9,
+            10,
+            11,
+            12,
+            11,
+            10,
+            9
+          ],
+          "playFps": 10,
+          "discInArt": true
+        },
+        "throw": {
+          "video": "raw/vega/vid_test_v1.mp4",
+          "fps": 12,
+          "start": 4.3,
+          "dur": 2.6,
+          "frames": [
+            13,
+            14,
+            15,
+            16,
+            24
+          ],
+          "playFps": 30
+        }
       }
     },
     "kaito": {
       "ref": "raw/kaito/ref_v1.png",
       "anims": {
-        "idle":  { "src": "raw/kaito/anim_idle_v1.jpg",  "expect": 4, "frames": [0, 1, 2, 3] },
-        "run":   { "src": "raw/kaito/anim_run_v1.jpg",   "expect": 6, "frames": [0, 1, 2, 3, 4, 5], "groundLine": true },
-        "hold":  { "src": "raw/kaito/anim_hold_v1.jpg",  "expect": 2, "frames": [1], "discInArt": true },
-        "throw": { "src": "raw/kaito/anim_throw_v1.jpg", "expect": 3, "frames": [0, 1, 2] }
+        "idle": {
+          "src": "raw/kaito/anim_idle_v1.jpg",
+          "expect": 4,
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "run": {
+          "src": "raw/kaito/anim_run_v1.jpg",
+          "expect": 6,
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "groundLine": true
+        },
+        "hold": {
+          "src": "raw/kaito/anim_hold_v1.jpg",
+          "expect": 2,
+          "frames": [
+            1
+          ],
+          "discInArt": true
+        },
+        "throw": {
+          "src": "raw/kaito/anim_throw_v1.jpg",
+          "expect": 3,
+          "frames": [
+            0,
+            1,
+            2
+          ]
+        }
       }
     },
     "roxy": {
       "ref": "raw/roxy/ref_v3.png",
       "anims": {
-        "idle": { "src": "raw/roxy/anim_idle_v1.jpg", "expect": 4, "frames": [0, 1, 2, 3] },
-        "run":  { "src": "raw/roxy/anim_run_v1.jpg",  "expect": 6, "frames": [1, 2, 3, 4, 5] },
-        "hold": { "src": "raw/roxy/anim_hold_v1.jpg", "expect": 4, "frames": [2], "discInArt": true }
+        "idle": {
+          "src": "raw/roxy/anim_idle_v1.jpg",
+          "expect": 4,
+          "frames": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "run": {
+          "src": "raw/roxy/anim_run_v1.jpg",
+          "expect": 6,
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "hold": {
+          "src": "raw/roxy/anim_hold_v1.jpg",
+          "expect": 4,
+          "frames": [
+            2
+          ],
+          "discInArt": true
+        }
       }
     },
     "brick": {
       "ref": "raw/brick/ref_v1.png",
       "heightScale": 1.08,
       "anims": {
-        "idle": { "src": "raw/brick/anim_idle_v1.jpg", "expect": 4, "frames": [2, 3] },
-        "run":  { "src": "raw/brick/anim_run_v1.jpg",  "expect": 6, "frames": [0, 1, 2, 3, 4, 5] },
-        "hold": { "src": "raw/brick/anim_hold_v1.jpg", "expect": 2, "frames": [0], "discInArt": true }
+        "idle": {
+          "src": "raw/brick/anim_idle_v1.jpg",
+          "expect": 4,
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "run": {
+          "src": "raw/brick/anim_run_v1.jpg",
+          "expect": 6,
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "hold": {
+          "src": "raw/brick/anim_hold_v1.jpg",
+          "expect": 2,
+          "frames": [
+            0
+          ],
+          "discInArt": true
+        }
       }
     }
   },
   "arenas": {
-    "sunset":  { "court": "raw/arenas/sunset/court_v1.jpg" },
-    "pier":    { "court": "raw/arenas/pier/court_v1.jpg", "rotateCourt": true, "backdrop": "raw/arenas/pier/backdrop_v1.jpg" },
-    "lagoon":  { "court": "raw/arenas/lagoon/court_v1.jpg", "backdrop": "raw/arenas/lagoon/backdrop_v1.jpg" },
-    "orbital": { "court": "raw/arenas/orbital/court_v1.jpg", "rotateCourt": true }
+    "sunset": {
+      "court": "raw/arenas/sunset/court_v1.jpg"
+    },
+    "pier": {
+      "court": "raw/arenas/pier/court_v1.jpg",
+      "rotateCourt": true,
+      "backdrop": "raw/arenas/pier/backdrop_v1.jpg"
+    },
+    "lagoon": {
+      "court": "raw/arenas/lagoon/court_v1.jpg",
+      "backdrop": "raw/arenas/lagoon/backdrop_v1.jpg"
+    },
+    "orbital": {
+      "court": "raw/arenas/orbital/court_v1.jpg",
+      "rotateCourt": true
+    }
   }
 }
