@@ -82,6 +82,19 @@ def runs(occ, min_gap):
     return out
 
 
+def clean_frame(crop):
+    """Drop stray bits (swatch squares, specks) that aren't part of the main figure, then re-trim."""
+    a = crop[..., 3]
+    n, lbl, stats, _ = cv2.connectedComponentsWithStats((a > 40).astype(np.uint8), 8)
+    if n > 2:
+        areas = stats[1:, cv2.CC_STAT_AREA]
+        keep = np.zeros(n, bool)
+        keep[1:] = areas >= areas.max() * 0.02
+        crop[..., 3] = np.where(keep[lbl], a, 0)
+    ys, xs = np.where(crop[..., 3] > 8)
+    return crop[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+
+
 def cmd_slice(inp, outdir, expect=None):
     """Split a sheet into frames: row bands by empty rows, then frames by empty columns."""
     img = load_rgba(inp)
@@ -103,7 +116,7 @@ def cmd_slice(inp, outdir, expect=None):
     Path(outdir).mkdir(parents=True, exist_ok=True)
     stem = Path(inp).stem.replace("_keyed", "")
     for i, (x, y, w, h) in enumerate(boxes):
-        crop = img[y:y + h, x:x + w]
+        crop = clean_frame(img[y:y + h, x:x + w].copy())
         Image.fromarray(crop, "RGBA").save(Path(outdir) / f"{stem}_{i}.png")
     print(f"{len(boxes)} frames -> {outdir}")
     if expect and len(boxes) != expect:
@@ -131,6 +144,9 @@ def cmd_pack(manifest, out):
     rows = len(anims)
     atlas = Image.new("RGBA", (cw * cols, ch * rows), (0, 0, 0, 0))
     meta = {"cell": [cw, ch], "cols": cols, "rows": rows, "anchorY": 0.04, "anims": {}}
+    for k in ("interim", "heightScale"):
+        if k in man:
+            meta[k] = man[k]
     for r, (name, a) in enumerate(anims.items()):
         frames = [Image.open(base / f).convert("RGBA") for f in a["frames"]]
         tallest = max(f.height for f in frames)

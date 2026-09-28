@@ -8,11 +8,13 @@ export interface InputSource {
 
 const keysDown = new Set<string>();
 const pressedQueue = new Set<string>();
+const menuQueue = new Set<string>(); // separate so gameplay ticks can't swallow menu taps
 
 window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   keysDown.add(e.code);
   pressedQueue.add(e.code);
+  menuQueue.add(e.code);
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
 });
 window.addEventListener('keyup', (e) => keysDown.delete(e.code));
@@ -127,10 +129,17 @@ export class MenuInput {
       back ||= !!gp.buttons[1]?.pressed;
     }
     const cur = { l, r, u, d, ok, back };
+    // Keyboard taps shorter than a frame never show up in keysDown, so also consume queued presses.
+    const tapped = (codes: string[]) => codes.some((c) => menuQueue.has(c));
     const edge = {
-      l: l && !this.prev.l, r: r && !this.prev.r, u: u && !this.prev.u, d: d && !this.prev.d,
-      ok: ok && !this.prev.ok, back: back && !this.prev.back,
+      l: (l && !this.prev.l) || tapped(['ArrowLeft', 'KeyA']),
+      r: (r && !this.prev.r) || tapped(['ArrowRight', 'KeyD']),
+      u: (u && !this.prev.u) || tapped(['ArrowUp', 'KeyW']),
+      d: (d && !this.prev.d) || tapped(['ArrowDown', 'KeyS']),
+      ok: (ok && !this.prev.ok) || tapped(['Enter', 'Space', 'KeyJ']),
+      back: (back && !this.prev.back) || tapped(['Escape', 'Backspace', 'KeyK']),
     };
+    menuQueue.clear();
     this.prev = cur;
     return edge;
   }

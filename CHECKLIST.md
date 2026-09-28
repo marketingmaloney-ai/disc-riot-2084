@@ -91,6 +91,19 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - ⬜ Title logo (optional; the CSS logo exists)
 - ⬜ Super cut-in art ×4 (`public/assets/characters/<id>/cutin.png`, transparent, dramatic waist-up super pose facing right). Queue after the ref sheets are approved (batch03).
 
+## Phase 3b: Interim art (in the game now, replaced automatically as batches land) ✅
+- [x] `build_interim.py`: approved ref sheets → the 3/4-view atlas (`"interim": true`) + a front-view portrait per character
+- [x] Renderer fakes motion for interim atlases (lean, squash/stretch, hops per state)
+- [x] PLAYER_HEIGHT 2.35 → 3.0; Brick heightScale 1.08
+- [x] Character select, VS and cut-ins use the real portraits
+- [x] Fixed: menu taps shorter than one frame were ignored
+- When batch03 lands, pack real atlases **without** `interim`, and re-run portraits only if batch05 isn't done.
+
+## Pending art batches (quota exhausted; resume any time)
+- batch02 arenas: READY, not generated
+- batch03 core animations: READY, not generated
+- Resume: tell the Antigravity agent "Follow ANTIGRAVITY_HANDOFF.md (Flow mode if needed). Do batch02 and batch03."
+
 ## Phase 4: Integration and polish
 - [ ] Tune sprite height/anchor per character after the real atlases land
 - [ ] Re-screenshot every arena × character combo and do the director review pass

@@ -6,6 +6,8 @@ export interface AtlasMeta {
   cols: number;
   rows: number;
   anchorY: number;
+  interim?: boolean; // one pose per anim (from ref sheets) -> renderer fakes motion
+  heightScale?: number; // per-character height tweak (e.g. Brick is bigger)
   anims: Record<string, { row: number; frames: number; fps: number; loop: boolean }>;
 }
 

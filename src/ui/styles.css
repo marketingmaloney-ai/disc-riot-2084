@@ -163,7 +163,7 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .cutin-lines { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 38px); animation: speed 0.25s linear infinite; }
 .cutin-r .cutin-lines { animation-direction: reverse; }
 @keyframes speed { to { background-position: -76px 0; } }
-.cutin-art { position: absolute; bottom: -35%; height: 170%; left: 12%; transform: skewY(6deg); filter: drop-shadow(0 0 18px var(--c1)); animation: artSlide 0.9s ease-out forwards; }
+.cutin-art { position: absolute; bottom: -8%; height: 128%; left: 12%; transform: skewY(6deg); filter: drop-shadow(0 0 18px var(--c1)); animation: artSlide 0.9s ease-out forwards; }
 .cutin-r .cutin-art { left: auto; right: 12%; transform: skewY(6deg) scaleX(-1); animation-name: artSlideR; }
 .cutin-text { position: absolute; top: 50%; right: 14%; transform: translateY(-50%) skewY(6deg); text-align: right; }
 .cutin-r .cutin-text { right: auto; left: 14%; text-align: left; }

@@ -9,7 +9,7 @@ import { loadCharacterArt, type CharacterArt } from './characterArt';
 import { charById } from '../sim/characters';
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const PLAYER_HEIGHT = 2.35;
+const PLAYER_HEIGHT = 3.0;
 
 class PlayerView {
   sprite: THREE.Sprite;
@@ -27,7 +27,9 @@ class PlayerView {
     this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05 }));
     this.sprite.center.set(0.5, m.anchorY);
     const aspect = m.cell[0] / m.cell[1];
-    this.sprite.scale.set(PLAYER_HEIGHT * aspect, PLAYER_HEIGHT, 1);
+    this.baseH = PLAYER_HEIGHT * (art.meta.heightScale ?? 1);
+    this.baseW = this.baseH * aspect;
+    this.sprite.scale.set(this.baseW, this.baseH, 1);
     this.shadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.55, 24),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }),
@@ -48,6 +50,7 @@ class PlayerView {
     this.animT += dt;
     let f = Math.floor(this.animT * a.fps);
     f = a.loop ? f % a.frames : Math.min(f, a.frames - 1);
+    if (this.art.meta.interim) this.applyMotion(anim);
     const u = 1 / meta.cols, v = 1 / meta.rows;
     const row = meta.rows - 1 - a.row; // textures are bottom-up
     // Art faces right; right-side player faces left => mirror.
@@ -59,6 +62,38 @@ class PlayerView {
       this.tex.offset.set(f * u, row * v);
     }
   }
+
+  /**
+   * Interim art has one pose per animation, so fake the motion: lean (rotation about the
+   * feet anchor), squash/stretch and hops. Disabled once real multi-frame sheets land.
+   */
+  private applyMotion(anim: string) {
+    const t = this.animT;
+    let lean = 0, sx = 1, sy = 1, hop = 0;
+    switch (anim) {
+      case 'idle': sy = 1 + 0.018 * Math.sin(t * 6); sx = 1 - 0.01 * Math.sin(t * 6); break;
+      case 'run': {
+        const c = Math.abs(Math.sin(t * 13));
+        hop = c * 0.14; lean = 0.13; sy = 0.95 + c * 0.07; sx = 1.04 - c * 0.05;
+        break;
+      }
+      case 'dash': lean = 0.38; sx = 1.16; sy = 0.84; break;
+      case 'hold': lean = -0.09 + 0.02 * Math.sin(t * 9); sy = 0.97; break;
+      case 'throw': { const k = Math.max(0, 1 - t * 5); lean = 0.28 * (1 - k * 0.5); sx = 1 + 0.12 * k; sy = 1 - 0.06 * k; break; }
+      case 'lob': lean = -0.12; sy = 1.07; break;
+      case 'block': sy = 1.09; sx = 0.95; hop = 0.08; break;
+      case 'knock': lean = -0.3 + 0.05 * Math.sin(t * 60); break;
+      case 'win': hop = Math.abs(Math.sin(t * 6)) * 0.35; sy = 1 + Math.sin(t * 12) * 0.04; break;
+      case 'lose': lean = 0.22; sy = 0.9; sx = 1.05; break;
+    }
+    const facing = this.side < 0 ? 1 : -1;
+    (this.sprite.material as THREE.SpriteMaterial).rotation = -lean * facing;
+    this.sprite.scale.set(this.baseW * sx, this.baseH * sy, 1);
+    this.hop = hop;
+  }
+  hop = 0;
+  baseW = 1;
+  baseH = 1;
 }
 
 let _glow: THREE.Texture | null = null;
@@ -332,7 +367,7 @@ export class GameRenderer {
       const v = this.players[i];
       if (!v) return;
       const x = lerp(p.px, p.x, alpha), z = lerp(p.pz, p.z, alpha);
-      v.sprite.position.set(x, 0, z);
+      v.sprite.position.set(x, v.hop, z);
       v.shadow.position.set(x, 0.01, z);
       v.aura.position.set(x, 0, z - 0.05);
       v.aura.visible = p.charged;
