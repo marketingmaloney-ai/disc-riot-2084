@@ -256,11 +256,60 @@ function modeScreen() {
   const s = show(`<div class="title-h">SELECT MODE</div>`);
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
-    { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; charSelect(); } },
+    { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; if (touch) controllerScreen(); else void charSelect(); } },
     { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
+}
+
+/**
+ * 2P on a touch device: the touch controls only ever drive Player 1, so Player 2 needs a controller. A web page
+ * can't pair Bluetooth (that happens in the phone's settings) and the browser only exposes a controller after a
+ * button press on it, so this screen walks through both steps and shows live whether the game can see it.
+ * humanSources() gives one connected controller to Player 2; with two, each player gets their own.
+ */
+function controllerScreen() {
+  const s = show(`
+    <div class="title-h">CONNECT CONTROLLER</div>
+    <div class="pad-steps">
+      <div><b>1</b><span>PUT YOUR CONTROLLER IN PAIRING MODE<small>HOLD ITS BLUETOOTH / SHARE BUTTON UNTIL THE LIGHT FLASHES</small></span></div>
+      <div><b>2</b><span>PAIR IT IN YOUR PHONE'S SETTINGS › BLUETOOTH<small>TAP IT UNDER "OTHER DEVICES", THEN COME BACK HERE</small></span></div>
+      <div><b>3</b><span>PRESS ANY BUTTON ON THE CONTROLLER<small>THE GAME CAN'T SEE IT UNTIL YOU DO</small></span></div>
+    </div>
+    <div class="pad-status"></div>`);
+  const status = s.querySelector('.pad-status') as HTMLElement;
+  menu(s, [{ label: 'CONTINUE', action: () => void charSelect() }], modeScreen);
+  const cont = s.querySelector('.menu .btn') as HTMLElement;
+  // The press that wakes a controller must not also "confirm" CONTINUE: ignore confirm briefly after it connects.
+  // Checked here, every frame, right before the press is read (a slower timer lets the same press through).
+  let lock = 0, lastN = connectedPads().length;
+  const inner = onMenuInput!;
+  onMenuInput = (e) => {
+    const n = connectedPads().length;
+    if (n > lastN) lock = performance.now() + 900;
+    lastN = n;
+    inner(performance.now() < lock ? { ...e, ok: false } : e);
+  };
+  const padName = (p: Gamepad) => (p.id.replace(/\s*\(.*$/, '').trim() || 'CONTROLLER').toUpperCase().slice(0, 34);
+  let seenN = connectedPads().length, lastHtml = '';
+  const paint = () => {
+    const all = navigator.getGamepads?.() ?? [];
+    const live = connectedPads().map((i) => all[i]!).filter(Boolean);
+    if (live.length > seenN) audio.play('charge');
+    seenN = live.length;
+    const hit = live.some((p) => p.buttons.some((b) => b.pressed) || p.axes.some((a) => Math.abs(a) > 0.5));
+    const html = live.length === 0
+      ? `<div class="pad-l blink">WAITING FOR A CONTROLLER…</div><div class="pad-s">NO CONTROLLER? PLAYER 2 CAN PLAY ON A KEYBOARD INSTEAD</div>`
+      : live.length === 1
+        ? `<div class="pad-l">✓ ${padName(live[0])}</div><div class="pad-s">PLAYER 2 PLAYS WITH THIS CONTROLLER · PLAYER 1 KEEPS THE TOUCH CONTROLS</div>`
+        : `<div class="pad-l">✓ ${live.length} CONTROLLERS CONNECTED</div><div class="pad-s">ONE PER PLAYER · TOUCH CONTROLS OFF</div>`;
+    status.className = 'pad-status' + (live.length ? ' ok' : '') + (hit ? ' hit' : '');
+    if (html !== lastHtml) { status.innerHTML = html; lastHtml = html; }
+    cont.textContent = live.length ? 'CONTINUE' : 'CONTINUE WITHOUT CONTROLLER';
+  };
+  const timer = window.setInterval(() => { if (!s.isConnected) window.clearInterval(timer); else paint(); }, 100);
+  paint();
 }
 
 function difficultyScreen() {

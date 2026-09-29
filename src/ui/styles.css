@@ -257,3 +257,23 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .ach-h { font-size: 12px; margin-bottom: 2px; }
   .ach-row { font-size: 10px; gap: 8px; padding: 1px 0; }
 }
+
+/* ---------- connect controller (2P on touch devices) ---------- */
+.pad-steps { display: flex; flex-direction: column; gap: 1.2vh; max-width: min(720px, 92vw); }
+.pad-steps > div { display: flex; gap: 14px; align-items: center; font-size: clamp(11px, 1.5vw, 18px); font-weight: 900; letter-spacing: 0.06em; }
+.pad-steps b { flex: none; width: 2.2em; height: 2.2em; display: grid; place-items: center; background: var(--pink); transform: skewX(-10deg); font-family: 'Russo One'; }
+.pad-steps small { display: block; font-weight: 500; opacity: 0.7; font-size: 0.72em; letter-spacing: 0.08em; margin-top: 2px; }
+.pad-status { min-width: min(560px, 88vw); text-align: center; padding: 1.2vh 1.6vw; border: 2px solid rgba(255, 255, 255, 0.25); background: rgba(18, 5, 42, 0.7); transition: border-color 0.1s, box-shadow 0.1s; }
+.pad-status.ok { border-color: var(--cyan); box-shadow: 0 0 18px rgba(25, 230, 255, 0.45); }
+.pad-status.hit { border-color: var(--yellow); box-shadow: 0 0 26px var(--yellow); }
+.pad-l { font-family: 'Russo One'; font-size: clamp(14px, 2.2vw, 26px); letter-spacing: 0.08em; }
+.pad-status.ok .pad-l { color: var(--cyan); }
+.pad-s { font-size: clamp(9px, 1.1vw, 13px); opacity: 0.75; letter-spacing: 0.1em; margin-top: 3px; }
+@media (max-height: 520px) {
+  .pad-steps { gap: 4px; }
+  .pad-steps > div { font-size: 11px; gap: 10px; }
+  .pad-steps small { font-size: 9px; }
+  .pad-status { padding: 4px 10px; min-width: 0; }
+  .pad-l { font-size: 14px; }
+  .pad-s { font-size: 9px; }
+}

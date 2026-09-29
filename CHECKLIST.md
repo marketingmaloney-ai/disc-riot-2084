@@ -115,6 +115,7 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [ ] Performance check on mobile (target 60 fps; drop bloom resolution if needed)
 - [ ] Tune sprite height/anchor per character now that real atlases are in
 - [ ] Re-screenshot every arena × character combo and do the director review pass
+- [x] CONNECT CONTROLLER screen before 2P on touch devices: pairing steps, live detection (shows the controller's name, lights up on input), CONTINUE WITHOUT CONTROLLER for keyboard. One controller goes to Player 2, two give one each. Phone touch controls stay one-player (Brice's call)
 - [ ] Future arena idea: a court with bounce barriers (the original had some)
 
 ### Visual audit (2026-09-29, iPhone 15 landscape playtest)
