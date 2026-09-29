@@ -51,11 +51,16 @@ let onMenuInput: ((e: ReturnType<MenuInput['poll']>) => void) | null = null;
 let tracker: MatchTracker | null = null;
 let newAchievements: Achievement[] = [];
 
+let loading = 0; // startMatch calls still loading art
+
 async function startMatch(p1: string, p2: string, arena: number, ctrls: [Controller, Controller], isDemo: boolean) {
+  // a newer startMatch began while this one was loading: drop this one entirely
+  loading++;
+  const current = await renderer.setup(ARENAS[arena], p1, p2).finally(() => loading--);
+  if (!current) return;
   demo = isDemo;
   paused = false;
   controllers = ctrls;
-  await renderer.setup(ARENAS[arena], p1, p2);
   // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
   const upgraded = !isDemo && mode === '1p';
   audio.setCharacters([p1, p2]);
@@ -156,7 +161,7 @@ function frame(now: number) {
     }
     if (!demo) hud.update(game);
     renderer.render(game, paused ? 1 : acc / DT, paused ? 0 : dt);
-    if (demo && game.phase === 'matchEnd') void startDemo();
+    if (demo && game.phase === 'matchEnd' && !loading) void startDemo(); // once, not every frame while it loads
   }
 }
 let escDown = false;
@@ -407,6 +412,7 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) (window as unknown as { __game: () => GameState }).__game = () => game;
+if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus } });
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('quick')) {

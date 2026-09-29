@@ -301,15 +301,23 @@ export class GameRenderer {
     this.camera.updateProjectionMatrix();
   }
 
-  async setup(arena: ArenaDef, p1: string, p2: string) {
+  private setupGen = 0;
+
+  /** Swap in a new arena + fighters. Returns false if a newer setup() started while this one was
+   * loading (e.g. the attract demo still loading when the player starts a match): the stale result
+   * is discarded, so two setups can never both add their fighters (frozen "ghost" sprites). */
+  async setup(arena: ArenaDef, p1: string, p2: string): Promise<boolean> {
+    const gen = ++this.setupGen;
+    const [built, arts] = await Promise.all([buildArena(arena), Promise.all([loadCharacterArt(p1), loadCharacterArt(p2)])]);
+    if (gen !== this.setupGen) return false;
     if (this.arena) this.scene.remove(this.arena.group);
     for (const p of this.players) this.scene.remove(p.sprite, p.shadow, p.aura);
-    this.arena = await buildArena(arena);
+    this.arena = built;
     this.scene.add(this.arena.group);
     (this.scene.fog as THREE.Fog).color.set(arena.sky[1]);
-    const arts = await Promise.all([loadCharacterArt(p1), loadCharacterArt(p2)]);
     this.players = arts.map((a, i) => new PlayerView(a, i === 0 ? -1 : 1, charById(i === 0 ? p1 : p2).colors.primary));
     for (const p of this.players) this.scene.add(p.sprite, p.shadow, p.aura);
+    return true;
   }
 
   private animFor(p: Player, g: GameState) {
