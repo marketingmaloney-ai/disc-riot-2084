@@ -10,7 +10,8 @@ export const PLAYER_MAX_Z = 4.1;
 export const DISC_RADIUS = 0.28;
 
 export const CATCH_RADIUS = 0.62;
-export const HUMAN_CATCH_MULT = 1.3; // human players get a wider catch reach than the CPU (0.62 -> ~0.81)
+export const HUMAN_CATCH_MULT = 1.6; // human players get a wider catch reach than the CPU (0.62 -> ~0.99)
+export const HUMAN_SPEED_MULT = 1.12; // ...and run a bit faster (the CPU reads the disc perfectly, people don't)
 export const SUPER_CATCH_MULT = 1.12; // supers are big, glowing and catchable if you read them
 export const CATCH_HEIGHT = 2.2; // disc above this can't be caught (lobs in flight)
 export const HOLD_MAX = 1.1; // auto-throw after this long

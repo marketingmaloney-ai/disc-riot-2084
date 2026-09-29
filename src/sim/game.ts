@@ -11,7 +11,7 @@ function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels, human = false):
   const sp = L(lv?.speed), pw = L(lv?.power), te = L(lv?.technique), rf = L(lv?.reflex);
   return {
     idx, side: idx === 0 ? -1 : 1, charId,
-    speed: c.speed * (1 + C.ATTR_SPEED * sp),
+    speed: c.speed * (1 + C.ATTR_SPEED * sp) * (human ? C.HUMAN_SPEED_MULT : 1),
     power: c.power * (1 + C.ATTR_POWER * pw),
     curve: c.curve * (1 + C.ATTR_TECH_CURVE * te),
     superKind: c.superKind,
