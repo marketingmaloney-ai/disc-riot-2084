@@ -10,6 +10,7 @@ import { charById } from '../sim/characters';
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const PLAYER_HEIGHT = 3.0;
+const TRAIL_STEP = 1 / 60; // seconds of game time between trail samples
 const RUN_TO_IDLE = 0.12; // seconds of standing still before the run cycle gives way to idle
 
 class PlayerView {
@@ -269,9 +270,19 @@ class Trail {
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
   }
-  push(p: THREE.Vector3, width: number, active: boolean) {
-    if (!active) { this.pts.length = 0; }
-    else { this.pts.unshift(p.clone()); if (this.pts.length > this.n) this.pts.pop(); }
+  private acc = 0;
+  /** One sample per 1/60 s of game time, whatever the screen's refresh rate: sampling per rendered frame made
+   * the trail half as long on 120 Hz phones. Between samples the newest point follows the disc. */
+  push(p: THREE.Vector3, width: number, active: boolean, dt: number) {
+    if (!active) { this.pts.length = 0; this.acc = 0; }
+    else {
+      this.acc += dt;
+      if (!this.pts.length || this.acc >= TRAIL_STEP) {
+        this.acc = this.pts.length ? this.acc % TRAIL_STEP : 0;
+        this.pts.unshift(p.clone());
+        if (this.pts.length > this.n) this.pts.pop();
+      } else this.pts[0].copy(p);
+    }
     const pos = this.geo.attributes.position as THREE.BufferAttribute;
     const al = this.geo.attributes.alpha as THREE.BufferAttribute;
     for (let i = 0; i < this.n; i++) {
@@ -502,8 +513,8 @@ export class GameRenderer {
     (this.discGlow.material as THREE.SpriteMaterial).color.set(tc).multiplyScalar(d.mode === 'held' ? 0.35 : d.kind === 'super' ? 3 : 1.2);
     const flying = d.mode === 'flight' || d.mode === 'ground' || d.mode === 'lob';
     const w = d.kind === 'super' ? 0.45 : d.kind === 'supersonic' ? 0.32 : 0.16;
-    this.trail.push(this.disc.position, w, flying && g.hitstop === 0 ? true : flying);
-    if (d.kind === 'super' && flying && Math.random() < 0.7) this.particles.burst(dx, dh, dz, tc, 2, 2, 0.35, 0.35);
+    this.trail.push(this.disc.position, w, flying, dt);
+    if (d.kind === 'super' && flying && Math.random() < 0.7 * Math.min(1, dt * 60)) this.particles.burst(dx, dh, dz, tc, 2, 2, 0.35, 0.35);
 
     this.reticle.visible = d.mode === 'lob' && !!d.lob;
     if (d.lob) {
