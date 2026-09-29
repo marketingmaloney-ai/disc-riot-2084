@@ -18,8 +18,8 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - Declined: downloading the Windjammers 2 ROM, because that's piracy. Rules were researched from public sources instead.
 - Plays mostly **on an iPhone** inside the Claude app, so mobile touch, layout and rotation issues matter.
 - Art route: generates images and videos in **Google Flow** (Nano Banana 2 / Veo), either personally or via their **Antigravity agent**.
-  They find Flow annoying: it often draws the character **twice**. The Gemini API key is free tier with 0 image quota,
-  so API generation is blocked. The key lives only in the git-ignored `.env`. **Rotate it**, because it was pasted in chat.
+  They find Flow annoying: it often draws the character **twice**. **No Gemini API** (decided 2026-09-29):
+  art is made in Flow only. The old key should be deleted in Google AI Studio (it was pasted in chat); never commit keys.
 - Shares art through **Google Photos shared-album links** or by pushing to `tools/gen-assets/inbox/`.
 
 ## 3. Locked creative decisions
