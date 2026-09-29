@@ -8,7 +8,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 1. What it is
 - A **Windjammers-style, fast-paced arcade flying-disc game**, a full playable prototype in **three.js**.
 - Repo: `github.com/marketingmaloney-ai/disc-riot-2084` (private, branch `main`).
-- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 18 as of 2026-09-29, the visual-audit fixes).
+- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 19 as of 2026-09-29: visual-audit fixes + glass barrier).
   Republish it from `dist/` after `npm run build`.
 
 ## 2. Owner preferences and working style
