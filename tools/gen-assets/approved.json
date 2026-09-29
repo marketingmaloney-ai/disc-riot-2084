@@ -291,7 +291,8 @@
   },
   "arenas": {
     "sunset": {
-      "court": "raw/arenas/sunset/court_v1.jpg"
+      "court": "raw/arenas/sunset/court_v1.jpg",
+      "backdrop": "raw/arenas/sunset/backdrop_v2.jpg"
     },
     "pier": {
       "court": "raw/arenas/pier/court_v1.jpg",
@@ -304,7 +305,8 @@
     },
     "orbital": {
       "court": "raw/arenas/orbital/court_v1.jpg",
-      "rotateCourt": true
+      "rotateCourt": true,
+      "backdrop": "raw/arenas/orbital/backdrop_v2.jpg"
     }
   }
 }

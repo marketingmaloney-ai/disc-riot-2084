@@ -2,9 +2,11 @@
  "files": [
   "assets/arenas/lagoon/backdrop.jpg",
   "assets/arenas/lagoon/court.jpg",
+  "assets/arenas/orbital/backdrop.jpg",
   "assets/arenas/orbital/court.jpg",
   "assets/arenas/pier/backdrop.jpg",
   "assets/arenas/pier/court.jpg",
+  "assets/arenas/sunset/backdrop.jpg",
   "assets/arenas/sunset/court.jpg",
   "assets/characters/brick/atlas.json",
   "assets/characters/brick/atlas.png",
