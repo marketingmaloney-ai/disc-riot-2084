@@ -486,7 +486,7 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) (window as unknown as { __game: () => GameState }).__game = () => game;
-if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS } });
+if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS, hud } });
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('quick')) {

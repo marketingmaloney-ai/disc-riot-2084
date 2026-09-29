@@ -65,10 +65,10 @@ export class Hud {
     window.setTimeout(() => el.remove(), 900);
   }
 
-  announce(html: string, ms = 1300, small = false) {
+  announce(html: string, ms = 1300, small = false, extra = '') {
     this.announceEl?.remove();
     const a = document.createElement('div');
-    a.className = 'announce' + (small ? ' small' : '');
+    a.className = 'announce' + (small ? ' small' : '') + extra;
     a.innerHTML = html;
     this.el.appendChild(a);
     this.announceEl = a;
@@ -89,7 +89,8 @@ export class Hud {
         if (e.p! < 0) this.announce(`SET ${g.setNo}<span class="pts">DRAW · BOTH SCORE</span>`, 2800);
         else this.announce(`SET ${g.setNo}<span class="pts">${charById(g.players[e.p!].charId).name.split(' ')[0]} WINS</span>`, 2800);
       } else if (e.type === 'reversal') {
-        this.announce('REVERSAL!', 900, true);
+        // fires on the same tick as the super cut-in, which covers the middle of the screen: show it below the band
+        this.announce('REVERSAL!', 1100, true, ' rev');
       } else if (e.type === 'serve' && g.score[0] === 0 && g.score[1] === 0) {
         this.announce(g.suddenDeath ? 'SUDDEN DEATH' : `SET ${g.setNo}`, 1100, g.suddenDeath);
       }

@@ -119,6 +119,8 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   -webkit-text-stroke: 2px var(--pink); filter: drop-shadow(0 0 20px var(--pink)); animation: slam 0.35s cubic-bezier(.2, 1.6, .4, 1);
 }
 .announce.small { font-size: clamp(22px, 4.5vw, 64px); }
+/* REVERSAL! lands with the super cut-in (z-index 5, band across the middle): sit under the band, above it in z */
+.announce.rev { top: 72%; z-index: 6; }
 .announce .pts { display: block; font-size: 0.5em; -webkit-text-stroke: 1px var(--ink); background: linear-gradient(180deg, #fff, #ffe600, #ff7a1a); -webkit-background-clip: text; background-clip: text; }
 @keyframes slam { from { transform: skewX(-10deg) scale(3); opacity: 0; } to { transform: skewX(-10deg) scale(1); opacity: 1; } }
 
