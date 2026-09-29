@@ -133,6 +133,13 @@ class PlayerView {
     this.sprite.scale.set(this.baseW, this.baseH, 1);
     this.hop = 0;
   }
+  dispose() {
+    this.tex.dispose(); // this fighter's own texture object (the atlas image is shared and cached)
+    (this.sprite.material as THREE.Material).dispose();
+    this.shadow.geometry.dispose();
+    (this.shadow.material as THREE.Material).dispose();
+    (this.aura.material as THREE.Material).dispose(); // the glow texture itself is shared: kept
+  }
   /** true when the current frame already shows the disc in hand (so the 3D disc is hidden) */
   get discInArt() {
     return this.anim === 'hold' && !!this.art.meta.anims.hold?.discInArt;
@@ -142,6 +149,21 @@ class PlayerView {
   idleFor = 0;
   baseW = 1;
   baseH = 1;
+}
+
+/** Free the GPU memory of everything under `root` (geometry, materials and their textures). Each match and each
+ * attract-demo loop builds a new arena; without this the old ones piled up until phones ran out of memory. */
+function disposeTree(root: THREE.Object3D) {
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    m.geometry?.dispose();
+    const mats = Array.isArray(m.material) ? m.material : m.material ? [m.material] : [];
+    for (const mat of mats) {
+      for (const v of Object.values(mat)) if (v instanceof THREE.Texture) v.dispose();
+      mat.dispose();
+    }
+    (o as THREE.InstancedMesh).dispose?.();
+  });
 }
 
 let _glow: THREE.Texture | null = null;
@@ -366,8 +388,8 @@ export class GameRenderer {
     const gen = ++this.setupGen;
     const [built, arts] = await Promise.all([buildArena(arena), Promise.all([loadCharacterArt(p1), loadCharacterArt(p2)])]);
     if (gen !== this.setupGen) return false;
-    if (this.arena) this.scene.remove(this.arena.group);
-    for (const p of this.players) this.scene.remove(p.sprite, p.shadow, p.aura);
+    if (this.arena) { this.scene.remove(this.arena.group); disposeTree(this.arena.group); }
+    for (const p of this.players) { this.scene.remove(p.sprite, p.shadow, p.aura); p.dispose(); }
     this.arena = built;
     this.scene.add(this.arena.group);
     (this.scene.fog as THREE.Fog).color.set(arena.sky[1]);
@@ -434,6 +456,9 @@ export class GameRenderer {
 
   render(g: GameState, alpha: number, dt: number) {
     this.resize(); // no-op unless the size / pixel ratio changed
+    // During a freeze (catch, goal, super cut-in) the sim stops updating its previous positions, so the
+    // interpolation kept sweeping between two old positions and everything buzzed. Hold the latest one instead.
+    if (g.hitstop > 0) alpha = 1;
     this.time += dt;
     this.arena?.update(this.time);
     const d = g.disc;
