@@ -10,6 +10,7 @@ import { charById } from '../sim/characters';
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const PLAYER_HEIGHT = 3.0;
+const RUN_TO_IDLE = 0.12; // seconds of standing still before the run cycle gives way to idle
 
 class PlayerView {
   sprite: THREE.Sprite;
@@ -46,6 +47,12 @@ class PlayerView {
   /** `restart`: the requested anim changed this frame, so a one-shot re-entered (throw, hold, throw) plays again. */
   setFrame(want: string, dt: number, restart = false) {
     const meta = this.art.meta;
+    // Run -> idle only after standing still for a moment. The CPU's steering (and key tapping) flips
+    // walk/idle every tick while tracking a moving target, which restarted the run cycle each frame.
+    if (want === 'idle' && this.anim === 'run') {
+      this.idleFor += dt;
+      if (this.idleFor < RUN_TO_IDLE) want = 'run';
+    } else this.idleFor = 0;
     // The sim leaves throw/lob/block/knock after ~0.2 s but most real one-shot anims run longer. Let the
     // current one-shot finish instead of snapping to idle or hold. Moving (run) and new actions still cut in.
     const cur = meta.anims[this.anim];
@@ -109,6 +116,7 @@ class PlayerView {
   }
   hop = 0;
   lastWant = '';
+  idleFor = 0;
   baseW = 1;
   baseH = 1;
 }
