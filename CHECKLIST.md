@@ -122,6 +122,7 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [x] Touch joystick and A/B sat on top of the pause and results menus and ate the left half of every button; now hidden unless actually playing. Pause button disabled after match end
 - [x] One-shot animations (throw, lob, block, knock) got cut off at ~0.16 s; they now finish before going back to idle/hold (running still cuts in)
 - [x] Back-row fighters read as standing in the crowd once drawn over the backdrop (reported from iPhone): added a tinted glass barrier + neon rail above the far wall, painted as background so fighters always draw in front. Also held the backdrop under the bloom threshold and toned down the far-wall/rail neon, which were bloom-washing back-row fighters in Sunset Strip and Orbital Cabana
+- [x] Far-wall neon strips still cut across back-row fighters' legs (reported from iPhone): the far wall, its strips and the floor apron are now drawn as background too, so anything on the court draws over them
 - [ ] Sprite frames clipped at the atlas cell edges (30+ frames, worst on Brick): pad cells in `process.py pack` instead of cropping, then rebuild atlases
 - [ ] CPU flickers between walk and idle every frame, so its run cycle restarts constantly
 - [ ] Disc glow/trail/sparks cut out by fighters in the near half (sprite `renderOrder` beats depth)

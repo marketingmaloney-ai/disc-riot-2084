@@ -296,6 +296,18 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   const base = `assets/arenas/${def.id}/`;
   const [courtTex, skyTex] = await Promise.all([tryTexture(base + 'court.jpg'), tryTexture(base + 'backdrop.jpg')]);
 
+  // Fighters are camera-facing cards that lean back, so a back-row fighter's legs and body sit geometrically
+  // behind the far wall and its glass even though they stand in front of them. Everything behind the court
+  // is therefore painted as background: drawn in order right after the backdrop, with no depth test, so
+  // anything on the court (fighters, disc, effects) always draws over it.
+  const asBackground = (m: THREE.Mesh, order: number) => {
+    const mat = m.material as THREE.Material;
+    mat.depthTest = false;
+    mat.depthWrite = false;
+    m.renderOrder = order;
+    group.add(m);
+  };
+
   // floor apron (outside court). With a painted backdrop the apron stops where the backdrop meets the
   // floor: the backdrop is drawn as a background layer (see below), so floor past that line would paint over it.
   const APRON_NEAR = 15;
@@ -308,7 +320,7 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   );
   apron.rotation.x = -Math.PI / 2;
   apron.position.set(0, -0.02, (APRON_NEAR + apronFar) / 2);
-  group.add(apron);
+  asBackground(apron, -999.5); // floor: under everything, and must not paint over the far wall
 
   // court
   const court = new THREE.Mesh(
@@ -336,8 +348,7 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     // depth: a background layer. Otherwise it hides fighters standing at the back and deep lobs.
     // Held just under the bloom threshold (0.9): bright painted skies otherwise bloom into a haze that
     // washes out any fighter standing in front of them (same reason the painted courts are toned down).
-    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, color: new THREE.Color(0.88, 0.88, 0.88), toneMapped: false, fog: false, depthTest: false, depthWrite: false }));
-    sky.renderOrder = -1000;
+    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, color: new THREE.Color(0.88, 0.88, 0.88), toneMapped: false, fog: false }));
     sky.rotation.x = lean;
     sky.position.set(0, BACKDROP_BOTTOM_Y + (h / 2) * Math.cos(lean), -W - 0.6 + (h / 2) * Math.sin(lean) - BACKDROP_BACK);
   } else {
@@ -348,35 +359,26 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     sky.position.set(0, 5.2, -10);
     sky.rotation.x = 0.3;
   }
-  group.add(sky);
+  asBackground(sky, -1000);
 
-  // far wall
+  // far wall (front face on the court edge, where the sim's wall is)
   const wallMat = new THREE.MeshStandardMaterial({ color: '#1a0f2e', metalness: 0.8, roughness: 0.3 });
   const farWall = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.9, 0.3), wallMat);
   farWall.position.set(0, 0.45, -W - 0.15);
-  group.add(farWall);
+  asBackground(farWall, -997);
   const neonMat = (c: string, k = 3) => new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), toneMapped: false });
   const strip = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.08, 0.05), neonMat(def.neonB, 1.7)); // top of the far wall: brighter blooms over back-row fighters
   strip.position.set(0, 0.86, -W + 0.01);
-  group.add(strip);
-  const strip2 = strip.clone();
-  strip2.position.y = 0.2;
-  strip2.material = neonMat(def.neonA, 2);
-  group.add(strip2);
+  asBackground(strip, -996);
+  const strip2 = new THREE.Mesh(strip.geometry, neonMat(def.neonA, 2));
+  strip2.position.set(0, 0.2, -W + 0.01);
+  asBackground(strip2, -996);
   // Glass barrier above the far wall (think hockey glass). Fighters at the back of the court are drawn over
   // the backdrop; without a barrier they read as standing up in the crowd. Tinted glass + a neon top rail
-  // puts them visibly in front of the arena wall. Purely visual: the sim's walls are unchanged.
-  // Sprites are camera-facing cards that lean back, so a back-row fighter's upper body pokes through any real
-  // plane here. The glass is therefore painted as background: drawn right after the backdrop with no depth,
-  // in the opaque pass (CustomBlending keeps alpha there), so everything on the court draws over it.
+  // puts them visibly in front of the arena wall. Purely visual: the sim's walls are unchanged. Painted as
+  // background like the wall; it stays in the opaque pass (CustomBlending keeps its alpha there) so it
+  // draws right after the backdrop.
   const GLASS_H = 2.3;
-  const asBackground = (m: THREE.Mesh, order: number) => {
-    const mat = m.material as THREE.Material;
-    mat.depthTest = false;
-    mat.depthWrite = false;
-    m.renderOrder = order;
-    group.add(m);
-  };
   const glassMat = new THREE.MeshBasicMaterial({
     color: def.night ? '#140a36' : '#2a1050', opacity: 0.5, fog: false,
     blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
