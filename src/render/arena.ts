@@ -296,13 +296,18 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   const base = `assets/arenas/${def.id}/`;
   const [courtTex, skyTex] = await Promise.all([tryTexture(base + 'court.jpg'), tryTexture(base + 'backdrop.jpg')]);
 
-  // floor apron (outside court)
+  // floor apron (outside court). With a painted backdrop the apron stops where the backdrop meets the
+  // floor: the backdrop is drawn as a background layer (see below), so floor past that line would paint over it.
+  const APRON_NEAR = 15;
+  const apronFar = skyTex
+    ? -W - 0.6 - BACKDROP_BACK - BACKDROP_BOTTOM_Y * Math.tan(BACKDROP_LEAN)
+    : -15;
   const apron = new THREE.Mesh(
-    new THREE.PlaneGeometry(60, 30),
+    new THREE.PlaneGeometry(60, APRON_NEAR - apronFar),
     new THREE.MeshStandardMaterial({ color: def.night ? '#0d0718' : '#2a0f3a', roughness: def.night ? 0.25 : 0.9, metalness: def.night ? 0.5 : 0 }),
   );
   apron.rotation.x = -Math.PI / 2;
-  apron.position.y = -0.02;
+  apron.position.set(0, -0.02, (APRON_NEAR + apronFar) / 2);
   group.add(apron);
 
   // court
@@ -327,7 +332,10 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     // tucked behind the far wall, so the image's crowd/skyline fills the band above the court.
     const img = skyTex.image as { width: number; height: number };
     const w = BACKDROP_W, h = w / (img.width / img.height), lean = BACKDROP_LEAN;
-    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, toneMapped: false, fog: false }));
+    // The leaning plane cuts through the air above the back of the court, so it is drawn first and without
+    // depth: a background layer. Otherwise it hides fighters standing at the back and deep lobs.
+    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, toneMapped: false, fog: false, depthTest: false, depthWrite: false }));
+    sky.renderOrder = -1000;
     sky.rotation.x = lean;
     sky.position.set(0, BACKDROP_BOTTOM_Y + (h / 2) * Math.cos(lean), -W - 0.6 + (h / 2) * Math.sin(lean) - BACKDROP_BACK);
   } else {

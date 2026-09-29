@@ -52,6 +52,8 @@ let tracker: MatchTracker | null = null;
 let newAchievements: Achievement[] = [];
 
 let loading = 0; // startMatch calls still loading art
+let touchWanted = false; // this match is played with the on-screen controls
+let touchShown = false;
 
 async function startMatch(p1: string, p2: string, arena: number, ctrls: [Controller, Controller], isDemo: boolean) {
   // a newer startMatch began while this one was loading: drop this one entirely
@@ -72,11 +74,11 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
     const lbl = (c: Controller, i: number) => (c.kind === 'cpu' ? `CPU · ${difficulty.toUpperCase()}` : `PLAYER ${i + 1}`);
     hud.setup(game, [lbl(ctrls[0], 0), lbl(ctrls[1], 1)]);
     hudEl.classList.remove('hidden');
-    touch?.setVisible(ctrls[0].kind === 'human' && ctrls[0].src instanceof MergedSource);
+    touchWanted = ctrls[0].kind === 'human' && ctrls[0].src instanceof MergedSource;
     audio.startMusic(arena); // each arena has its own track
   } else {
     hudEl.classList.add('hidden');
-    touch?.setVisible(false);
+    touchWanted = false;
   }
 }
 
@@ -160,8 +162,11 @@ function frame(now: number) {
       endTick();
     }
     if (!demo) hud.update(game);
-    // touch pause button: only during a real match, not over menus or the attract demo
-    pauseBtn?.classList.toggle('hidden', demo || (screens.childElementCount > 0 && !paused));
+    // touch pause button: only during a real match, not over menus, the results or the attract demo
+    pauseBtn?.classList.toggle('hidden', demo || game.phase === 'matchEnd' || (screens.childElementCount > 0 && !paused));
+    // joystick + A/B only while actually playing: over the pause menu or results they swallow the menu taps
+    const tv = touchWanted && !demo && !paused && game.phase !== 'matchEnd' && screens.childElementCount === 0;
+    if (tv !== touchShown) { touchShown = tv; touch?.setVisible(tv); }
     renderer.render(game, paused ? 1 : acc / DT, paused ? 0 : dt);
     if (demo && game.phase === 'matchEnd' && !loading) void startDemo(); // once, not every frame while it loads
   }
@@ -427,7 +432,7 @@ if (touch) {
   const pb = document.createElement('button');
   pb.className = 'pause-btn';
   pb.textContent = 'II';
-  pb.addEventListener('click', () => { if (!demo) togglePause(); });
+  pb.addEventListener('click', () => { if (!demo && game.phase !== 'matchEnd') togglePause(); });
   document.getElementById('app')!.appendChild(pb);
   pauseBtn = pb;
 }

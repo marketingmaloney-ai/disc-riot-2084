@@ -94,6 +94,13 @@ export class TouchSource implements InputSource {
 
   setVisible(v: boolean) {
     this.root.style.display = v ? '' : 'none';
+    if (!v) {
+      // hidden mid-drag (pause, match end): drop the held direction so the fighter doesn't keep running
+      this.stickId = null;
+      this.vec = { x: 0, y: 0 };
+      this.knob.style.transform = '';
+      this.base.classList.remove('on');
+    }
   }
 }
 

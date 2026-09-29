@@ -117,6 +117,20 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [ ] Re-screenshot every arena × character combo and do the director review pass
 - [ ] Future arena idea: a court with bounce barriers (the original had some)
 
+### Visual audit (2026-09-29, iPhone 15 landscape playtest)
+- [x] Backdrop hid fighters at the back of the court (only feet showed) and deep lobs: backdrop is now a background layer (`depthTest` off, drawn first) and the apron stops at the backdrop's floor line
+- [x] Touch joystick and A/B sat on top of the pause and results menus and ate the left half of every button; now hidden unless actually playing. Pause button disabled after match end
+- [x] One-shot animations (throw, lob, block, knock) got cut off at ~0.16 s; they now finish before going back to idle/hold (running still cuts in)
+- [ ] Sprite frames clipped at the atlas cell edges (30+ frames, worst on Brick): pad cells in `process.py pack` instead of cropping, then rebuild atlases
+- [ ] CPU flickers between walk and idle every frame, so its run cycle restarts constantly
+- [ ] Disc glow/trail/sparks cut out by fighters in the near half (sprite `renderOrder` beats depth)
+- [ ] Hit-stop jitter: `px` isn't updated during freezes, so the disc buzzes on 120 Hz screens
+- [ ] REVERSAL! announcement hidden behind the super cut-in
+- [ ] Trail length and super sparks depend on frame rate
+- [ ] GPU memory leak: old arenas never disposed (attract demo loops leak), plus ~315 MB of atlases resident
+- [ ] Results screen overflows on phones (TITLE pushed off screen); A/B cover the near-right court corner
+- [ ] Minor: sudden-death timer blinks "0"; first arena's goal labels use the fallback font; pause-menu BACK covers the P1 name
+
 ## Phase 5: Stretch
 - [ ] More arenas / characters
 - [ ] Online play (rollback netcode over WebRTC; the sim is already deterministic)
@@ -125,3 +139,4 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - **S1 (2026-09-28):** Research + plan. Built the full engine, AI, renderer, audio, menus, mobile, pipeline and tests. Created the Antigravity bridge and batch01, the repo, 2 extra arenas and cut-ins.
 - **S2 (2026-09-28 to 09-29):** Reviewed batch01-04; interim then real art; balance passes 1 and 2; progression; video-to-sprite pipeline; Roxy/Brick full sets from Flow videos; character sounds; all 4 backdrops; phone fixes; per-arena music; human assists; toss lock; `PROJECT_MEMORY.md`.
 - **S3 (2026-09-29):** Checklist cleanup: brought every section up to date with the code and git history, marked batch04 superseded, recorded the "no Gemini API, Flow only" decision, removed the reference to the missing `PLAN.md`.
+- **S4 (2026-09-29, Mac session):** Visual audit (full code read, atlas edge scan, headless-Chrome playtest at iPhone size). Fixed the backdrop hiding back-court fighters, touch controls over menus, and cut-off one-shot animations. Remaining findings listed under Phase 4 "Visual audit".

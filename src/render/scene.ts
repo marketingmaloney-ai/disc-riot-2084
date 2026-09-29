@@ -43,10 +43,16 @@ class PlayerView {
     this.aura.visible = false;
   }
 
-  setFrame(anim: string, dt: number) {
+  /** `restart`: the requested anim changed this frame, so a one-shot re-entered (throw, hold, throw) plays again. */
+  setFrame(want: string, dt: number, restart = false) {
     const meta = this.art.meta;
+    // The sim leaves throw/lob/block/knock after ~0.2 s but most real one-shot anims run longer. Let the
+    // current one-shot finish instead of snapping to idle or hold. Moving (run) and new actions still cut in.
+    const cur = meta.anims[this.anim];
+    const curPlaying = !!cur && !cur.loop && this.animT < cur.frames / cur.fps;
+    const anim = want !== this.anim && curPlaying && (want === 'idle' || want === 'hold') ? this.anim : want;
     const a = meta.anims[anim] ?? meta.anims.idle;
-    if (anim !== this.anim) { this.anim = anim; this.animT = 0; }
+    if (anim !== this.anim || (restart && want === this.anim && !a.loop)) { this.anim = anim; this.animT = 0; }
     this.animT += dt;
     let f = Math.floor(this.animT * a.fps);
     f = a.loop ? f % a.frames : Math.min(f, a.frames - 1);
@@ -102,6 +108,7 @@ class PlayerView {
     return this.anim === 'hold' && !!this.art.meta.anims.hold?.discInArt;
   }
   hop = 0;
+  lastWant = '';
   baseW = 1;
   baseH = 1;
 }
@@ -407,7 +414,9 @@ export class GameRenderer {
         const s = 1 + 0.12 * Math.sin(this.time * 18);
         v.aura.scale.set(2.4 * s, 3.2 * s, 1);
       }
-      v.setFrame(this.animFor(p, g), dt);
+      const anim = this.animFor(p, g);
+      v.setFrame(anim, dt, anim !== v.lastWant);
+      v.lastWant = anim;
       v.sprite.renderOrder = 10 + Math.round(z * 10);
     });
 
