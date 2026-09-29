@@ -73,7 +73,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
     hud.setup(game, [lbl(ctrls[0], 0), lbl(ctrls[1], 1)]);
     hudEl.classList.remove('hidden');
     touch?.setVisible(ctrls[0].kind === 'human' && ctrls[0].src instanceof MergedSource);
-    audio.startMusic(arena % 2);
+    audio.startMusic(arena); // each arena has its own track
   } else {
     hudEl.classList.add('hidden');
     touch?.setVisible(false);

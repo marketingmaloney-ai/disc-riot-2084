@@ -4,6 +4,51 @@ import { hasAsset } from '../render/assets';
 /** Per-character sounds cut from the art videos (tools/gen-assets/sfx.json). Missing ones use the synth. */
 const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
 
+interface Song {
+  bpm: number;
+  prog: number[]; // 8 bar roots (MIDI)
+  chord: (bar: number) => number[]; // pad intervals above the root
+  kick: number[]; snare: number[]; clap?: number[]; // 16th-step positions
+  hats: (i: number) => boolean;
+  bass: (i: number) => number | null; // semitones above root-12, or rest
+  bassWave: OscillatorType; bassLen: number;
+  arp: number[]; arpFrom: number; arpEvery: number; // lead enters at bar arpFrom
+  leadWave: OscillatorType; leadLen: number; leadVol: number;
+  padCutoff: number;
+}
+
+/** One procedural track per arena (ARENAS order: sunset, pier, lagoon, orbital). */
+const SONGS: Song[] = [
+  { // SUNSET STRIP — classic Miami synthwave, Am-F-C-G
+    bpm: 118, prog: [45, 41, 48, 43, 45, 41, 48, 43],
+    chord: (bar) => [0, bar % 4 === 1 || bar % 4 === 2 ? 4 : 3, 7, 12],
+    kick: [0, 4, 8, 12], snare: [4, 12], hats: (i) => i % 2 === 1,
+    bass: (i) => (i % 2 === 1 ? 12 : 0), bassWave: 'sawtooth', bassLen: 0.12,
+    arp: [0, 7, 12, 15, 12, 7, 3, 7], arpFrom: 4, arpEvery: 2, leadWave: 'square', leadLen: 0.1, leadVol: 0.045, padCutoff: 1800,
+  },
+  { // NEON PIER — darker, driving night-drive, Em-C-D-Bm, rolling 16th bass
+    bpm: 128, prog: [40, 36, 38, 35, 40, 36, 38, 35],
+    chord: (bar) => [0, bar % 4 === 1 || bar % 4 === 2 ? 4 : 3, 7, 10],
+    kick: [0, 4, 8, 12], snare: [4, 12], hats: () => true,
+    bass: (i) => [0, 0, 12, 0][i % 4], bassWave: 'sawtooth', bassLen: 0.08,
+    arp: [12, 10, 7, 3, 7, 10, 12, 15], arpFrom: 2, arpEvery: 2, leadWave: 'sawtooth', leadLen: 0.07, leadVol: 0.035, padCutoff: 1200,
+  },
+  { // LASER LAGOON — laid-back sunny beach funk, Dmaj7-Bm7-Gmaj7-A, syncopated bass
+    bpm: 104, prog: [50, 47, 43, 45, 50, 47, 43, 45],
+    chord: (bar) => (bar % 4 === 1 ? [0, 3, 7, 10] : bar % 4 === 3 ? [0, 4, 7, 12] : [0, 4, 7, 11]),
+    kick: [0, 6, 8], snare: [4, 12], clap: [12], hats: (i) => i % 2 === 0 || i === 7 || i === 15,
+    bass: (i) => ({ 0: 0, 3: 12, 6: 7, 8: 0, 10: 10, 14: 12 } as Record<number, number>)[i] ?? null, bassWave: 'triangle', bassLen: 0.18,
+    arp: [12, 16, 19, 23, 19, 16], arpFrom: 4, arpEvery: 4, leadWave: 'triangle', leadLen: 0.22, leadVol: 0.07, padCutoff: 2400,
+  },
+  { // ORBITAL CABANA — spacey half-time darkwave, Dm-Bb-Gm-A, bell arps
+    bpm: 136, prog: [38, 34, 43, 45, 38, 34, 43, 45],
+    chord: (bar) => [0, bar % 4 === 3 ? 4 : bar % 4 === 1 ? 4 : 3, 7, 14],
+    kick: [0, 10], snare: [8], hats: (i) => i % 4 === 2,
+    bass: (i) => (i % 2 === 0 ? (i % 8 === 6 ? 12 : 0) : null), bassWave: 'square', bassLen: 0.14,
+    arp: [0, 7, 14, 19, 24, 19, 14, 7], arpFrom: 0, arpEvery: 2, leadWave: 'sine', leadLen: 0.25, leadVol: 0.06, padCutoff: 900,
+  },
+];
+
 /** Web Audio: synthesized arcade SFX + a procedural synthwave loop, layered with per-character sounds. */
 export class AudioEngine {
   ctx: AudioContext | null = null;
@@ -196,11 +241,11 @@ export class AudioEngine {
     }
   }
 
-  // ---------- Music: 118 BPM synthwave ----------
+  // ---------- Music: one procedural track per arena ----------
   startMusic(song = 0) {
     if (!this.ctx) return;
     this.stopMusic();
-    this.song = song;
+    this.song = song % SONGS.length;
     this.nextNote = this.ctx.currentTime + 0.1;
     this.step16 = 0;
     this.musicTimer = window.setInterval(() => this.schedule(), 25);
@@ -212,8 +257,7 @@ export class AudioEngine {
 
   private schedule() {
     const ctx = this.ctx!;
-    const bpm = this.song === 0 ? 118 : 126;
-    const s16 = 60 / bpm / 4;
+    const s16 = 60 / SONGS[this.song].bpm / 4;
     while (this.nextNote < ctx.currentTime + 0.12) {
       this.playStep(this.step16, this.nextNote - ctx.currentTime);
       this.nextNote += s16;
@@ -222,34 +266,28 @@ export class AudioEngine {
   }
 
   private playStep(s: number, when: number) {
+    const song = SONGS[this.song];
     const bar = Math.floor(s / 16) % 8;
     const i = s % 16;
-    // Am - F - C - G  (song 0) / Em - C - D - Bm (song 1)
-    const prog = this.song === 0 ? [45, 41, 48, 43, 45, 41, 48, 43] : [40, 36, 38, 35, 40, 36, 38, 35];
-    const root = prog[bar];
+    const root = song.prog[bar];
     const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
     const bus = this.musicBus;
-    // kick
-    if (i % 4 === 0) this.tone('sine', 150, 40, 0.25, 0.9, when, bus);
-    // snare (gated noise)
-    if (i === 4 || i === 12) { this.noise(0.18, 0.5, 'bandpass', 1800, 1200, when, bus, 0.8); this.tone('triangle', 220, 180, 0.08, 0.25, when, bus); }
-    // hats
-    if (i % 2 === 1) this.noise(0.04, i % 4 === 3 ? 0.18 : 0.1, 'highpass', 8000, 8000, when, bus);
-    // octave bass
-    const bassNote = root - 12 + (i % 2 === 1 ? 12 : 0);
-    this.tone('sawtooth', hz(bassNote), hz(bassNote) * 0.99, 0.12, 0.16, when, bus);
-    // pad chord on bar start
+    if (song.kick.includes(i)) this.tone('sine', 150, 40, 0.25, 0.9, when, bus);
+    if (song.snare.includes(i)) { this.noise(0.18, 0.5, 'bandpass', 1800, 1200, when, bus, 0.8); this.tone('triangle', 220, 180, 0.08, 0.25, when, bus); }
+    if (song.clap?.includes(i)) this.noise(0.09, 0.35, 'bandpass', 2400, 1600, when, bus, 1.5);
+    if (song.hats(i)) this.noise(0.04, i % 4 === 3 ? 0.18 : 0.1, 'highpass', 8000, 8000, when, bus);
+    const b = song.bass(i);
+    if (b !== null) this.tone(song.bassWave, hz(root - 12 + b), hz(root - 12 + b) * 0.99, song.bassLen, 0.16, when, bus);
     if (i === 0) {
-      const minor = this.song === 0 ? [0, 3, 7] : [0, 3, 7];
-      const third = (bar % 4 === 1 || bar % 4 === 2) ? 4 : minor[1];
-      for (const iv of [0, third, 7, 12]) this.padNote(hz(root + 12 + iv), when, (60 / (this.song === 0 ? 118 : 126)) * 4);
+      for (const iv of song.chord(bar)) this.padNote(hz(root + 12 + iv), when, (60 / song.bpm) * 4, song.padCutoff);
     }
-    // arp lead
-    const arp = [0, 7, 12, 15, 12, 7, 3, 7];
-    if (bar >= 4 && i % 2 === 0) this.tone('square', hz(root + 24 + arp[(i / 2) % 8]), hz(root + 24 + arp[(i / 2) % 8]), 0.1, 0.045, when, bus);
+    if (bar >= song.arpFrom && i % song.arpEvery === 0) {
+      const n = hz(root + 24 + song.arp[(i / song.arpEvery) % song.arp.length]);
+      this.tone(song.leadWave, n, n, song.leadLen, song.leadVol, when, bus);
+    }
   }
 
-  private padNote(f: number, when: number, dur: number) {
+  private padNote(f: number, when: number, dur: number, cutoff = 1800) {
     const ctx = this.ctx!;
     const t = ctx.currentTime + when;
     const g = ctx.createGain();
@@ -258,7 +296,7 @@ export class AudioEngine {
     g.gain.linearRampToValueAtTime(0.0001, t + dur);
     const flt = ctx.createBiquadFilter();
     flt.type = 'lowpass';
-    flt.frequency.value = 1800;
+    flt.frequency.value = cutoff;
     for (const det of [-8, 8]) {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
