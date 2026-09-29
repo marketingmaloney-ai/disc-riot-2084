@@ -113,6 +113,8 @@ def build_character(cid: str, spec: dict):
             vargs = ["video", HERE / a["video"], vdir, "--fps", a.get("fps", 24), "--start", a.get("start", 0)]
             if "dur" in a:
                 vargs += ["--dur", a["dur"]]
+            if "figure" in a:  # Flow drew the character twice: keep "left" / "right" / "largest"
+                vargs += ["--figure", a["figure"]]
             run(*vargs)
             anims[name] = {"frames": [str(vdir / f"k_{i:04d}.png") for i in a["frames"]], "fps": a.get("playFps", fps), "loop": loop}
             flags[name] = {"discInArt": bool(a.get("discInArt"))}

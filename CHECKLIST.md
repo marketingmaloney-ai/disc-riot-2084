@@ -108,6 +108,7 @@ Order: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) l
 - Keying fixed: only border-connected green (or enclosed pockets matching the screen colour) is removed, so costume greens (Roxy's lime) survive.
 - ⏸ **video01/video02 CANCELLED** (user chose images via Antigravity). Tooling stays for later: 4 clips per character (A throw, B dive+lob, C block/knock/victory, D defeat) from `video_starts/<char>_start.png`. Batch04 is still needed for the 2 landscape backdrops (jobs 4.27–4.28).
 - ✅ Video pilot: Vega hold/throw now come from video (`raw/vega/vid_test_v1.mp4`).
+- ✅ Duplicate-figure fix (Flow often draws the character twice): `process.py split IMG... OUTDIR` writes one PNG per figure (`<stem>_fig0.png`, `_fig1.png`, left→right, touching figures cut at the thinnest column). Videos: add `"figure": "left"|"right"|"largest"` to the anim entry in `approved.json` (or `--figure` on `process.py video`).
 - **batch05 READY:** 4 portraits (3:4) + 4 super cut-ins (16:9, green screen). Independent of batch04.
 
 ## Pending art batches (quota exhausted; resume any time)

@@ -4,6 +4,7 @@
 Subcommands
   key    IN OUT                 chroma-key #00FF00 background -> transparent PNG (with despill + soft edge)
   slice  IN OUTDIR [--expect N] content-aware slice a keyed sheet into trimmed frames (left->right, top->bottom)
+  split  IN... OUTDIR           one PNG per figure (for Flow outputs that drew the character twice)
   pack   MANIFEST.json OUT.png  build a uniform-cell, foot-anchored atlas + OUT.json for the game
   sheet  IN OUT                 make a checkerboard preview of a transparent image (for review)
 
@@ -212,7 +213,102 @@ def cmd_pack(manifest, out):
     print("atlas ->", out, atlas.size)
 
 
-def cmd_video(inp, outdir, fps=24, start=0.0, dur=None):
+def keep_figure(arr, which="left"):
+    """Flow sometimes draws the character twice: keep one figure (left / right / largest) and drop the rest.
+    Figures = connected shapes at least 20% the size of the biggest one."""
+    a = (arr[..., 3] > 40).astype(np.uint8)
+    n, lbl, st, _ = cv2.connectedComponentsWithStats(a, 8)
+    if n <= 2:
+        return arr
+    areas = st[1:, cv2.CC_STAT_AREA]
+    figs = [i + 1 for i in range(n - 1) if areas[i] >= areas.max() * 0.2]
+    if len(figs) < 2:
+        return split_touching(arr, which)
+    cx = {i: st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] / 2 for i in figs}
+    if which == "right":
+        keep = max(figs, key=lambda i: cx[i])
+    elif which == "largest":
+        keep = max(figs, key=lambda i: st[i, cv2.CC_STAT_AREA])
+    else:
+        keep = min(figs, key=lambda i: cx[i])
+    # keep the chosen figure plus small bits (disc, sparks) nearer to it than to the other figures
+    out = arr.copy()
+    others = [i for i in figs if i != keep]
+    for i in range(1, n):
+        if i == keep:
+            continue
+        if i in others:
+            out[..., 3][lbl == i] = 0
+            continue
+        c = st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] / 2
+        if min(abs(c - cx[o]) for o in others) < abs(c - cx[keep]):
+            out[..., 3][lbl == i] = 0
+    return drop_faint(out)
+
+
+def drop_faint(arr):
+    """Clear faint soft-edge pixels (alpha <= 40) that no longer border a kept solid pixel."""
+    near = cv2.dilate((arr[..., 3] > 40).astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+    arr[..., 3] = np.where(near, arr[..., 3], 0)
+    return arr
+
+
+def split_touching(arr, which):
+    """Two duplicates drawn touching form one blob: if it is wider than tall, cut at the thinnest
+    column in its middle third and keep one side."""
+    a = arr[..., 3] > 40
+    xs = np.where(a.any(axis=0))[0]
+    ys = np.where(a.any(axis=1))[0]
+    if not len(xs) or (xs[-1] - xs[0]) < (ys[-1] - ys[0]) * 0.9 or which == "largest":
+        return arr
+    x0, x1 = xs[0], xs[-1]
+    lo, hi = x0 + (x1 - x0) // 3, x0 + 2 * (x1 - x0) // 3
+    cut = lo + int(np.argmin(a[:, lo:hi].sum(axis=0)))
+    out = arr.copy()
+    if which == "right":
+        out[:, :cut, 3] = 0
+    else:
+        out[:, cut:, 3] = 0
+    return drop_faint(out)
+
+
+def figures(arr):
+    """Every separate figure of an image as its own RGBA array, left to right."""
+    a = (arr[..., 3] > 40).astype(np.uint8)
+    n, _, st, _ = cv2.connectedComponentsWithStats(a, 8)
+    areas = st[1:, cv2.CC_STAT_AREA] if n > 1 else np.array([0])
+    count = int((areas >= areas.max() * 0.2).sum()) if n > 1 else 0
+    if count >= 2:
+        # keep_figure by rank: peel off the leftmost repeatedly
+        out, rest = [], arr
+        for _ in range(count - 1):
+            out.append(keep_figure(rest, "left"))
+            rest = rest.copy()
+            rest[..., 3] = np.where(out[-1][..., 3] > 0, 0, rest[..., 3])
+        out.append(drop_faint(rest))
+        return out
+    left = split_touching(arr, "left")
+    return [left, split_touching(arr, "right")] if left is not arr else [arr]
+
+
+def cmd_split(inp, outdir):
+    """Still image (green screen or already keyed) -> one PNG per figure: <stem>_fig0.png, _fig1.png..."""
+    out = Path(outdir)
+    out.mkdir(parents=True, exist_ok=True)
+    src = Path(inp)
+    keyed = out / (src.stem + "_keyed.png")
+    arr = np.array(Image.open(src).convert("RGBA"))
+    if (arr[..., 3] < 255).mean() < 0.01:  # opaque: key it first
+        cmd_key(src, keyed)
+        arr = np.array(Image.open(keyed))
+        keyed.unlink()
+    figs = figures(arr)
+    for k, f in enumerate(figs):
+        Image.fromarray(clean_frame(f), "RGBA").save(out / f"{src.stem}_fig{k}.png")
+    print(f"{src.name}: {len(figs)} figure(s) -> {out}")
+
+
+def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None):
     """Video (green screen) -> keyed, trimmed frames k_0000.png... + numbered contact sheet.jpg."""
     import subprocess
     import imageio_ffmpeg
@@ -235,6 +331,8 @@ def cmd_video(inp, outdir, fps=24, start=0.0, dur=None):
         if (arr[..., 3] > 40).sum() < arr[..., 3].size * 0.002:
             k.unlink()  # empty frame (character left the shot)
         else:
+            if figure:
+                arr = keep_figure(arr, figure)
             Image.fromarray(clean_frame(arr), "RGBA").save(k)
             thumbs.append((i, k))
         r.unlink()
@@ -282,7 +380,10 @@ if __name__ == "__main__":
         cmd_pack(a[1], a[2])
     elif cmd == "video":
         opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d  # noqa: E731
-        cmd_video(a[1], a[2], float(opt("--fps", 24)), float(opt("--start", 0)), opt("--dur"))
+        cmd_video(a[1], a[2], float(opt("--fps", 24)), float(opt("--start", 0)), opt("--dur"), opt("--figure"))
+    elif cmd == "split":
+        for f in a[1:-1]:
+            cmd_split(f, a[-1])
     elif cmd == "sheet":
         cmd_sheet(a[1], a[2])
     else:
