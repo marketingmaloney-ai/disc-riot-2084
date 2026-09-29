@@ -294,6 +294,9 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   const group = new THREE.Group();
   const L = C.COURT_HALF_LEN, W = C.COURT_HALF_WID;
   const base = `assets/arenas/${def.id}/`;
+  // The goal-zone "3"/"5" labels are painted onto canvases right here: wait for the font, or the first arena
+  // built on a fresh page (nothing else has used Orbitron yet) paints them in the fallback font.
+  await document.fonts.load('700 96px "Orbitron"').catch(() => undefined);
   const [courtTex, skyTex] = await Promise.all([tryTexture(base + 'court.jpg'), tryTexture(base + 'backdrop.jpg')]);
 
   // Fighters are camera-facing cards that lean back, so a back-row fighter's legs and body sit geometrically

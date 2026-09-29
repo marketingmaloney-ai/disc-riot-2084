@@ -109,9 +109,10 @@ export class Hud {
         this.last[i] = g.score[i];
       }
     }
+    // Sudden death has no clock (setTime is 0): show "SD" steadily instead of a blinking pink 0.
     const t = Math.ceil(g.setTime);
-    this.time.textContent = String(t);
-    this.time.classList.toggle('low', t <= 10);
+    this.time.textContent = g.suddenDeath ? 'SD' : String(t);
+    this.time.classList.toggle('low', !g.suddenDeath && t <= 10);
     this.setLbl.textContent = g.suddenDeath ? 'SUDDEN DEATH · NEXT SCORE WINS' : `SET ${g.setNo} · FIRST TO ${C.SET_POINTS}`;
     const pips = (n: number) => Array.from({ length: C.SETS_TO_WIN }, (_, i) => `<div class="pip ${i < n ? 'on' : ''}"></div>`).join('');
     const key = `${g.sets[0]}-${g.sets[1]}`;

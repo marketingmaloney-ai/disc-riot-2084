@@ -234,6 +234,8 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   color: #fff; background: rgba(18, 5, 42, 0.8); border: 2px solid var(--cyan); padding: 10px 14px; transform: skewX(-10deg);
   box-shadow: 0 0 12px rgba(25, 230, 255, 0.5);
 }
+/* Over a live match (pause menu) the HUD's player name sits where BACK goes: drop BACK below the name block. */
+#hud:not(.hidden) ~ .back-btn { top: calc(max(10px, env(safe-area-inset-top)) + 15vh); }
 .controls-help { max-width: min(1000px, 92vw); }
 .controls-help span { overflow-wrap: anywhere; }
 @media (max-height: 520px) {
