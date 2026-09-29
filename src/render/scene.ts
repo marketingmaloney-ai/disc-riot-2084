@@ -285,11 +285,24 @@ export class GameRenderer {
     this.scene.add(this.disc, this.discGlow, this.discShadow, this.reticle, this.trail.mesh, this.particles.points);
 
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('orientationchange', () => this.resize());
+    window.visualViewport?.addEventListener('resize', () => this.resize());
+    new ResizeObserver(() => this.resize()).observe(container);
     this.resize();
   }
 
+  private sized = { w: 0, h: 0, dpr: 0 };
+
+  /** Resize whenever the container's real size or the pixel ratio changed. Called every frame too:
+   * phones (rotation, in-app browsers, toolbars sliding) don't reliably fire window 'resize' after the
+   * layout settles, which left the drawing buffer at an old size in a corner of the screen. */
   resize() {
-    const w = this.container.clientWidth, h = this.container.clientHeight;
+    const w = Math.max(1, this.container.clientWidth), h = Math.max(1, this.container.clientHeight);
+    const dpr = Math.min(devicePixelRatio, 2);
+    if (w === this.sized.w && h === this.sized.h && dpr === this.sized.dpr) return;
+    this.sized = { w, h, dpr };
+    this.renderer.setPixelRatio(dpr);
+    this.composer.setPixelRatio(dpr);
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);
     this.bloom.resolution.set(w / 2, h / 2);
@@ -377,6 +390,7 @@ export class GameRenderer {
   }
 
   render(g: GameState, alpha: number, dt: number) {
+    this.resize(); // no-op unless the size / pixel ratio changed
     this.time += dt;
     this.arena?.update(this.time);
     const d = g.disc;
