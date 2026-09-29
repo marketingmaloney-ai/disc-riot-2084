@@ -115,8 +115,22 @@ def build_character(cid: str, spec: dict):
                 vargs += ["--dur", a["dur"]]
             if "figure" in a:  # Flow drew the character twice: keep "left" / "right" / "largest"
                 vargs += ["--figure", a["figure"]]
-            run(*vargs)
-            anims[name] = {"frames": [str(vdir / f"k_{i:04d}.png") for i in a["frames"]], "fps": a.get("playFps", fps), "loop": loop}
+            stamp = vdir / "args.txt"
+            key = " ".join(map(str, vargs[1:])) + f" {(HERE / a['video']).stat().st_mtime}"
+            if not (stamp.exists() and stamp.read_text() == key):  # same clip + settings: reuse frames
+                run(*vargs)
+                stamp.write_text(key)
+            frames = [vdir / f"k_{i:04d}.png" for i in a["frames"]]
+            anims[name] = {"frames": [str(f) for f in frames], "fps": a.get("playFps", fps), "loop": loop}
+            if "refFrame" in a:
+                # scale against the clip's standing pose, so dives/kneels stay life-size instead of the
+                # lowest pose being stretched to full standing height
+                ref_h = Image.open(vdir / f"k_{a['refFrame']:04d}.png").height
+                anims[name]["scale"] = max(Image.open(f).height for f in frames) / ref_h
+            elif "scale" in a:
+                anims[name]["scale"] = a["scale"]
+            if "dx" in a:
+                anims[name]["dx"] = a["dx"]
             flags[name] = {"discInArt": bool(a.get("discInArt"))}
         elif a and a.get("mode") == "components":
             fr = component_frames(HERE / a["src"], work, a["frames"], a.get("groundLine", False))

@@ -3,13 +3,13 @@
   400,
   448
  ],
- "cols": 5,
+ "cols": 10,
  "rows": 10,
  "anchorY": 0.04,
  "anims": {
   "idle": {
    "row": 0,
-   "frames": 4,
+   "frames": 8,
    "fps": 6,
    "loop": true,
    "discInArt": false
@@ -23,10 +23,10 @@
   },
   "dash": {
    "row": 2,
-   "frames": 1,
+   "frames": 8,
    "fps": 14,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "hold": {
    "row": 3,
@@ -37,45 +37,45 @@
   },
   "throw": {
    "row": 4,
-   "frames": 3,
-   "fps": 14,
+   "frames": 6,
+   "fps": 20,
    "loop": false,
    "discInArt": false
   },
   "lob": {
    "row": 5,
-   "frames": 1,
-   "fps": 10,
+   "frames": 8,
+   "fps": 14,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "block": {
    "row": 6,
-   "frames": 1,
-   "fps": 12,
+   "frames": 5,
+   "fps": 14,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "knock": {
    "row": 7,
-   "frames": 1,
+   "frames": 6,
    "fps": 10,
    "loop": false,
-   "interim": true
+   "discInArt": false
   },
   "win": {
    "row": 8,
-   "frames": 1,
-   "fps": 3,
+   "frames": 10,
+   "fps": 8,
    "loop": true,
-   "interim": true
+   "discInArt": false
   },
   "lose": {
    "row": 9,
-   "frames": 1,
+   "frames": 5,
    "fps": 3,
    "loop": true,
-   "interim": true
+   "discInArt": false
   }
  },
  "heightScale": 1.0
