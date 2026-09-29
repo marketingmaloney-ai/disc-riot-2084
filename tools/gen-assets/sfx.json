@@ -1,0 +1,72 @@
+{
+  "_doc": "Character sounds cut from the Flow videos' audio. Times in seconds (start, end); build_sfx.py trims leading silence, normalizes, fades and writes public/assets/sfx/<char>/<name>.mp3. Names the game uses: throw, dash, lob, block, shout (super), win, lose. Missing names fall back to the synth SFX.",
+  "roxy": {
+    "throw": {
+      "src": "raw/roxy/vid_A_v1.mp4",
+      "start": 1.45,
+      "end": 1.95
+    },
+    "shout": {
+      "src": "raw/roxy/vid_A_v1.mp4",
+      "start": 2.15,
+      "end": 3.2
+    },
+    "dash": {
+      "src": "raw/roxy/vid_B_v1.mp4",
+      "start": 1.1,
+      "end": 1.8
+    },
+    "lob": {
+      "src": "raw/roxy/vid_B_v1.mp4",
+      "start": 4.95,
+      "end": 5.45
+    },
+    "block": {
+      "src": "raw/roxy/vid_B_v1.mp4",
+      "start": 5.95,
+      "end": 6.6
+    },
+    "win": {
+      "src": "raw/roxy/vid_A_v1.mp4",
+      "start": 4.9,
+      "end": 7.45
+    },
+    "lose": {
+      "src": "raw/roxy/vid_D_v1.mp4",
+      "start": 3.8,
+      "end": 4.95
+    }
+  },
+  "brick": {
+    "throw": {
+      "src": "raw/brick/vid_A_v1.mp4",
+      "start": 3.35,
+      "end": 4.6
+    },
+    "shout": {
+      "src": "raw/brick/vid_B_v1.mp4",
+      "start": 4.5,
+      "end": 5.45
+    },
+    "dash": {
+      "src": "raw/brick/vid_B_v1.mp4",
+      "start": 1.15,
+      "end": 1.9
+    },
+    "lob": {
+      "src": "raw/brick/vid_B_v1.mp4",
+      "start": 5.35,
+      "end": 6.2
+    },
+    "win": {
+      "src": "raw/brick/vid_A_v1.mp4",
+      "start": 6.45,
+      "end": 8.0
+    },
+    "lose": {
+      "src": "raw/brick/vid_D_v1.mp4",
+      "start": 3.2,
+      "end": 5.0
+    }
+  }
+}

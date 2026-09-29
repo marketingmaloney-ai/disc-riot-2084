@@ -1,6 +1,10 @@
 import type { GameEvent } from '../sim/types';
+import { hasAsset } from '../render/assets';
 
-/** All audio is synthesized with Web Audio: arcade SFX + a procedural synthwave loop. */
+/** Per-character sounds cut from the art videos (tools/gen-assets/sfx.json). Missing ones use the synth. */
+const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
+
+/** Web Audio: synthesized arcade SFX + a procedural synthwave loop, layered with per-character sounds. */
 export class AudioEngine {
   ctx: AudioContext | null = null;
   private master!: GainNode;
@@ -12,6 +16,10 @@ export class AudioEngine {
   private step16 = 0;
   private song = 0;
   muted = false;
+  private chars: string[] = [];
+  private voices = new Map<string, AudioBuffer>();
+  private pending = new Map<string, ArrayBuffer>();
+  private lastEndVoice = -1e9;
 
   unlock() {
     if (this.ctx) { void this.ctx.resume(); return; }
@@ -43,6 +51,48 @@ export class AudioEngine {
     this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this.decodePending();
+  }
+
+  /** Match fighters (P1, P2): fetch their character sounds. */
+  setCharacters(ids: string[]) {
+    this.chars = ids;
+    for (const id of new Set(ids)) {
+      for (const n of VOICE_NAMES) {
+        const key = `${id}/${n}`;
+        if (this.voices.has(key) || this.pending.has(key)) continue;
+        const url = `assets/sfx/${key}.mp3`;
+        void hasAsset(url).then(async (ok) => {
+          if (!ok || this.pending.has(key) || this.voices.has(key)) return;
+          const r = await fetch(url).catch(() => null);
+          if (!r?.ok) return;
+          this.pending.set(key, await r.arrayBuffer());
+          this.decodePending();
+        });
+      }
+    }
+  }
+
+  private decodePending() {
+    if (!this.ctx) return; // decoded once the context exists (after the first user gesture)
+    for (const [key, data] of this.pending) {
+      this.pending.delete(key);
+      this.ctx.decodeAudioData(data).then((b) => this.voices.set(key, b)).catch(() => {});
+    }
+  }
+
+  /** Play player p's character sound; false if that character has none (caller falls back to synth). */
+  private voice(p: number | undefined, name: string, vol = 1, when = 0): boolean {
+    if (!this.ctx || this.muted || p === undefined || p < 0) return false;
+    const buf = this.voices.get(`${this.chars[p]}/${name}`);
+    if (!buf) return false;
+    const s = this.ctx.createBufferSource();
+    s.buffer = buf;
+    const g = this.ctx.createGain();
+    g.gain.value = vol;
+    s.connect(g).connect(this.sfxBus);
+    s.start(this.ctx.currentTime + when);
+    return true;
   }
 
   setMuted(m: boolean) {
@@ -117,20 +167,31 @@ export class AudioEngine {
     for (const e of events) {
       switch (e.type) {
         case 'catch': this.play(e.big ? 'bigcatch' : 'catch'); break;
-        case 'throw': this.play('throw'); break;
+        case 'throw': if (!this.voice(e.p, 'throw')) this.play('throw'); break;
         case 'curve': this.play('curve'); break;
-        case 'supersonic': this.play('supersonic'); break;
-        case 'super': this.play('super'); break;
+        case 'supersonic': this.play('supersonic'); this.voice(e.p, 'throw', 0.8); break;
+        case 'super': this.play('super'); this.voice(e.p, 'shout'); break;
         case 'reversal': this.play('supersonic'); break;
-        case 'lob': case 'toss': case 'block': this.play('lob'); break;
+        case 'lob': case 'toss': if (!this.voice(e.p, 'lob')) this.play('lob'); break;
+        case 'block': if (!this.voice(e.p, 'block') && !this.voice(e.p, 'lob')) this.play('lob'); break;
         case 'wall': this.play('wall'); break;
-        case 'dash': this.play('dash'); break;
+        case 'dash': if (!this.voice(e.p, 'dash', 0.8)) this.play('dash'); break;
         case 'land': this.play('land'); break;
         case 'charge': this.play('charge'); break;
         case 'score': this.play('score'); break;
         case 'drop': this.play('drop'); break;
         case 'serve': this.play('whistle'); break;
-        case 'setEnd': case 'matchEnd': this.play('setEnd'); break;
+        case 'setEnd': case 'matchEnd': {
+          this.play('setEnd');
+          // winner celebrates, loser pants (once per set end: setEnd and matchEnd can fire together)
+          const now = this.ctx?.currentTime ?? 0;
+          if (e.p !== undefined && e.p >= 0 && now - this.lastEndVoice > 2) {
+            this.lastEndVoice = now;
+            this.voice(e.p, 'win', 1, 0.35);
+            this.voice(1 - e.p, 'lose', 0.7, 0.9);
+          }
+          break;
+        }
       }
     }
   }

@@ -58,6 +58,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   await renderer.setup(ARENAS[arena], p1, p2);
   // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
   const upgraded = !isDemo && mode === '1p';
+  audio.setCharacters([p1, p2]);
   game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
   tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
   newAchievements = [];
@@ -399,6 +400,9 @@ if (touch) {
   pb.addEventListener('click', () => { if (!demo) togglePause(); });
   document.getElementById('app')!.appendChild(pb);
 }
+
+// Browsers only allow audio after a user gesture: unlock on the first key, tap or click anywhere.
+for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEventListener(ev, () => audio.unlock(), { once: true, capture: true });
 
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);

@@ -19,6 +19,19 @@
   "assets/characters/roxy/portrait.png",
   "assets/characters/vega/atlas.json",
   "assets/characters/vega/atlas.png",
-  "assets/characters/vega/portrait.png"
+  "assets/characters/vega/portrait.png",
+  "assets/sfx/brick/dash.mp3",
+  "assets/sfx/brick/lob.mp3",
+  "assets/sfx/brick/lose.mp3",
+  "assets/sfx/brick/shout.mp3",
+  "assets/sfx/brick/throw.mp3",
+  "assets/sfx/brick/win.mp3",
+  "assets/sfx/roxy/block.mp3",
+  "assets/sfx/roxy/dash.mp3",
+  "assets/sfx/roxy/lob.mp3",
+  "assets/sfx/roxy/lose.mp3",
+  "assets/sfx/roxy/shout.mp3",
+  "assets/sfx/roxy/throw.mp3",
+  "assets/sfx/roxy/win.mp3"
  ]
 }
