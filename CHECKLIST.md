@@ -125,12 +125,13 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [x] Far-wall neon strips still cut across back-row fighters' legs (reported from iPhone): the far wall, its strips and the floor apron are now drawn as background too, so anything on the court draws over them
 - [x] Sprite frames were clipped at the atlas cell edges (30+ frames, worst on Brick): `process.py pack` rewritten to a tight atlas with per-frame rects and 8 px margins, all 4 atlases rebuilt. No cropping, no neighbour bleed, GPU memory for fighters down from ~236 MB to ~109 MB
 - [x] CPU flickered between walk and idle every frame, restarting its run cycle: renderer now waits 0.12 s of standing still before run gives way to idle (AI and gameplay unchanged)
-- [ ] Disc glow/trail/sparks cut out by fighters in the near half (sprite `renderOrder` beats depth)
+- [x] Disc glow/trail/sparks were cut out by fighters, and a disc behind a fighter drew over his chest: fighter sprites now depth-test as an upright card at their feet (vertex shader), and disc effects draw after fighters
 - [ ] Hit-stop jitter: `px` isn't updated during freezes, so the disc buzzes on 120 Hz screens
 - [ ] REVERSAL! announcement hidden behind the super cut-in
 - [ ] Trail length and super sparks depend on frame rate
 - [ ] GPU memory leak: old arenas never disposed (attract demo loops leak), plus ~315 MB of atlases resident
-- [ ] Results screen overflows on phones (TITLE pushed off screen); A/B cover the near-right court corner
+- [x] Results screen overflowed on phones: two-column layout under 520 px tall, unlock list scrolls in its own box
+- [ ] A/B cover the near-right court corner
 - [ ] Minor: sudden-death timer blinks "0"; first arena's goal labels use the fallback font; pause-menu BACK covers the P1 name
 
 ## Phase 5: Stretch

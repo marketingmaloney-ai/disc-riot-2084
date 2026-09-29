@@ -247,4 +247,13 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .up-card img { height: 100%; width: 100%; object-fit: cover; object-position: top; }
   .logo .l1 { font-size: clamp(40px, 16vh, 90px); }
   .logo .l2 { font-size: clamp(28px, 11vh, 64px); }
+  /* Results on a landscape phone: two columns (result + unlocks | buttons) so every button stays on screen
+     however many achievements unlocked; the unlock list scrolls inside its own box if it's long. */
+  .screen.results { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 34vw); column-gap: 4vw; row-gap: 6px; align-content: center; justify-items: center; }
+  .results > :not(.menu) { grid-column: 1; }
+  .results > .menu { grid-column: 2; grid-row: 1 / span 5; align-self: center; min-width: 0; width: 100%; }
+  .results .winner { font-size: clamp(22px, 9vh, 40px); text-align: center; }
+  .ach-unlocked { min-width: 0; width: 100%; max-height: 42vh; overflow-y: auto; padding: 6px 10px; }
+  .ach-h { font-size: 12px; margin-bottom: 2px; }
+  .ach-row { font-size: 10px; gap: 8px; padding: 1px 0; }
 }

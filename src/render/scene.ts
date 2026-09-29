@@ -23,7 +23,24 @@ class PlayerView {
     this.tex = art.texture.clone();
     this.tex.needsUpdate = true;
     this.tex.magFilter = THREE.LinearFilter;
-    this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05 }));
+    const mat = new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05 });
+    // A sprite is a camera-facing quad: it leans back with the view, so a disc behind the fighter but up at
+    // chest height is nearer the camera than the sprite there and drew over him. Keep the sprite's look, but
+    // give the depth test an upright card standing at the feet: each corner gets the depth of the point where
+    // its view ray meets the vertical plane through the feet (facing the camera). Depth is linear across that
+    // plane on screen, so this is exact for every pixel.
+    mat.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <logdepthbuf_vertex>', `{
+        vec3 feetW = modelMatrix[ 3 ].xyz;
+        vec3 nW = cameraPosition - feetW; nW.y = 0.0; nW = normalize( nW );
+        vec3 nV = ( viewMatrix * vec4( nW, 0.0 ) ).xyz;
+        float t = dot( nV, modelViewMatrix[ 3 ].xyz ) / dot( nV, mvPosition.xyz );
+        vec4 onCard = projectionMatrix * vec4( mvPosition.xyz * t, 1.0 );
+        gl_Position.z = onCard.z / onCard.w * gl_Position.w;
+      }
+      #include <logdepthbuf_vertex>`);
+    };
+    this.sprite = new THREE.Sprite(mat);
     this.showFrame('idle', 0);
     this.shadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.55, 24),
@@ -303,6 +320,11 @@ export class GameRenderer {
     this.reticle = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.75, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color('#19e6ff').multiplyScalar(2.5), transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false }));
     this.reticle.rotation.x = -Math.PI / 2;
     this.reticle.position.y = 0.02;
+    // Glow, trail and sparks go after every fighter sprite (renderOrder 10 + z*10, at most ~51). They don't
+    // write depth, so a sprite drawn after them painted over them even when the disc was in front; drawn
+    // last, the depth test hides them only behind a fighter that is really in front.
+    const EFFECTS_LAST = 100;
+    this.discGlow.renderOrder = this.trail.mesh.renderOrder = this.particles.points.renderOrder = EFFECTS_LAST;
     this.scene.add(this.disc, this.discGlow, this.discShadow, this.reticle, this.trail.mesh, this.particles.points);
 
     window.addEventListener('resize', () => this.resize());
