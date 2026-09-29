@@ -132,7 +132,7 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [x] Trail length and super sparks depended on frame rate: trail now samples per 1/60 s of game time and sparks scale with frame time (measured trail length 5.1 at 60 Hz, was 2.55 at 120 Hz, 2.13 at 144 Hz; now 5.1 / 5.1 / 5.0)
 - [x] GPU memory leak: old arenas and fighters are now disposed on every setup (verified: geometries/textures 119/42 after 8 setups, now flat at 45/25). Atlases are also ~half the size since the atlas rebuild
 - [x] Results screen overflowed on phones: two-column layout under 520 px tall, unlock list scrolls in its own box
-- [ ] A/B cover the near-right court corner
+- [x] A/B buttons over the near-right court corner: reviewed, kept as is (Brice, 2026-09-29)
 - [x] Minor: sudden-death timer now shows a steady "SD" (was a blinking 0); pause-menu BACK moved below the P1 name; goal-label canvases now wait for Orbitron before painting (the fallback-font symptom could not be reproduced in testing, so this is a guard against the race)
 
 ## Phase 5: Stretch
