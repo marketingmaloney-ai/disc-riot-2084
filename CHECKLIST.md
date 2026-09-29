@@ -29,7 +29,7 @@
 ## Blockers / user actions
 - [x] GitHub repo: **marketingmaloney-ai/disc-riot-2084** (private, branch `main`). Always push after each item.
 - [x] Gemini API billing: **not needed** (user decision 2026-09-29).
-- [ ] User: delete the Gemini API key in Google AI Studio (no longer used, and it was pasted in chat). Never commit keys.
+- [x] User deleted the Gemini API key in Google AI Studio (2026-09-29). Never commit keys.
 
 ## Phase 1: Engine and playable prototype ✅
 - [x] Vite + TS + three.js project, fixed 60 Hz deterministic sim (`src/sim`)
