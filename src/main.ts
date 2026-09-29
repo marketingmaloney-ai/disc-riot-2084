@@ -160,6 +160,8 @@ function frame(now: number) {
       endTick();
     }
     if (!demo) hud.update(game);
+    // touch pause button: only during a real match, not over menus or the attract demo
+    pauseBtn?.classList.toggle('hidden', demo || (screens.childElementCount > 0 && !paused));
     renderer.render(game, paused ? 1 : acc / DT, paused ? 0 : dt);
     if (demo && game.phase === 'matchEnd' && !loading) void startDemo(); // once, not every frame while it loads
   }
@@ -172,6 +174,24 @@ window.addEventListener('keyup', (e) => { if (e.code === 'Escape' || e.code === 
 function clearScreens() {
   screens.innerHTML = '';
   onMenuInput = null;
+  setBack(null);
+}
+
+// On-screen BACK for touch (keyboard/pad already have Esc / Ⓑ): shown whenever the screen has somewhere to go back to.
+const backBtn = document.createElement('button');
+backBtn.className = 'back-btn hidden';
+backBtn.textContent = '‹ BACK';
+let onBack: (() => void) | null = null;
+backBtn.addEventListener('click', () => { if (onBack) { audio.play('menu'); onBack(); } });
+document.getElementById('app')!.appendChild(backBtn);
+function setBack(fn: (() => void) | null) {
+  onBack = fn;
+  backBtn.classList.toggle('hidden', !fn);
+}
+
+function openUpgrades(back: () => void, startChar?: string) {
+  upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, back, startChar);
+  setBack(back);
 }
 
 function show(html: string, cls = '') {
@@ -206,6 +226,7 @@ function menu(el: HTMLElement, items: { label: string; action: () => void }[], b
     if (e.ok) { audio.unlock(); audio.play('confirm'); items[sel].action(); }
     if (e.back && back) { audio.play('menu'); back(); }
   };
+  if (back) setBack(back);
 }
 
 function titleScreen() {
@@ -231,7 +252,7 @@ function modeScreen() {
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
     { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; charSelect(); } },
-    { label: 'FIGHTER UPGRADES', action: () => upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, modeScreen) },
+    { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
@@ -324,12 +345,14 @@ async function charSelect() {
     c.addEventListener('click', () => { cursor[who] = i; confirm(); });
   });
   paint();
+  const goBack = () => { if (who === 1) { who = 0; paint(); } else modeScreen(); };
+  setBack(goBack);
   onMenuInput = (e) => {
     const n = CHARACTERS.length;
     if (e.l) { cursor[who] = (cursor[who] + n - 1) % n; audio.play('menu'); paint(); }
     if (e.r) { cursor[who] = (cursor[who] + 1) % n; audio.play('menu'); paint(); }
     if (e.ok) confirm();
-    if (e.back) { if (who === 1) { who = 0; paint(); } else modeScreen(); }
+    if (e.back) goBack();
   };
 }
 
@@ -353,6 +376,7 @@ function arenaSelect() {
     if (e.ok) { audio.play('confirm'); vsScreen(); }
     if (e.back) charSelect();
   };
+  setBack(charSelect);
 }
 
 async function vsScreen() {
@@ -391,19 +415,21 @@ function showResults() {
   const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>${ach}`, 'results clear');
   const pts = tracker ? freePoints(charProfile(picks[0])) : 0;
   menu(s, [
-    ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { void startDemo(); upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, modeScreen, picks[0]); } }] : []),
+    ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { void startDemo(); openUpgrades(modeScreen, picks[0]); } }] : []),
     { label: 'REMATCH', action: () => beginVersus() },
     { label: 'CHARACTER SELECT', action: () => { void startDemo(); charSelect(); } },
     { label: 'TITLE', action: () => { audio.stopMusic(); void startDemo(); titleScreen(); } },
   ]);
 }
 
+let pauseBtn: HTMLElement | null = null;
 if (touch) {
   const pb = document.createElement('button');
   pb.className = 'pause-btn';
   pb.textContent = 'II';
   pb.addEventListener('click', () => { if (!demo) togglePause(); });
   document.getElementById('app')!.appendChild(pb);
+  pauseBtn = pb;
 }
 
 // Browsers only allow audio after a user gesture: unlock on the first key, tap or click anywhere.

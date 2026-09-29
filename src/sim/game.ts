@@ -227,6 +227,7 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       placeHeld(d, p);
       return;
     case 'dash':
+      if (lockUnderToss(g, p)) { setState(p, 'idle'); return; }
       p.x += p.dvx * C.DT;
       p.z += p.dvz * C.DT;
       clampToHalf(p);
@@ -239,6 +240,7 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       return;
     default: {
       // idle / walk
+      if (lockUnderToss(g, p)) return;
       let mx = inp.mx, mz = inp.mz;
       const len = Math.hypot(mx, mz);
       if (len > 0) { mx /= len; mz /= len; }
@@ -258,6 +260,20 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       tryCatch(g, p);
     }
   }
+}
+
+/** Under your own toss/block pop-up: once inside the landing circle you're locked on its centre
+ * until it lands, so a stray stick push or dash can't slide you out and lose the super charge. */
+function lockUnderToss(g: GameState, p: Player): boolean {
+  const d = g.disc;
+  const L = d.lob;
+  if (d.mode !== 'lob' || !L || d.kind !== 'toss' || d.thrower !== p.idx) return false;
+  if (Math.hypot(p.x - L.tx, p.z - L.tz) >= p.catchR * C.TOSS_LOCK_MULT) return false;
+  p.x = L.tx;
+  p.z = L.tz;
+  p.moving = false;
+  if (p.state === 'walk') p.state = 'idle';
+  return true;
 }
 
 function clampToHalf(p: Player) {

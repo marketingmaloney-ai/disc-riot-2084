@@ -22,6 +22,8 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   background: radial-gradient(ellipse at 50% 120%, rgba(255, 46, 154, 0.35), transparent 60%),
     linear-gradient(180deg, rgba(10, 2, 24, 0.82), rgba(26, 6, 56, 0.72));
   animation: fadeIn 0.25s ease-out;
+  /* screens taller than the viewport (phones in landscape) scroll instead of spilling off both edges */
+  overflow-y: auto; justify-content: safe center; padding: max(12px, env(safe-area-inset-top)) 16px 16px; box-sizing: border-box;
 }
 .screen.clear { background: rgba(8, 2, 20, 0.45); }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -222,3 +224,27 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .ach-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--pink), var(--yellow)); }
 .ach-n { text-align: right; }
 @media (max-width: 900px) { .up-wrap { grid-template-columns: 1fr 1.6fr; } .up-right { display: none; } }
+
+/* ---------- touch BACK button + small (phone landscape) screens ---------- */
+.back-btn {
+  position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); z-index: 30;
+  pointer-events: auto; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 14px; letter-spacing: 0.1em;
+  color: #fff; background: rgba(18, 5, 42, 0.8); border: 2px solid var(--cyan); padding: 10px 14px; transform: skewX(-10deg);
+  box-shadow: 0 0 12px rgba(25, 230, 255, 0.5);
+}
+.controls-help { max-width: min(1000px, 92vw); }
+.controls-help span { overflow-wrap: anywhere; }
+@media (max-height: 520px) {
+  .screen { gap: 1.2vh; padding-top: 52px; }
+  .title-h { font-size: clamp(18px, 6vh, 30px); }
+  .btn { font-size: clamp(12px, 4vh, 18px); padding: 6px 16px; }
+  .menu { gap: 6px; }
+  .controls-help { font-size: 11px; gap: 3px 10px; line-height: 1.25; }
+  .hint { display: none; }
+  .up-wrap { max-height: none; grid-template-columns: 1fr 1.6fr; }
+  .up-right { display: none; }
+  .up-card { height: 46vh; width: 34.5vh; overflow: hidden; }
+  .up-card img { height: 100%; width: 100%; object-fit: cover; object-position: top; }
+  .logo .l1 { font-size: clamp(40px, 16vh, 90px); }
+  .logo .l2 { font-size: clamp(28px, 11vh, 64px); }
+}

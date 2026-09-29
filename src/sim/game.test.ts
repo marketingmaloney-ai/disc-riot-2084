@@ -28,6 +28,27 @@ describe('simulation', () => {
     console.log('match seconds', (ticks / 60).toFixed(1), counts);
   });
 
+  it('locks you under your own toss so pushing/dashing away still catches it and charges the super', () => {
+    const g = createGame('vega', 'kaito', undefined, [], [true, false]);
+    const idle = { mx: 0, mz: 0, a: false, b: false };
+    let t = 0;
+    while (!(g.phase === 'play' && g.players.some((p) => p.state === 'hold')) && t++ < 600) step(g, [idle, idle]);
+    const p = g.players.find((q) => q.state === 'hold')!;
+    const fwd = -p.side; // toward the opponent
+    const inputs = (i: number) => {
+      const me = i === 0 ? { mx: -fwd, mz: 0, a: false, b: true } // B + back: self-toss
+        : i < 6 ? { mx: fwd, mz: 0, a: false, b: false } // walk into the landing circle
+        : { mx: fwd, mz: 1, a: i % 4 === 0, b: false }; // then keep pushing diagonally away + dashing
+      return (p.idx === 0 ? [me, idle] : [idle, me]) as [typeof me, typeof me];
+    };
+    let charged = false;
+    for (let i = 0; i < 120 && !charged; i++) {
+      step(g, inputs(i));
+      charged = g.events.some((e) => e.type === 'charge' && e.p === p.idx);
+    }
+    expect(charged).toBe(true);
+  });
+
   it('is deterministic', () => {
     const a = playMatch(5, 9, 'kaito', 'roxy');
     const b = playMatch(5, 9, 'kaito', 'roxy');
