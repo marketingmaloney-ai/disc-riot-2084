@@ -10,7 +10,7 @@ import { createGame, step } from './sim/game';
 import type { GameState, InputFrame } from './sim/types';
 import { GameRenderer } from './render/scene';
 import { ARENAS } from './render/arena';
-import { loadCharacterArt } from './render/characterArt';
+import { frameDataURL, loadCharacterArt } from './render/characterArt';
 import { CpuPlayer, DIFFICULTIES } from './ai/cpu';
 import {
   connectedPads, endTick, GamepadSource, KeyboardSource, MenuInput, MergedSource,
@@ -291,13 +291,7 @@ function howTo() {
 async function cardVisual(id: string): Promise<string> {
   const art = await loadCharacterArt(id);
   if (art.portrait) return `<img class="portrait" src="${art.portrait}" alt="">`;
-  const img = art.texture.image as CanvasImageSource & { width: number; height: number };
-  const [cw, ch] = art.meta.cell;
-  const row = art.meta.anims.idle.row;
-  const c = document.createElement('canvas');
-  c.width = cw; c.height = ch;
-  c.getContext('2d')!.drawImage(img, 0, row * ch, cw, ch, 0, 0, cw, ch);
-  return `<img src="${c.toDataURL()}" alt="">`;
+  return `<img src="${frameDataURL(art, 'idle')}" alt="">`;
 }
 
 async function charSelect() {

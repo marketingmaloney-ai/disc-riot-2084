@@ -2,14 +2,35 @@ import * as THREE from 'three';
 import { hasAsset } from './assets';
 import { charById, type CharacterDef } from '../sim/characters';
 
+/**
+ * Two layouts: the procedural stand-in art uses a uniform grid (cell/cols/rows/anchorY, one row per anim).
+ * Real art is format 2 from `process.py pack`: frames tightly packed, each with its own rect
+ * [x, y, w, h, footX] (px, y down from the top, feet on the rect's bottom edge), sized at baseCellH px = PLAYER_HEIGHT.
+ */
 export interface AtlasMeta {
-  cell: [number, number];
-  cols: number;
-  rows: number;
-  anchorY: number;
+  format?: 2;
+  size?: [number, number]; // format 2: atlas px
+  baseCellH?: number; // format 2: px that make PLAYER_HEIGHT
+  cell?: [number, number];
+  cols?: number;
+  rows?: number;
+  anchorY?: number;
   interim?: boolean; // one pose per anim (from ref sheets) -> renderer fakes motion
   heightScale?: number; // per-character height tweak (e.g. Brick is bigger)
-  anims: Record<string, { row: number; frames: number; fps: number; loop: boolean; interim?: boolean; discInArt?: boolean }>;
+  anims: Record<string, { row?: number; rects?: [number, number, number, number, number][]; frames: number; fps: number; loop: boolean; interim?: boolean; discInArt?: boolean }>;
+}
+
+/** One frame's place in the atlas, in px (y down from the top), plus where the feet are inside it. */
+export interface FrameRect { x: number; y: number; w: number; h: number; footX: number; footY: number; atlasW: number; atlasH: number; refH: number }
+
+export function frameRect(meta: AtlasMeta, anim: string, f: number): FrameRect {
+  const a = meta.anims[anim] ?? meta.anims.idle;
+  if (a.rects) {
+    const [x, y, w, h, footX] = a.rects[Math.min(f, a.rects.length - 1)];
+    return { x, y, w, h, footX, footY: 0, atlasW: meta.size![0], atlasH: meta.size![1], refH: meta.baseCellH ?? 448 };
+  }
+  const [cw, ch] = meta.cell!;
+  return { x: f * cw, y: a.row! * ch, w: cw, h: ch, footX: cw / 2, footY: meta.anchorY! * ch, atlasW: cw * meta.cols!, atlasH: ch * meta.rows!, refH: ch };
 }
 
 export interface CharacterArt {
@@ -242,12 +263,15 @@ export async function uiImageURL(id: string, prefer: 'cutin' | 'portrait', frame
   if (prefer === 'cutin' && (await exists(base + 'cutin.png'))) return base + 'cutin.png';
   const art = await loadCharacterArt(id);
   if (art.portrait) return art.portrait;
-  const img = art.texture.image as CanvasImageSource;
-  const [cw, ch] = art.meta.cell;
-  const row = (art.meta.anims[frameAnim] ?? art.meta.anims.idle).row;
+  return frameDataURL(art, frameAnim);
+}
+
+/** First frame of an animation as a standalone image (UI fallback when there is no portrait). */
+export function frameDataURL(art: CharacterArt, anim = 'idle'): string {
+  const r = frameRect(art.meta, anim, 0);
   const c = document.createElement('canvas');
-  c.width = cw;
-  c.height = ch;
-  c.getContext('2d')!.drawImage(img, 0, row * ch, cw, ch, 0, 0, cw, ch);
+  c.width = r.w;
+  c.height = r.h;
+  c.getContext('2d')!.drawImage(art.texture.image as CanvasImageSource, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
   return c.toDataURL();
 }

@@ -143,7 +143,7 @@ def build_character(cid: str, spec: dict):
         else:
             anims[name] = {"frames": [str(three_q)], "fps": fps, "loop": loop}
             flags[name] = {"interim": True}
-    man = {"cell": [400, 448], "height": 430, "heightScale": spec.get("heightScale", 1.0), "anims": anims}
+    man = {"height": 430, "heightScale": spec.get("heightScale", 1.0), "anims": anims}
     (work / "manifest.json").write_text(json.dumps(man))
     dst = OUT / "characters" / cid
     dst.mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,9 @@ def build_character(cid: str, spec: dict):
     upper = upper.resize((round(upper.width * s), round(upper.height * s)), Image.LANCZOS)
     canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     canvas.paste(upper, ((W - upper.width) // 2, H - upper.height), upper)
-    canvas.save(dst / "portrait.png", optimize=True)
+    pdst = dst / "portrait.png"
+    if not (pdst.exists() and np.array_equal(np.array(Image.open(pdst).convert("RGBA")), np.array(canvas))):
+        canvas.save(pdst, optimize=True)  # only when it changed: re-encoding identical pixels churns git
     real = [n for n in flags if not flags[n].get("interim")]
     print(f"{cid}: real {real}, interim {[n for n in flags if flags[n].get('interim')]}")
 

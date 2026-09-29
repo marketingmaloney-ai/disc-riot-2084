@@ -104,7 +104,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
   throw, super shout, dash, lob, block, win and lose.
   - Roxy and Brick have them. Vega's clip is only background noise, and Kaito has no clips.
   - Anything missing falls back to the synth sounds.
-- Atlases must stay **≤4096 px wide** for phones: at most 10 frames per animation in 400 px cells.
+- Atlases are **format 2** (since 2026-09-29): `process.py pack` trims each frame, keeps one scale per animation, shelf-packs frames with an 8 px clear margin and writes per-frame rects `[x, y, w, h, footX]`; the renderer sizes and anchors each sprite per frame. Nothing is cropped or shrunk, both atlas dimensions stay ≤4096 px for phones, and the four atlases take ~109 MB of GPU memory (was ~236 MB). `process.py video` falls back to system `ffmpeg` when `imageio-ffmpeg` is not installed.
 
 ## 7. Current state (end of September 2026)
 - All 4 characters have all 10 animations from real art: idle, run, dash, hold, throw, lob, block, knock, win, lose.

@@ -5,7 +5,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import type { GameEvent, GameState, Player } from '../sim/types';
 import { buildArena, type ArenaDef, type ArenaView } from './arena';
-import { loadCharacterArt, type CharacterArt } from './characterArt';
+import { frameRect, loadCharacterArt, type CharacterArt } from './characterArt';
 import { charById } from '../sim/characters';
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -23,14 +23,8 @@ class PlayerView {
     this.tex = art.texture.clone();
     this.tex.needsUpdate = true;
     this.tex.magFilter = THREE.LinearFilter;
-    const m = art.meta;
-    this.tex.repeat.set(1 / m.cols, 1 / m.rows);
     this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05 }));
-    this.sprite.center.set(0.5, m.anchorY);
-    const aspect = m.cell[0] / m.cell[1];
-    this.baseH = PLAYER_HEIGHT * (art.meta.heightScale ?? 1);
-    this.baseW = this.baseH * aspect;
-    this.sprite.scale.set(this.baseW, this.baseH, 1);
+    this.showFrame('idle', 0);
     this.shadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.55, 24),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }),
@@ -63,17 +57,29 @@ class PlayerView {
     this.animT += dt;
     let f = Math.floor(this.animT * a.fps);
     f = a.loop ? f % a.frames : Math.min(f, a.frames - 1);
+    this.showFrame(anim, f);
     if (this.art.meta.interim || a.interim) this.applyMotion(anim);
     else this.resetMotion();
-    const u = 1 / meta.cols, v = 1 / meta.rows;
-    const row = meta.rows - 1 - a.row; // textures are bottom-up
-    // Art faces right; right-side player faces left => mirror.
+  }
+
+  /** Point the texture at one frame and size + anchor the sprite from its rect (frames differ in size). */
+  private showFrame(anim: string, f: number) {
+    const r = frameRect(this.art.meta, anim, f);
+    const k = (PLAYER_HEIGHT * (this.art.meta.heightScale ?? 1)) / r.refH; // world units per atlas px
+    this.baseW = r.w * k;
+    this.baseH = r.h * k;
+    const u0 = r.x / r.atlasW, du = r.w / r.atlasW;
+    const v0 = 1 - (r.y + r.h) / r.atlasH, dv = r.h / r.atlasH; // textures are bottom-up
+    const fx = r.footX / r.w, fy = r.footY / r.h;
+    // Art faces right; right-side player faces left => mirror around the feet.
     if (this.side > 0) {
-      this.tex.repeat.set(-u, v);
-      this.tex.offset.set((f + 1) * u, row * v);
+      this.tex.repeat.set(-du, dv);
+      this.tex.offset.set(u0 + du, v0);
+      this.sprite.center.set(1 - fx, fy);
     } else {
-      this.tex.repeat.set(u, v);
-      this.tex.offset.set(f * u, row * v);
+      this.tex.repeat.set(du, dv);
+      this.tex.offset.set(u0, v0);
+      this.sprite.center.set(fx, fy);
     }
   }
 

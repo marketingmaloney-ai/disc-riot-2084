@@ -5,13 +5,12 @@ Subcommands
   key    IN OUT                 chroma-key #00FF00 background -> transparent PNG (with despill + soft edge)
   slice  IN OUTDIR [--expect N] content-aware slice a keyed sheet into trimmed frames (left->right, top->bottom)
   split  IN... OUTDIR           one PNG per figure (for Flow outputs that drew the character twice)
-  pack   MANIFEST.json OUT.png  build a uniform-cell, foot-anchored atlas + OUT.json for the game
+  pack   MANIFEST.json OUT.png  build a tight, foot-anchored atlas (format 2: per-frame rects) + OUT.json for the game
   sheet  IN OUT                 make a checkerboard preview of a transparent image (for review)
 
 Manifest format (pack):
 {
-  "cell": [320, 448],            # atlas cell size in px
-  "height": 400,                 # px height of a standing frame inside the cell
+  "height": 430,                 # px height of a standing frame (448 px = the game's PLAYER_HEIGHT)
   "anims": {
     "idle": {"frames": ["raw/vega/idle_0.png", ...], "fps": 6, "loop": true, "scale": 1.0},
     ...
@@ -171,45 +170,75 @@ def foot_center_x(a):
     return float(xs[sel].mean())
 
 
+PACK_PAD = 8  # transparent gutter (px) around every frame: no art is ever cut at, or bleeds across, an edge
+PACK_MAX = 4096  # phones: keep both atlas dimensions at most this
+BASE_CELL_H = 448  # px of the old uniform cell = PLAYER_HEIGHT in the game (keeps fighters the same size)
+
+
+def shelf_pack(sizes, width):
+    """Place (w, h) boxes on shelves, tallest first. Returns ([(x, y)], total height)."""
+    order = sorted(range(len(sizes)), key=lambda i: -sizes[i][1])
+    pos, x, y, shelf = [None] * len(sizes), 0, 0, 0
+    for i in order:
+        w, h = sizes[i]
+        if x + w > width:
+            x, y, shelf = 0, y + shelf, 0
+        pos[i] = (x, y)
+        x += w
+        shelf = max(shelf, h)
+    return pos, y + shelf
+
+
 def cmd_pack(manifest, out):
+    """Tight, foot-anchored atlas (format 2): no frame is ever cropped, shrunk or touching another.
+
+    Every frame keeps its animation's single scale (no size pulsing; a standing frame is `height` px),
+    is trimmed to its art and shelf-packed with PACK_PAD px of clear space around it. atlas.json stores
+    per frame [x, y, w, h, footX] (pixels, y down from the top); the game sizes and anchors each sprite
+    from that, at BASE_CELL_H px = PLAYER_HEIGHT, so fighters look exactly as big as before.
+    """
     man = json.loads(Path(manifest).read_text())
     base = Path(manifest).parent
-    cw, ch = man["cell"]
     stand_h = man["height"]
     anims = man["anims"]
-    cols = max(len(a["frames"]) for a in anims.values())
-    rows = len(anims)
-    atlas = Image.new("RGBA", (cw * cols, ch * rows), (0, 0, 0, 0))
-    meta = {"cell": [cw, ch], "cols": cols, "rows": rows, "anchorY": 0.04, "anims": {}}
+
+    frames, owner = [], []
+    for name, a in anims.items():
+        imgs = [Image.open(base / f).convert("RGBA") for f in a["frames"]]
+        k = stand_h * a.get("scale", 1.0) / max(f.height for f in imgs)
+        for f in imgs:
+            f2 = f.resize((max(1, round(f.width * k)), max(1, round(f.height * k))), Image.LANCZOS)
+            fx = foot_center_x(np.array(f2)[..., 3]) - a.get("dx", 0)
+            frames.append((f2, fx))
+            owner.append(name)
+
+    sizes = [(f.width + 2 * PACK_PAD, f.height + 2 * PACK_PAD) for f, _ in frames]
+    best = None
+    for width in (2048, 2560, 3072, 3584, 4096):
+        if width < max(w for w, _ in sizes):
+            continue
+        pos, height = shelf_pack(sizes, width)
+        if height <= PACK_MAX and (best is None or width * height < best[0] * best[1]):
+            best = (width, height, pos)
+    if best is None:
+        sys.exit(f"frames don't fit in {PACK_MAX}x{PACK_MAX}: lower the standing height")
+    W, H, pos = best
+    W = max(x + w for (x, _), (w, _) in zip(pos, sizes))  # trim unused width
+    atlas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+
+    meta = {"format": 2, "size": [W, H], "baseCellH": BASE_CELL_H, "anims": {}}
     for k in ("interim", "heightScale"):
         if k in man:
             meta[k] = man[k]
-    for r, (name, a) in enumerate(anims.items()):
-        frames = [Image.open(base / f).convert("RGBA") for f in a["frames"]]
-        tallest = max(f.height for f in frames)
-        k = stand_h * a.get("scale", 1.0) / tallest
-        for c, f in enumerate(frames):
-            f2 = f.resize((max(1, round(f.width * k)), max(1, round(f.height * k))), Image.LANCZOS)
-            arr = np.array(f2)
-            fx = foot_center_x(arr[..., 3])
-            if f2.height > ch * 0.97:
-                s = ch * 0.97 / f2.height
-                f2 = f2.resize((round(f2.width * s), round(f2.height * s)), Image.LANCZOS)
-                fx *= s
-            # Keep one scale per animation (no per-frame shrinking = no size pulsing). Frames wider than
-            # the cell (disc trails, outstretched arms) are cropped around the foot anchor instead.
-            ox = round(cw / 2 - fx + a.get("dx", 0))
-            if f2.width <= cw:
-                ox = max(0, min(cw - f2.width, ox))
-            else:
-                left = max(0, -ox)
-                f2 = f2.crop((left, 0, min(f2.width, left + cw), f2.height))
-                ox = max(0, ox)
-            oy = round(ch * (1 - meta["anchorY"]) - f2.height)
-            atlas.paste(f2, (c * cw + ox, r * ch + max(0, oy)), f2)
-        meta["anims"][name] = {"row": r, "frames": len(frames), "fps": a.get("fps", 8), "loop": a.get("loop", True)}
+    for name, a in anims.items():
+        meta["anims"][name] = {"frames": 0, "fps": a.get("fps", 8), "loop": a.get("loop", True), "rects": []}
+    for (f2, fx), (x, y), name in zip(frames, pos, owner):
+        atlas.paste(f2, (x + PACK_PAD, y + PACK_PAD), f2)
+        m = meta["anims"][name]
+        m["rects"].append([x + PACK_PAD, y + PACK_PAD, f2.width, f2.height, round(fx, 1)])
+        m["frames"] += 1
     atlas.save(out, optimize=True)
-    Path(out).with_suffix(".json").write_text(json.dumps(meta, indent=1))
+    Path(out).with_suffix(".json").write_text(json.dumps(meta, separators=(",", ":")))
     print("atlas ->", out, atlas.size)
 
 
@@ -310,14 +339,19 @@ def cmd_split(inp, outdir):
 
 def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None):
     """Video (green screen) -> keyed, trimmed frames k_0000.png... + numbered contact sheet.jpg."""
+    import shutil
     import subprocess
-    import imageio_ffmpeg
+    try:
+        import imageio_ffmpeg
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:  # e.g. the Mac: Homebrew ffmpeg on PATH works the same
+        ffmpeg = shutil.which("ffmpeg") or sys.exit("video needs imageio-ffmpeg (pip) or ffmpeg on PATH")
 
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
     for f in out.glob("*.png"):
         f.unlink()
-    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-ss", str(start)]
+    cmd = [ffmpeg, "-loglevel", "error", "-ss", str(start)]
     if dur:
         cmd += ["-t", str(dur)]
     cmd += ["-i", str(inp), "-vf", f"fps={fps}", str(out / "raw_%04d.png")]

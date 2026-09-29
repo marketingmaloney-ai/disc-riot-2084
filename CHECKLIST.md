@@ -61,7 +61,7 @@ Status key: ⬜ not started · 🔄 in progress · 👀 awaiting approval · ✅
 - ✅ Reference sheets: Vega **ref_v3**, Kaito **ref_v1**, Roxy **ref_v3** (tattoo locked to left arm), Brick **ref_v1**
 
 ### Animations (all 10 per character are real art)
-Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2). Atlases stay ≤4096 px wide (max 10 frames per anim, 400 px cells).
+Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(2) win(2) lose(2). Atlases are tightly packed (format 2: per-frame rects, 8 px margins, both sides ≤4096 px); see `process.py pack`.
 
 | Character | Source | Status |
 |---|---|---|
@@ -123,7 +123,7 @@ Order and frames: idle(4) run(6) dash(3) hold(2) throw(3) lob(2) block(2) knock(
 - [x] One-shot animations (throw, lob, block, knock) got cut off at ~0.16 s; they now finish before going back to idle/hold (running still cuts in)
 - [x] Back-row fighters read as standing in the crowd once drawn over the backdrop (reported from iPhone): added a tinted glass barrier + neon rail above the far wall, painted as background so fighters always draw in front. Also held the backdrop under the bloom threshold and toned down the far-wall/rail neon, which were bloom-washing back-row fighters in Sunset Strip and Orbital Cabana
 - [x] Far-wall neon strips still cut across back-row fighters' legs (reported from iPhone): the far wall, its strips and the floor apron are now drawn as background too, so anything on the court draws over them
-- [ ] Sprite frames clipped at the atlas cell edges (30+ frames, worst on Brick): pad cells in `process.py pack` instead of cropping, then rebuild atlases
+- [x] Sprite frames were clipped at the atlas cell edges (30+ frames, worst on Brick): `process.py pack` rewritten to a tight atlas with per-frame rects and 8 px margins, all 4 atlases rebuilt. No cropping, no neighbour bleed, GPU memory for fighters down from ~236 MB to ~109 MB
 - [x] CPU flickered between walk and idle every frame, restarting its run cycle: renderer now waits 0.12 s of standing still before run gives way to idle (AI and gameplay unchanged)
 - [ ] Disc glow/trail/sparks cut out by fighters in the near half (sprite `renderOrder` beats depth)
 - [ ] Hit-stop jitter: `px` isn't updated during freezes, so the disc buzzes on 120 Hz screens
