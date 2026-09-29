@@ -334,7 +334,9 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     const w = BACKDROP_W, h = w / (img.width / img.height), lean = BACKDROP_LEAN;
     // The leaning plane cuts through the air above the back of the court, so it is drawn first and without
     // depth: a background layer. Otherwise it hides fighters standing at the back and deep lobs.
-    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, toneMapped: false, fog: false, depthTest: false, depthWrite: false }));
+    // Held just under the bloom threshold (0.9): bright painted skies otherwise bloom into a haze that
+    // washes out any fighter standing in front of them (same reason the painted courts are toned down).
+    sky = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: skyTex, color: new THREE.Color(0.88, 0.88, 0.88), toneMapped: false, fog: false, depthTest: false, depthWrite: false }));
     sky.renderOrder = -1000;
     sky.rotation.x = lean;
     sky.position.set(0, BACKDROP_BOTTOM_Y + (h / 2) * Math.cos(lean), -W - 0.6 + (h / 2) * Math.sin(lean) - BACKDROP_BACK);
@@ -354,13 +356,42 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   farWall.position.set(0, 0.45, -W - 0.15);
   group.add(farWall);
   const neonMat = (c: string, k = 3) => new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), toneMapped: false });
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.08, 0.05), neonMat(def.neonB));
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.08, 0.05), neonMat(def.neonB, 1.7)); // top of the far wall: brighter blooms over back-row fighters
   strip.position.set(0, 0.86, -W + 0.01);
   group.add(strip);
   const strip2 = strip.clone();
   strip2.position.y = 0.2;
   strip2.material = neonMat(def.neonA, 2);
   group.add(strip2);
+  // Glass barrier above the far wall (think hockey glass). Fighters at the back of the court are drawn over
+  // the backdrop; without a barrier they read as standing up in the crowd. Tinted glass + a neon top rail
+  // puts them visibly in front of the arena wall. Purely visual: the sim's walls are unchanged.
+  // Sprites are camera-facing cards that lean back, so a back-row fighter's upper body pokes through any real
+  // plane here. The glass is therefore painted as background: drawn right after the backdrop with no depth,
+  // in the opaque pass (CustomBlending keeps alpha there), so everything on the court draws over it.
+  const GLASS_H = 2.3;
+  const asBackground = (m: THREE.Mesh, order: number) => {
+    const mat = m.material as THREE.Material;
+    mat.depthTest = false;
+    mat.depthWrite = false;
+    m.renderOrder = order;
+    group.add(m);
+  };
+  const glassMat = new THREE.MeshBasicMaterial({
+    color: def.night ? '#140a36' : '#2a1050', opacity: 0.5, fog: false,
+    blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+  });
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(2 * L + 0.6, GLASS_H), glassMat);
+  glass.position.set(0, 0.9 + GLASS_H / 2, -W - 0.15);
+  asBackground(glass, -999);
+  const glassRail = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.06, 0.06), neonMat(def.neonB, 1.15));
+  glassRail.position.set(0, 0.9 + GLASS_H, -W - 0.15);
+  asBackground(glassRail, -998);
+  for (let i = -4; i <= 4; i++) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, GLASS_H, 0.04), neonMat(def.neonA, 0.9));
+    post.position.set((i / 4) * (L + 0.3), 0.9 + GLASS_H / 2, -W - 0.15);
+    asBackground(post, -998);
+  }
   // near rail (low so it doesn't hide players)
   const rail = new THREE.Mesh(new THREE.BoxGeometry(2 * L + 0.6, 0.04, 0.04), neonMat(def.neonB, 1.2));
   rail.position.set(0, 0.1, W + 0.1);
