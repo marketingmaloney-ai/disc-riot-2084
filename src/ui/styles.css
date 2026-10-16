@@ -57,7 +57,13 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .title-h { font-family: 'Russo One', sans-serif; font-size: clamp(22px, 4vw, 52px); letter-spacing: 0.1em; color: var(--yellow); text-shadow: 3px 3px 0 var(--pink), 0 0 20px rgba(255, 230, 0, 0.6); transform: skewX(-8deg); }
 
 /* ---------- character select ---------- */
-.cs-grid { display: flex; gap: 1.5vw; justify-content: center; }
+.cs-grid { display: flex; gap: 1.2vw; justify-content: center; width: min(96vw, 1900px); padding: 0 max(0px, env(safe-area-inset-left)) 0 max(0px, env(safe-area-inset-right)); box-sizing: border-box; }
+/* every fighter fits on one row at any width: the cards share the row instead of overflowing off both edges */
+.cs-grid .card { flex: 1 1 0; min-width: 0; width: auto; max-width: 230px; }
+.cs-grid .card .nm { font-size: clamp(8px, 1.15vw, 15px); padding: 0.6vh 0.3vw; }
+.cs-grid .card .lvl { font-size: clamp(7px, 1vw, 14px); padding: 1px 4px; right: 8%; top: 4px; }
+.cs-grid .card .tag { font-size: clamp(8px, 1vw, 16px); padding: 1px 5px; left: 7%; top: 4px; }
+.cs-grid .card .tag.t2 { left: auto; right: 7%; top: 22px; }
 .card {
   position: relative; width: clamp(110px, 19vw, 260px); aspect-ratio: 3 / 4.4; cursor: pointer;
   background: linear-gradient(160deg, #2a0d4a, #0c0420); border: 3px solid rgba(255, 255, 255, 0.2);
