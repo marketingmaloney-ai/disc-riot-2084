@@ -8,7 +8,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 1. What it is
 - A **Windjammers-style, fast-paced arcade flying-disc game**, a full playable prototype in **three.js**.
 - Repo: `github.com/marketingmaloney-ai/disc-riot-2084` (private, branch `main`).
-- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 33 as of 2026-10-16: input buffering, catch pop, easier Easy CPU; v32: 8 fighters with 3 supers each; v31: pauses when backgrounded; v30: licensed music from Openverse, Kenney CC0 sound effects + arcade announcer, Quendel crowd, CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
+- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 35 as of 2026-10-16: online versus menus + rollback netcode, relay not yet deployed; v34: shared-screen 2P on touch; v33: input buffering, catch pop, easier Easy CPU; v32: 8 fighters with 3 supers each; v31: pauses when backgrounded; v30: licensed music from Openverse, Kenney CC0 sound effects + arcade announcer, Quendel crowd, CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
   Republish it from `dist/` after `npm run build`.
 
 ## 2. Owner preferences and working style
@@ -134,6 +134,12 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - Music was chosen without listening (by genre, metadata and spectrogram analysis): the owner should audition it. Alternates per slot are listed in `music.json`.
 - Wikimedia's synthwave tracks (Eternity Arcade, Ru Frequence, Infraction, Alex-Productions) were rate-limited from the cloud (HTTP 429); worth trying from home.
 - Keep checking that the Easy CPU is beatable on a phone. Next lever: make the Easy CPU itself weaker.
+
+## Multiplayer (2026-10-16)
+- Owner chose local + online, free tier only, friend room codes.
+- Local: 2 PLAYER VERSUS → SHARE THIS SCREEN (split touch controls) or USE A CONTROLLER.
+- Online: rollback netcode in `src/net/` (deterministic sim, host state snapshot each second against float drift) over a room-code relay in `server/` (Cloudflare Worker + Durable Object, free plan, about 180 matches a day).
+- Deploy steps are in `server/README.md`; the game reads the relay URL from `VITE_NET_URL`.
 
 ## 9. Gotchas learned
 - Flow often draws a character twice. Use `process.py split`, or `"figure"` in `approved.json`.
