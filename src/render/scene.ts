@@ -147,6 +147,7 @@ class PlayerView {
     return this.anim === 'hold' && !!this.art.meta.anims.hold?.discInArt;
   }
   hop = 0;
+  pop = 0; // catch squash, 1 -> 0
   lastWant = '';
   idleFor = 0;
   baseW = 1;
@@ -444,6 +445,7 @@ export class GameRenderer {
         case 'catch':
           this.particles.burst(e.x!, 1, e.z!, e.big ? '#ffffff' : pc, e.big ? 60 : 18, e.big ? 9 : 5);
           this.shake = Math.max(this.shake, e.big ? 0.5 : 0.12);
+          if (e.p !== undefined && this.players[e.p]) this.players[e.p].pop = e.big ? 1 : 0.7;
           break;
         case 'wall':
           this.particles.burst(e.x!, 0.8, e.z!, '#19e6ff', 14, 6, 0.3, 0.35);
@@ -501,6 +503,13 @@ export class GameRenderer {
       const anim = this.animFor(p, g);
       v.setFrame(anim, dt, anim !== v.lastWant);
       v.lastWant = anim;
+      if (v.pop > 0) {
+        // catch impact: a quick squash that springs back
+        const k = v.pop * Math.cos(v.pop * 9);
+        v.sprite.scale.x *= 1 + 0.16 * k;
+        v.sprite.scale.y *= 1 - 0.11 * k;
+        v.pop = Math.max(0, v.pop - dt * 4);
+      }
       v.sprite.renderOrder = 10 + Math.round(z * 10);
       // ice supers: frozen fighters flash icy blue
       (v.sprite.material as THREE.SpriteMaterial).color.set(p.frozen > 0 && p.state === 'knock' ? (Math.sin(this.time * 30) > 0 ? '#9fe8ff' : '#d8f6ff') : (charById(p.charId).spriteTint ?? '#ffffff'));
