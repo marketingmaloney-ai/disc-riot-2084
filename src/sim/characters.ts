@@ -44,6 +44,7 @@ export interface CharacterDef {
   power: number; // base throw speed m/s
   curve: number; // lateral accel multiplier
   reach?: number; // catch reach multiplier (default 1)
+  spriteTint?: string; // multiplies the sprite (tames bloom on very bright outfits)
   /** [0] charged A (stick neutral or forward), [1] charged A while holding up/down. */
   supers: [SuperDef, SuperDef];
   /** Charged B: a super lob. */
@@ -54,8 +55,8 @@ export interface CharacterDef {
 export const CHARACTERS: CharacterDef[] = [
   {
     id: 'vega', name: 'VEGA STARR', nation: 'MIAMI', tagline: 'Chrome & Sunset',
-    speed: 7.0, power: 23.3, curve: 1.0,
-    supers: [{ name: 'LASER SURF', kind: 'wave' }, { name: 'SUNSET SPIRAL', kind: 'spiral', speed: 1.0 }],
+    speed: 7.0, power: 22.8, curve: 1.0,
+    supers: [{ name: 'LASER SURF', kind: 'wave' }, { name: 'SUNSET SPIRAL', kind: 'spiral', speed: 0.95 }],
     lobSuper: { name: 'NEON DIVE', kind: 'bounce', bounces: 1 },
     colors: { primary: '#ff2e9a', secondary: '#c0c8d8', skin: '#f2c3a0', hair: '#ff5ec4' },
   },
@@ -69,34 +70,34 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: 'roxy', name: 'ROXY VOLTAGE', nation: 'RIO', tagline: 'High Voltage Heat',
     speed: 7.4, power: 22.6, curve: 0.85,
-    supers: [{ name: 'THUNDER KISS', kind: 'fireball', speed: 1.3 }, { name: 'SAMBA SURGE', kind: 'rush', speed: 1.55 }],
-    lobSuper: { name: 'LIGHTNING ROD', kind: 'quake', radius: 2.0, stun: 0.25 },
+    supers: [{ name: 'THUNDER KISS', kind: 'fireball', speed: 1.3 }, { name: 'SAMBA SURGE', kind: 'rush', speed: 1.75 }],
+    lobSuper: { name: 'LIGHTNING ROD', kind: 'quake', radius: 1.0, stun: 0.25 },
     colors: { primary: '#2f6bff', secondary: '#b6ff2e', skin: '#9a5f3c', hair: '#27a7ff' },
   },
   {
     id: 'brick', name: 'BRICK DIAMOND', nation: 'GOLD COAST', tagline: 'Built Like a Bulldozer',
     speed: 6.4, power: 24.3, curve: 0.75,
     supers: [{ name: 'METEOR SLAM', kind: 'meteor' }, { name: 'WRECKING BALL', kind: 'straight', speed: 1.22, knock: 2.2 }],
-    lobSuper: { name: 'BODY SLAM', kind: 'quake', radius: 2.4, stun: 0.3 },
+    lobSuper: { name: 'BODY SLAM', kind: 'quake', radius: 1.15, stun: 0.3 },
     colors: { primary: '#ff7a1a', secondary: '#2b2b3a', skin: '#d99a6c', hair: '#f5d06a' },
   },
   {
     id: 'nova', name: 'NOVA KAIN', nation: 'SELENE CITY', tagline: 'Fastest Wheels on the Moon',
-    speed: 8.6, power: 20.6, curve: 1.1,
-    supers: [{ name: 'ECLIPSE ORBIT', kind: 'orbit', speed: 0.98 }, { name: 'ROLLER RUSH', kind: 'rush', speed: 1.75 }],
+    speed: 8.6, power: 21.4, curve: 1.1,
+    supers: [{ name: 'ECLIPSE ORBIT', kind: 'orbit', speed: 0.98 }, { name: 'ROLLER RUSH', kind: 'rush', speed: 1.9 }],
     lobSuper: { name: 'MOONSHOT', kind: 'bounce', bounces: 2 },
     colors: { primary: '#9b5cff', secondary: '#d8dcf0', skin: '#f0c9b0', hair: '#f4f4ff' },
   },
   {
     id: 'diesel', name: 'DIESEL REYES', nation: 'MEXICO CITY', tagline: 'Drop the Beat',
-    speed: 6.2, power: 24.8, curve: 0.7,
-    supers: [{ name: 'BASS DROP', kind: 'stopgo', speed: 1.32 }, { name: 'MIC CHECK', kind: 'straight', speed: 1.2, knock: 2.6 }],
-    lobSuper: { name: 'PILEDRIVER', kind: 'quake', radius: 2.8, stun: 0.35 },
+    speed: 6.5, power: 24.8, curve: 0.7,
+    supers: [{ name: 'BASS DROP', kind: 'stopgo', speed: 1.2 }, { name: 'MIC CHECK', kind: 'straight', speed: 1.2, knock: 2.6 }],
+    lobSuper: { name: 'PILEDRIVER', kind: 'quake', radius: 1.05, stun: 0.35 },
     colors: { primary: '#39ff6a', secondary: '#ff3b3b', skin: '#b97a52', hair: '#141414' },
   },
   {
     id: 'saki', name: 'SAKI VANCE', nation: 'SEOUL', tagline: 'Now You See It',
-    speed: 7.3, power: 21.6, curve: 1.5,
+    speed: 7.3, power: 21.6, curve: 1.5, spriteTint: '#cfcfd4',
     supers: [{ name: 'HOLO DECOY', kind: 'decoy', speed: 1.12 }, { name: 'PIXEL STORM', kind: 'zigzag', speed: 1.2, period: 0.11 }],
     lobSuper: { name: 'ENCORE', kind: 'bounce', bounces: 2 },
     colors: { primary: '#5effd0', secondary: '#c39bff', skin: '#f2cfb4', hair: '#b9a7ff' },

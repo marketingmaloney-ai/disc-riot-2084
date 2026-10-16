@@ -226,8 +226,10 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       // pushed back by a super's impact; ice supers freeze you in place for longer
       if (p.t < C.KNOCK_TIME) p.x = clamp(p.x - fwd * p.knockV * C.DT, -C.PLAYER_MAX_X, C.PLAYER_MAX_X);
       clampToHalf(p);
-      if (p.t > p.knockT) { p.frozen = 0; setState(p, 'hold'); }
-      placeHeld(d, p);
+      // knocked down by a super lob's quake: the disc stays loose, so recover empty-handed
+      const holding = d.mode === 'held' && d.holder === p.idx;
+      if (p.t > p.knockT) { p.frozen = 0; setState(p, holding ? 'hold' : 'idle'); }
+      if (holding) placeHeld(d, p);
       return;
     case 'dash':
       if (lockUnderToss(g, p)) { setState(p, 'idle'); return; }
@@ -387,6 +389,7 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
     let ang = inp.mz * C.ANGLE_SHOT * 0.6;
     if (sd.kind === 'meteor') sp = p.power * C.METEOR_AIR; // hangs in the air, then slams mid-court
     if (sd.kind === 'rush') { sp = p.power * C.RUSH_START; ang = (opp.z > 0 ? -1 : 1) * C.RUSH_ANGLE; } // burst toward the open corner
+    if (sd.kind === 'straight' && sd.stun) ang = (opp.z > 0 ? -1 : 1) * C.RUSH_ANGLE; // ice shots aim for the open corner too
     if (sd.kind === 'wave' || sd.kind === 'zigzag' || sd.kind === 'spiral' || sd.kind === 'orbit' || sd.kind === 'decoy' || sd.kind === 'stopgo') ang = 0;
     d.vx = fwd * Math.cos(ang) * sp;
     d.vz = Math.sin(ang) * sp;

@@ -85,6 +85,11 @@ export class CpuPlayer {
       if (d.mode === 'lob' && d.lob && Math.sign(d.lob.tx) === me.side) {
         tx = d.lob.tx;
         tz = d.lob.tz + this.aimErr * 0.4;
+        if (d.lob.superLob) {
+          // a super lob's slam can't be caught: stand off it, between the landing and the goal, to grab the skid
+          tx = clampX(d.lob.tx + me.side * C.SUPER_LOB_STANDOFF, me.side);
+          if (d.lob.lobSuper?.kind === 'corner') tz = d.lob.tz + (me.z > d.lob.tz ? 1 : -1) * 1.2;
+        }
         timeToArrive = (d.lob.T - d.lob.t) / C.DT;
         urgent = true;
       } else if ((d.mode === 'flight' || d.mode === 'ground') && d.thrower !== this.idx) {
@@ -179,4 +184,10 @@ function predictIntercept(g: GameState, lineX: number, knowsCurve = true): { z: 
     if ((vx > 0 && x >= lineX) || (vx < 0 && x <= lineX)) return { z, ticks: i };
   }
   return null;
+}
+
+/** Keep an x target inside the player's own half. */
+function clampX(x: number, side: number) {
+  const lim = C.PLAYER_MAX_X;
+  return side < 0 ? Math.max(-lim, Math.min(-C.PLAYER_MIN_X, x)) : Math.min(lim, Math.max(C.PLAYER_MIN_X, x));
 }

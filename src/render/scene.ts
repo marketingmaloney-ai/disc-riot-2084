@@ -503,7 +503,7 @@ export class GameRenderer {
       v.lastWant = anim;
       v.sprite.renderOrder = 10 + Math.round(z * 10);
       // ice supers: frozen fighters flash icy blue
-      (v.sprite.material as THREE.SpriteMaterial).color.set(p.frozen > 0 && p.state === 'knock' ? (Math.sin(this.time * 30) > 0 ? '#9fe8ff' : '#d8f6ff') : '#ffffff');
+      (v.sprite.material as THREE.SpriteMaterial).color.set(p.frozen > 0 && p.state === 'knock' ? (Math.sin(this.time * 30) > 0 ? '#9fe8ff' : '#d8f6ff') : (charById(p.charId).spriteTint ?? '#ffffff'));
     });
 
     const visible = d.mode !== 'dead' || g.phase === 'point';
