@@ -90,9 +90,9 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 
 /* ---------- arena select ---------- */
 .arena-grid { display: flex; gap: 1.5vw; flex-wrap: wrap; justify-content: center; max-width: 94vw; }
-.arena-card { width: clamp(130px, 21vw, 320px); aspect-ratio: 16 / 9; border: 3px solid rgba(255,255,255,0.25); cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; }
+.arena-card { width: clamp(130px, 21vw, 320px); aspect-ratio: 16 / 9; border: 3px solid rgba(255,255,255,0.25); cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center 30%; }
 .arena-card.sel { border-color: var(--yellow); box-shadow: 0 0 26px var(--yellow); }
-.arena-card .nm { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); padding: 6px; text-align: center; font-weight: 900; font-size: clamp(11px, 1.4vw, 18px); }
+.arena-card .nm { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85) 35%); padding: 14px 6px 5px; line-height: 1.15; text-align: center; font-weight: 900; font-size: clamp(11px, 1.4vw, 18px); }
 
 /* ---------- HUD ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; }
