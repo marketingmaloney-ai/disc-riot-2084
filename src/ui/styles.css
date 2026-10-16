@@ -281,3 +281,10 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .pad-l { font-size: 14px; }
   .pad-s { font-size: 9px; }
 }
+
+/* ---------- credits ---------- */
+.credits { display: flex; flex-direction: column; gap: 6px; max-width: min(900px, 92vw); font-size: clamp(11px, 1.3vw, 15px); }
+.cr-row { display: grid; grid-template-columns: minmax(110px, 0.8fr) 2fr auto; gap: 4px 14px; align-items: baseline; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 4px; }
+.cr-row b { color: var(--cyan); letter-spacing: 0.05em; }
+.cr-row a { color: var(--yellow); font-size: 0.85em; }
+.cr-note { opacity: 0.7; font-size: 0.85em; margin-top: 6px; }

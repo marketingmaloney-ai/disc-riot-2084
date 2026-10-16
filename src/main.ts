@@ -236,6 +236,7 @@ function menu(el: HTMLElement, items: { label: string; action: () => void }[], b
 
 function titleScreen() {
   hudEl.classList.add('hidden');
+  audio.startTitleMusic();
   const s = show(`
     <div class="logo"><div class="l1">DISC RIOT</div><div class="l2">2084</div></div>
     <div class="sub blink">PRESS START</div>
@@ -259,6 +260,7 @@ function modeScreen() {
     { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; if (touch) controllerScreen(); else void charSelect(); } },
     { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
+    { label: 'CREDITS', action: () => void creditsScreen() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
 }
@@ -333,6 +335,21 @@ function howTo() {
       <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS · DROPPED DISC = 2 PTS · 30 S SETS · TIED SET COUNTS FOR BOTH · 2–2 = SUDDEN DEATH</span>
       <b>UPGRADES</b><span>WIN MATCHES & UNLOCK ACHIEVEMENTS IN VS CPU TO EARN POINTS · SPEND THEM IN FIGHTER UPGRADES</span>
       <b>PAUSE</b><span>ESC / P · START</span>
+    </div>`);
+  menu(s, [{ label: 'BACK', action: modeScreen }], modeScreen);
+}
+
+async function creditsScreen() {
+  type Credit = { what: string; title: string; artist: string; license: string; page: string };
+  const list: Credit[] = await fetch('assets/credits.json').then((r) => (r.ok ? r.json() : { credits: [] })).then((j) => j.credits).catch(() => []);
+  const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const rows = list.map((c) => `<div class="cr-row"><b>${esc(c.what)}</b><span>"${esc(c.title)}" by ${esc(c.artist)}</span><a href="${esc(c.page)}" target="_blank" rel="noopener">${esc(c.license)}</a></div>`).join('');
+  const s = show(`
+    <div class="title-h">CREDITS</div>
+    <div class="credits">
+      <div class="cr-row"><b>Game</b><span>DISC RIOT 2084 · art generated with Nano Banana &amp; Veo in Google Flow</span></div>
+      ${rows || '<div class="cr-row"><span>All music and sound is generated in-game.</span></div>'}
+      <div class="cr-note">Music and sounds are Creative Commons works found via Openverse, trimmed and mixed for the game.</div>
     </div>`);
   menu(s, [{ label: 'BACK', action: modeScreen }], modeScreen);
 }
@@ -447,7 +464,7 @@ function togglePause() {
     const s = show(`<div class="title-h">PAUSED</div>`, 'clear');
     menu(s, [
       { label: 'RESUME', action: () => { paused = false; clearScreens(); } },
-      { label: 'QUIT TO TITLE', action: () => { paused = false; audio.stopMusic(); void startDemo(); titleScreen(); } },
+      { label: 'QUIT TO TITLE', action: () => { paused = false; void startDemo(); titleScreen(); } },
     ], () => { paused = false; clearScreens(); });
   } else clearScreens();
 }
@@ -463,10 +480,10 @@ function showResults() {
   const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>${ach}`, 'results clear');
   const pts = tracker ? freePoints(charProfile(picks[0])) : 0;
   menu(s, [
-    ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { void startDemo(); openUpgrades(modeScreen, picks[0]); } }] : []),
+    ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { audio.startTitleMusic(); void startDemo(); openUpgrades(modeScreen, picks[0]); } }] : []),
     { label: 'REMATCH', action: () => beginVersus() },
-    { label: 'CHARACTER SELECT', action: () => { void startDemo(); charSelect(); } },
-    { label: 'TITLE', action: () => { audio.stopMusic(); void startDemo(); titleScreen(); } },
+    { label: 'CHARACTER SELECT', action: () => { audio.startTitleMusic(); void startDemo(); charSelect(); } },
+    { label: 'TITLE', action: () => { void startDemo(); titleScreen(); } },
   ]);
 }
 
@@ -481,12 +498,18 @@ if (touch) {
 }
 
 // Browsers only allow audio after a user gesture: unlock on the first key, tap or click anywhere.
-for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEventListener(ev, () => audio.unlock(), { once: true, capture: true });
+const firstGesture = () => {
+  audio.unlock();
+  // start the right music inside the gesture (iOS only allows media to begin from a tap)
+  if (game && !demo) audio.startMusic(arenaIdx);
+  else audio.startTitleMusic();
+};
+for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEventListener(ev, firstGesture, { once: true, capture: true });
 
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) (window as unknown as { __game: () => GameState }).__game = () => game;
-if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS, hud } });
+if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS, hud, audio } });
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('quick')) {

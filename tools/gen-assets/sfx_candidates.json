@@ -1,0 +1,393 @@
+{
+ "_doc": "Sound-effect candidates found via Openverse (hosted on Freesound). Freesound blocks cloud servers, so run tools/gen-assets/fetch_sfx.py on a home computer to download them into raw/sfx_lib/, then commit and push; build_sfx_lib.py (cloud) picks/trims/normalizes them into public/assets/sfx/common/.",
+ "candidates": {
+  "throw": [
+   {
+    "id": "f1dc6045-7965-41de-87f8-4731d2583fd2",
+    "title": "Swosh swoosh whoosh air sound, free, high quality",
+    "artist": "qubodup",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/qubodup/sounds/60026",
+    "src": "https://cdn.freesound.org/previews/60/60026_71257-hq.mp3",
+    "duration": 0.49
+   },
+   {
+    "id": "3b7cd621-7396-4c1b-a49d-ba46996a78ae",
+    "title": "Hard Swing 1",
+    "artist": "magnuswaker",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/magnuswaker/sounds/523230",
+    "src": "https://cdn.freesound.org/previews/523/523230_11537497-hq.mp3",
+    "duration": 0.922
+   },
+   {
+    "id": "7150994d-1aa7-47f2-bbad-75eebcce8643",
+    "title": "hi speed electronic whoosh 1.wav",
+    "artist": "martian",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/martian/sounds/19307",
+    "src": "https://cdn.freesound.org/previews/19/19307_84709-hq.mp3",
+    "duration": 0.926
+   }
+  ],
+  "catch": [
+   {
+    "id": "eff8a43f-10a0-47e3-b22d-ba1817be30a1",
+    "title": "Glove Catch 1 FF014.aif",
+    "artist": "martinimeniscus",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/martinimeniscus/sounds/164499",
+    "src": "https://cdn.freesound.org/previews/164/164499_2320755-hq.mp3",
+    "duration": 0.834
+   },
+   {
+    "id": "ee39ef04-39f9-44ee-8100-8b244f774d10",
+    "title": "Glove Catch 11 FF004.aif",
+    "artist": "martinimeniscus",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/martinimeniscus/sounds/164534",
+    "src": "https://cdn.freesound.org/previews/164/164534_2320755-hq.mp3",
+    "duration": 0.934
+   },
+   {
+    "id": "c5e1b337-c2e5-4faa-b1fa-2185c860103a",
+    "title": "Punch impact sound.wav",
+    "artist": "ms107",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/ms107/sounds/266823",
+    "src": "https://cdn.freesound.org/previews/266/266823_5035221-hq.mp3",
+    "duration": 0.845
+   }
+  ],
+  "bigcatch": [
+   {
+    "id": "0d3d3638-3431-4b66-9bec-1b1500f1e2c7",
+    "title": "Dull Decompression Punch Impact Explodes 96kHz",
+    "artist": "qubodup",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/qubodup/sounds/71274",
+    "src": "https://cdn.freesound.org/previews/71/71274_71257-hq.mp3",
+    "duration": 0.756
+   },
+   {
+    "id": "ae389b8d-3631-4dca-8262-d15cc331894f",
+    "title": "kicks bass impacts subs by CVLTIV8R 92.wav",
+    "artist": "CVLTIV8R",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/CVLTIV8R/sounds/794189",
+    "src": "https://cdn.freesound.org/previews/794/794189_2520418-hq.mp3",
+    "duration": 0.785
+   }
+  ],
+  "wall": [
+   {
+    "id": "6afade61-ff10-493f-b420-48978c4b237c",
+    "title": "Metal Clang sound",
+    "artist": "kermite607",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/kermite607/sounds/362625",
+    "src": "https://cdn.freesound.org/previews/362/362625_3165091-hq.mp3",
+    "duration": 1.387
+   },
+   {
+    "id": "13c11ff1-6dc2-4b6c-9727-29448c33ef1e",
+    "title": "Ricochet 1.wav",
+    "artist": "saturdaysoundguy",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/saturdaysoundguy/sounds/394182",
+    "src": "https://cdn.freesound.org/previews/394/394182_7280678-hq.mp3",
+    "duration": 0.493
+   },
+   {
+    "id": "bfa565d3-fbeb-4f5a-add2-4b7481ec10ef",
+    "title": "Spacey Ricochet",
+    "artist": "GameAudio",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/GameAudio/sounds/220201",
+    "src": "https://cdn.freesound.org/previews/220/220201_4100837-hq.mp3",
+    "duration": 0.999
+   }
+  ],
+  "score": [
+   {
+    "id": "7b96ad8f-f838-43f0-9cec-8bff2d241718",
+    "title": "BerlinGameScene.com Crowd Cheer 4",
+    "artist": "BerlinGameScene",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/BerlinGameScene/sounds/267246",
+    "src": "https://cdn.freesound.org/previews/267/267246_5052946-hq.mp3",
+    "duration": 7.106
+   },
+   {
+    "id": "55abda91-4ab4-495f-beac-478b179af18b",
+    "title": "Crowd Cheer 5",
+    "artist": "Krizin",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Krizin/sounds/651646",
+    "src": "https://cdn.freesound.org/previews/651/651646_5315864-hq.mp3",
+    "duration": 6.343
+   },
+   {
+    "id": "bfb7ab87-0f69-4417-aa76-fa77282d556f",
+    "title": "Short Crowd Cheer 2.flac",
+    "artist": "qubodup",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/qubodup/sounds/182572",
+    "src": "https://cdn.freesound.org/previews/182/182572_71257-hq.mp3",
+    "duration": 7.689
+   }
+  ],
+  "crowd": [
+   {
+    "id": "1d2c7f0f-e9cf-4eab-9ed2-621a4da022bd",
+    "title": "crowd large cheer arena stadium hockey game Montreal Canadiens Habs chant applause whistle.flac",
+    "artist": "kyles",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/kyles/sounds/629884",
+    "src": "https://cdn.freesound.org/previews/629/629884_612689-hq.mp3",
+    "duration": 24.041
+   },
+   {
+    "id": "eccee830-3cc7-4a1f-8fe7-86b504d485aa",
+    "title": "Large Crowd Ambience",
+    "artist": "deleted_user_7146007",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/deleted_user_7146007/sounds/383768",
+    "src": "https://cdn.freesound.org/previews/383/383768_7146007-hq.mp3",
+    "duration": 27.583
+   },
+   {
+    "id": "0a464f4d-9a0d-4d9d-b46d-7c587d926a2c",
+    "title": "Stadium Crowd",
+    "artist": "stomachache",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/stomachache/sounds/274516",
+    "src": "https://cdn.freesound.org/previews/274/274516_177850-hq.mp3",
+    "duration": 8.193
+   }
+  ],
+  "whistle": [
+   {
+    "id": "b56a3101-0237-4787-a1bb-27386b83cae4",
+    "title": "Referee whistle sound.wav",
+    "artist": "Rosa-Orenes256",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Rosa-Orenes256/sounds/538422",
+    "src": "https://cdn.freesound.org/previews/538/538422_11966684-hq.mp3",
+    "duration": 0.535
+   },
+   {
+    "id": "424695f3-36fb-4418-8f75-a70733a81b47",
+    "title": "Whistle 07",
+    "artist": "chaosportal",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/chaosportal/sounds/137106",
+    "src": "https://cdn.freesound.org/previews/137/137106_880637-hq.mp3",
+    "duration": 0.603
+   }
+  ],
+  "ui_move": [
+   {
+    "id": "aa763a9d-65bd-4f53-b1ad-a38a4dc1e475",
+    "title": "Soft UI Button Click",
+    "artist": "Jummit",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Jummit/sounds/528561",
+    "src": "https://cdn.freesound.org/previews/528/528561_10360410-hq.mp3",
+    "duration": 0.238
+   },
+   {
+    "id": "0aa006ed-7b29-405a-930a-5cc971914795",
+    "title": "Menu FX 01",
+    "artist": "Nightflame",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Nightflame/sounds/397604",
+    "src": "https://cdn.freesound.org/previews/397/397604_3302499-hq.mp3",
+    "duration": 0.305
+   },
+   {
+    "id": "a5f1bb35-b2bd-4d38-a237-28b8cbf422ed",
+    "title": "Blip or Select",
+    "artist": "Jofae",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Jofae/sounds/379339",
+    "src": "https://cdn.freesound.org/previews/379/379339_6512973-hq.mp3",
+    "duration": 0.33
+   }
+  ],
+  "ui_confirm": [
+   {
+    "id": "05847812-dcad-452a-a4f3-de8069c98b68",
+    "title": "UI Confirm",
+    "artist": "unfa",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/unfa/sounds/584184",
+    "src": "https://cdn.freesound.org/previews/584/584184_1038806-hq.mp3",
+    "duration": 0.271
+   },
+   {
+    "id": "87ed2e86-287f-4b7f-8083-b9777f049017",
+    "title": "Beep Space Button",
+    "artist": "GameAudio",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/GameAudio/sounds/220206",
+    "src": "https://cdn.freesound.org/previews/220/220206_4100837-hq.mp3",
+    "duration": 0.5
+   },
+   {
+    "id": "24980c2e-2f03-4b38-93f9-710ba44a8052",
+    "title": "BeepPing.wav",
+    "artist": "noirenex",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/noirenex/sounds/245242",
+    "src": "https://cdn.freesound.org/previews/245/245242_1656228-hq.mp3",
+    "duration": 0.28
+   }
+  ],
+  "super": [
+   {
+    "id": "82aef254-7826-4404-ac4d-ae5256e98c4e",
+    "title": "Laser Charge Up (Stronger)",
+    "artist": "magnuswaker",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/magnuswaker/sounds/592573",
+    "src": "https://cdn.freesound.org/previews/592/592573_11537497-hq.mp3",
+    "duration": 1.1
+   },
+   {
+    "id": "c9e7c5dc-8d21-42b3-af5b-5efe59fcd261",
+    "title": "Sci-Fi Charge Up.wav",
+    "artist": "Hemplock",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/Hemplock/sounds/558679",
+    "src": "https://cdn.freesound.org/previews/558/558679_6135165-hq.mp3",
+    "duration": 1.211
+   }
+  ],
+  "drop": [
+   {
+    "id": "cf6310c4-6e77-4f81-a946-89126065ece7",
+    "title": "Medium Thud 1",
+    "artist": "sgrowe",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/sgrowe/sounds/342535",
+    "src": "https://cdn.freesound.org/previews/342/342535_6148875-hq.mp3",
+    "duration": 0.951
+   },
+   {
+    "id": "d5c12d3a-30c3-4514-9449-574ff2f21847",
+    "title": "HeavyObjectsFalling.wav",
+    "artist": "wilhellboy",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/wilhellboy/sounds/351374",
+    "src": "https://cdn.freesound.org/previews/351/351374_4603244-hq.mp3",
+    "duration": 0.77
+   }
+  ],
+  "jingle": [
+   {
+    "id": "c867a46d-cf46-4cf1-beb2-0f34ed60ab2d",
+    "title": "Game Success Fanfare",
+    "artist": "el_boss",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/el_boss/sounds/677859",
+    "src": "https://cdn.freesound.org/previews/677/677859_9129912-hq.mp3",
+    "duration": 3.381
+   },
+   {
+    "id": "5c18c434-1358-4e20-a741-ea7e59bbdca9",
+    "title": "Game Success Fanfare Short",
+    "artist": "el_boss",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/el_boss/sounds/677858",
+    "src": "https://cdn.freesound.org/previews/677/677858_9129912-hq.mp3",
+    "duration": 3.381
+   },
+   {
+    "id": "fae0f394-d82d-40fb-8b40-7411461b485f",
+    "title": "Success jingle",
+    "artist": "MaoDin204",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/MaoDin204/sounds/723584",
+    "src": "https://cdn.freesound.org/previews/723/723584_15555277-hq.mp3",
+    "duration": 3.147
+   }
+  ],
+  "airhorn": [
+   {
+    "id": "02293712-953a-4f4b-b2e2-b20164acfbe0",
+    "title": "Air Horn Hype.wav",
+    "artist": "zar.265",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/zar.265/sounds/581334",
+    "src": "https://cdn.freesound.org/previews/581/581334_11304525-hq.mp3",
+    "duration": 2.753
+   },
+   {
+    "id": "3c501f60-5a68-420d-8cfd-ccb885d4feab",
+    "title": "Airhorn",
+    "artist": "jacksonacademyashmore",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/jacksonacademyashmore/sounds/414208",
+    "src": "https://cdn.freesound.org/previews/414/414208_6938106-hq.mp3",
+    "duration": 1.61
+   }
+  ],
+  "announcer": [
+   {
+    "id": "43d7ab0e-de2c-4e11-8d98-ee59a68997e0",
+    "title": "Ready Set Go! (male)",
+    "artist": "dastudiospr",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page": "https://freesound.org/people/dastudiospr/sounds/529843",
+    "src": "https://cdn.freesound.org/previews/529/529843_10761583-hq.mp3",
+    "duration": 1.926
+   },
+   {
+    "id": "bfc480c0-903c-4c8c-a754-14e7be8dee4f",
+    "title": "Ready Go Deep Voice",
+    "artist": "dersuperanton",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "page": "https://freesound.org/people/dersuperanton/sounds/433706",
+    "src": "https://cdn.freesound.org/previews/433/433706_1992856-hq.mp3",
+    "duration": 2.025
+   }
+  ]
+ }
+}

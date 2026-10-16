@@ -4,6 +4,12 @@ import { hasAsset } from '../render/assets';
 /** Per-character sounds cut from the art videos (tools/gen-assets/sfx.json). Missing ones use the synth. */
 const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
 
+/** Shared sound effects (tools/gen-assets/sfx_candidates.json -> public/assets/sfx/common/). Missing ones use the synth. */
+const COMMON_SFX = ['throw', 'catch', 'bigcatch', 'wall', 'score', 'crowd', 'whistle', 'ui_move', 'ui_confirm', 'super', 'drop', 'jingle', 'airhorn', 'announcer'];
+/** Licensed music per slot (tools/gen-assets/music.json -> public/assets/music/<slot>.mp3). ARENAS order for matches. */
+const ARENA_TRACKS = ['sunset', 'pier', 'lagoon', 'orbital'];
+const MUSIC_VOL = 0.5;
+
 interface Song {
   bpm: number;
   prog: number[]; // 8 bar roots (MIDI)
@@ -65,6 +71,14 @@ export class AudioEngine {
   private voices = new Map<string, AudioBuffer>();
   private pending = new Map<string, ArrayBuffer>();
   private lastEndVoice = -1e9;
+  // streamed music: ONE <audio> element, reused for every track (iOS only lets media play after a tap;
+  // an element that has played once keeps that permission, so switching its src later just works)
+  private musicEl: HTMLAudioElement | null = null;
+  private musicGain!: GainNode;
+  private track = '';
+  private trackTimer: number | null = null;
+  private crowd: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private announceNext = false;
 
   unlock() {
     if (this.ctx) { void this.ctx.resume(); return; }
@@ -96,26 +110,51 @@ export class AudioEngine {
     this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this.musicGain = ctx.createGain();
+    this.musicGain.gain.value = 0;
+    this.musicGain.connect(this.master);
+    this.musicEl = new Audio();
+    this.musicEl.loop = true;
+    this.musicEl.preload = 'auto';
+    this.musicEl.setAttribute('playsinline', '');
+    ctx.createMediaElementSource(this.musicEl).connect(this.musicGain);
+    this.loadSamples(COMMON_SFX.map((n) => `common/${n}`));
     this.decodePending();
+  }
+
+  private loadSamples(keys: string[]) {
+    for (const key of keys) {
+      if (this.voices.has(key) || this.pending.has(key)) continue;
+      const url = `assets/sfx/${key}.mp3`;
+      void hasAsset(url).then(async (ok) => {
+        if (!ok || this.pending.has(key) || this.voices.has(key)) return;
+        const r = await fetch(url).catch(() => null);
+        if (!r?.ok) return;
+        this.pending.set(key, await r.arrayBuffer());
+        this.decodePending();
+      });
+    }
+  }
+
+  /** Play a shared sample; false if it isn't available (caller falls back to synth). */
+  private sample(name: string, vol = 1, when = 0, rate = 1): boolean {
+    if (!this.ctx || this.muted) return false;
+    const buf = this.voices.get(`common/${name}`);
+    if (!buf) return false;
+    const s = this.ctx.createBufferSource();
+    s.buffer = buf;
+    s.playbackRate.value = rate;
+    const g = this.ctx.createGain();
+    g.gain.value = vol;
+    s.connect(g).connect(this.sfxBus);
+    s.start(this.ctx.currentTime + when);
+    return true;
   }
 
   /** Match fighters (P1, P2): fetch their character sounds. */
   setCharacters(ids: string[]) {
     this.chars = ids;
-    for (const id of new Set(ids)) {
-      for (const n of VOICE_NAMES) {
-        const key = `${id}/${n}`;
-        if (this.voices.has(key) || this.pending.has(key)) continue;
-        const url = `assets/sfx/${key}.mp3`;
-        void hasAsset(url).then(async (ok) => {
-          if (!ok || this.pending.has(key) || this.voices.has(key)) return;
-          const r = await fetch(url).catch(() => null);
-          if (!r?.ok) return;
-          this.pending.set(key, await r.arrayBuffer());
-          this.decodePending();
-        });
-      }
-    }
+    this.loadSamples([...new Set(ids)].flatMap((id) => VOICE_NAMES.map((n) => `${id}/${n}`)));
   }
 
   private decodePending() {
@@ -181,6 +220,19 @@ export class AudioEngine {
   // ---------- SFX ----------
   play(name: string) {
     if (!this.ctx || this.muted) return;
+    const r = 0.94 + Math.random() * 0.12; // slight pitch variety so repeats don't sound copy-pasted
+    switch (name) {
+      case 'throw': if (this.sample('throw', 0.9, 0, r)) return; break;
+      case 'catch': if (this.sample('catch', 1, 0, r)) return; break;
+      case 'bigcatch': if (this.sample('bigcatch', 1)) { this.sample('catch', 0.7); return; } break;
+      case 'wall': if (this.sample('wall', 0.55, 0, r)) return; break;
+      case 'drop': if (this.sample('drop', 1)) return; break;
+      case 'whistle': if (this.sample('whistle', 0.7)) return; break;
+      case 'menu': if (this.sample('ui_move', 0.6)) return; break;
+      case 'confirm': if (this.sample('ui_confirm', 0.8)) return; break;
+      case 'charge': if (this.sample('super', 0.8)) return; break;
+      case 'setEnd': if (this.sample('jingle', 0.8)) return; break;
+    }
     switch (name) {
       case 'throw': this.noise(0.18, 0.5, 'bandpass', 900, 3500, 0, undefined, 2); this.tone('triangle', 500, 900, 0.08, 0.15); break;
       case 'curve': this.noise(0.3, 0.45, 'bandpass', 3000, 700, 0, undefined, 3); this.tone('sine', 700, 1400, 0.25, 0.12); break;
@@ -215,7 +267,7 @@ export class AudioEngine {
         case 'throw': if (!this.voice(e.p, 'throw')) this.play('throw'); break;
         case 'curve': this.play('curve'); break;
         case 'supersonic': this.play('supersonic'); this.voice(e.p, 'throw', 0.8); break;
-        case 'super': this.play('super'); this.voice(e.p, 'shout'); break;
+        case 'super': this.play('super'); this.voice(e.p, 'shout'); this.duck(0.35, 1.6); break;
         case 'reversal': this.play('supersonic'); break;
         case 'lob': case 'toss': if (!this.voice(e.p, 'lob')) this.play('lob'); break;
         case 'block': if (!this.voice(e.p, 'block') && !this.voice(e.p, 'lob')) this.play('lob'); break;
@@ -223,11 +275,21 @@ export class AudioEngine {
         case 'dash': if (!this.voice(e.p, 'dash', 0.8)) this.play('dash'); break;
         case 'land': this.play('land'); break;
         case 'charge': this.play('charge'); break;
-        case 'score': this.play('score'); break;
+        case 'score':
+          this.play('score');
+          this.sample('score', e.big ? 0.9 : 0.6);
+          if (e.big) this.sample('airhorn', 0.45, 0.05);
+          this.duck(0.6, 1.2);
+          break;
         case 'drop': this.play('drop'); break;
-        case 'serve': this.play('whistle'); break;
+        case 'serve':
+          if (this.announceNext && this.sample('announcer', 0.9)) this.play('whistle'); // whistle under the call
+          else this.play('whistle');
+          this.announceNext = false;
+          break;
         case 'setEnd': case 'matchEnd': {
           this.play('setEnd');
+          this.announceNext = e.type === 'setEnd';
           // winner celebrates, loser pants (once per set end: setEnd and matchEnd can fire together)
           const now = this.ctx?.currentTime ?? 0;
           if (e.p !== undefined && e.p >= 0 && now - this.lastEndVoice > 2) {
@@ -241,16 +303,98 @@ export class AudioEngine {
     }
   }
 
-  // ---------- Music: one procedural track per arena ----------
-  startMusic(song = 0) {
+  // ---------- Music: licensed tracks (streamed), procedural synthwave as fallback ----------
+  /** Match music for arena index `arena` (also starts the crowd and queues the announcer). */
+  startMusic(arena = 0) {
     if (!this.ctx) return;
-    this.stopMusic();
+    this.announceNext = true;
+    this.startCrowd();
+    void this.playTrack(ARENA_TRACKS[arena % ARENA_TRACKS.length], () => this.startSynth(arena));
+  }
+  /** Title / menu music. No-op if it's already playing. */
+  startTitleMusic() {
+    if (!this.ctx) return;
+    this.stopCrowd();
+    void this.playTrack('title', () => this.stopSynth());
+  }
+  stopMusic() {
+    this.stopSynth();
+    this.stopCrowd();
+    this.fadeMusic(0, 0.4);
+    this.track = '';
+    window.setTimeout(() => { if (this.track === '') this.musicEl?.pause(); }, 450);
+  }
+
+  private async playTrack(slot: string, fallback: () => void) {
+    if (this.track === slot) return;
+    this.track = slot;
+    const url = `assets/music/${slot}.mp3`;
+    if (!this.musicEl || !(await hasAsset(url))) { fallback(); return; }
+    if (this.track !== slot) return; // superseded while checking
+    this.stopSynth();
+    const el = this.musicEl;
+    const swap = () => {
+      if (this.track !== slot) return;
+      el.src = url;
+      el.currentTime = 0;
+      void el.play().catch(() => {});
+      this.fadeMusic(MUSIC_VOL, 0.8);
+    };
+    if (this.trackTimer !== null) clearTimeout(this.trackTimer);
+    if (!el.paused && el.src) { this.fadeMusic(0, 0.45); this.trackTimer = window.setTimeout(swap, 470); } else swap();
+  }
+
+  private fadeMusic(to: number, secs: number) {
+    if (!this.ctx || !this.musicGain) return;
+    const g = this.musicGain.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(to, t + secs);
+  }
+
+  /** Dip the music under a big moment, then bring it back. */
+  private duck(level: number, secs: number) {
+    if (!this.ctx || !this.musicGain || !this.track) return;
+    const g = this.musicGain.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(MUSIC_VOL * level, t + 0.08);
+    g.setValueAtTime(MUSIC_VOL * level, t + secs);
+    g.linearRampToValueAtTime(MUSIC_VOL, t + secs + 0.6);
+  }
+
+  private startCrowd() {
+    if (!this.ctx || this.crowd) return;
+    const buf = this.voices.get('common/crowd');
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    gain.gain.linearRampToValueAtTime(0.22, this.ctx.currentTime + 1.5);
+    src.connect(gain).connect(this.sfxBus);
+    src.start();
+    this.crowd = { src, gain };
+  }
+  private stopCrowd() {
+    if (!this.ctx || !this.crowd) return;
+    const { src, gain } = this.crowd, t = this.ctx.currentTime;
+    gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.6);
+    src.stop(t + 0.7);
+    this.crowd = null;
+  }
+
+  private startSynth(song = 0) {
+    if (!this.ctx) return;
+    this.stopSynth();
     this.song = song % SONGS.length;
     this.nextNote = this.ctx.currentTime + 0.1;
     this.step16 = 0;
     this.musicTimer = window.setInterval(() => this.schedule(), 25);
   }
-  stopMusic() {
+  private stopSynth() {
     if (this.musicTimer !== null) clearInterval(this.musicTimer);
     this.musicTimer = null;
   }

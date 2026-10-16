@@ -3,3 +3,4 @@ dist
 .env
 tools/gen-assets/raw/_interim
 __pycache__/
+tools/gen-assets/raw/music

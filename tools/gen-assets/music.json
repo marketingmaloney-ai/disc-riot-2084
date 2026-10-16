@@ -1,0 +1,18 @@
+{
+  "_doc": "Licensed music (found via Openverse, hosted on Jamendo). build_music.py downloads each source into raw/music/ (git-ignored), trims, loudness-normalizes and writes public/assets/music/<slot>.mp3 plus credits. Only CC0 / CC BY tracks: they allow editing and commercial use; BY needs the credit line, which the game shows on its CREDITS screen. start/end are seconds in the source; tracks loop in game.",
+  "slots": {
+    "title":   { "id": "89ef0cdd", "title": "One Touch", "artist": "SEVEN SPACE", "license": "CC BY 3.0", "licenseUrl": "https://creativecommons.org/licenses/by/3.0/", "page": "https://www.jamendo.com/track/738790", "src": "https://prod-1.storage.jamendo.com/?trackid=738790&format=mp32", "start": 0, "end": 150 },
+    "sunset":  { "id": "d983e917", "title": "emotioned by the 80's", "artist": "The Dog Above", "license": "CC BY 3.0", "licenseUrl": "https://creativecommons.org/licenses/by/3.0/", "page": "https://www.jamendo.com/track/795279", "src": "https://prod-1.storage.jamendo.com/?trackid=795279&format=mp32", "start": 0, "end": 238 },
+    "pier":    { "id": "a30546f3", "title": "DangerZone (Electro Leto ver. 3.0)", "artist": "Electron Project", "license": "CC BY 3.0", "licenseUrl": "https://creativecommons.org/licenses/by/3.0/", "page": "https://www.jamendo.com/track/718592", "src": "https://prod-1.storage.jamendo.com/?trackid=718592&format=mp32", "start": 0, "end": 210 },
+    "lagoon":  { "id": "29f30ae2", "title": "Funk in my Pocket", "artist": "OptiKill", "license": "CC BY 3.0", "licenseUrl": "https://creativecommons.org/licenses/by/3.0/", "page": "https://www.jamendo.com/track/1715120", "src": "https://prod-1.storage.jamendo.com/?trackid=1715120&format=mp32", "start": 0, "end": 188 },
+    "orbital": { "id": "cd6b80cf", "title": "Earthbeat", "artist": "zero-project", "license": "CC BY 3.0", "licenseUrl": "https://creativecommons.org/licenses/by/3.0/", "page": "https://www.jamendo.com/track/373290", "src": "https://prod-1.storage.jamendo.com/?trackid=373290&format=mp32", "start": 0, "end": 144 }
+  },
+  "alternates": {
+    "title":   [{ "title": "Retro Freak Dance", "artist": "Retro Frank", "page": "https://www.jamendo.com/track/2024992" }],
+    "sunset":  [{ "title": "Late For Disco (80s Mix)", "artist": "REC", "page": "https://www.jamendo.com/track/1199525" }],
+    "pier":    [{ "title": "We Need A Speed (Original Mix)", "artist": "Spencer Newton", "page": "https://www.jamendo.com/track/1674215" }],
+    "lagoon":  [{ "title": "Foxy disco", "artist": "NMK (Nicola Munck)", "page": "https://www.jamendo.com/track/911919" },
+                { "title": "Bring back tha funk", "artist": "Oilboy's Aftersun", "page": "https://www.jamendo.com/track/1540296" }],
+    "orbital": [{ "title": "Retro Futurism", "artist": "Notorious Twins", "page": "https://www.jamendo.com/track/1367851" }]
+  }
+}

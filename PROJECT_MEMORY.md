@@ -8,7 +8,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 1. What it is
 - A **Windjammers-style, fast-paced arcade flying-disc game**, a full playable prototype in **three.js**.
 - Repo: `github.com/marketingmaloney-ai/disc-riot-2084` (private, branch `main`).
-- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 28 as of 2026-09-29: audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text).
+- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 29 as of 2026-10-16: licensed music from Openverse + CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
   Republish it from `dist/` after `npm run build`.
 
 ## 2. Owner preferences and working style
@@ -35,12 +35,14 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 
 - 4 arenas, each with its own 5-point goal-zone width and its own music track:
 
-  | Arena | 5-pt zone half-width | Music |
+  | Arena | 5-pt zone half-width | Music (CC BY 3.0, via Openverse/Jamendo) |
   |---|---|---|
-  | Sunset Strip | 1.65 | classic Miami synthwave, 118 BPM |
-  | Neon Pier | 1.35 | dark night drive, 128 BPM |
-  | Laser Lagoon | 2.05 | laid-back beach funk, 104 BPM |
-  | Orbital Cabana | 1.1 | half-time space darkwave, 136 BPM |
+  | Sunset Strip | 1.65 | The Dog Above, "emotioned by the 80's" |
+  | Neon Pier | 1.35 | Electron Project, "DangerZone (Electro Leto ver. 3.0)" |
+  | Laser Lagoon | 2.05 | OptiKill, "Funk in my Pocket" |
+  | Orbital Cabana | 1.1 | zero-project, "Earthbeat" |
+
+  Title/menu music: SEVEN SPACE, "One Touch". The old procedural synthwave songs remain as a fallback.
 
 - Platforms: desktop keyboard and gamepad, plus mobile touch (landscape).
 - Features: super cut-ins, generated audio.
@@ -119,12 +121,15 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - Brick's run cycle still comes from an older, pinker still image. It needs a new run clip.
 - Proper knock-back clips for Roxy and Brick; the knockdown currently reuses the get-up from the dive clip.
 - Voice and sound clips for Vega and Kaito.
-- Optional: produced music tracks to replace the procedural songs.
+- **Sound effects from Openverse:** 36 candidates in `tools/gen-assets/sfx_candidates.json`. Freesound blocks cloud servers, so a home computer must run `python3 tools/gen-assets/fetch_sfx.py` and push `raw/sfx_lib/`; then run `build_sfx_lib.py` in the cloud. Until then the synth SFX play.
+- Music was chosen without listening (by genre, metadata and spectrogram analysis): the owner should audition it. Alternates per slot are listed in `music.json`.
+- Wikimedia's synthwave tracks (Eternity Arcade, Ru Frequence, Infraction, Alex-Productions) were rate-limited from the cloud (HTTP 429); worth trying from home.
 - Keep checking that the Easy CPU is beatable on a phone. Next lever: make the Easy CPU itself weaker.
 
 ## 9. Gotchas learned
 - Flow often draws a character twice. Use `process.py split`, or `"figure"` in `approved.json`.
 - Flow's mobile version produces portrait images. Courts get rotated automatically; backdrops must be landscape.
+- Audio sources: Openverse API needs a User-Agent header and allows only 20 results per page anonymously. Jamendo downloads work from the cloud; Freesound (403) and Wikimedia (429) don't. Only CC0 / CC BY assets are used, and every one is credited in `CREDITS.md` and the in-game CREDITS screen.
 - iOS in-app browsers don't reliably fire `resize`, which is why the renderer checks its size every frame.
 - The audio context must be unlocked by the first tap or key press; that's handled globally.
 - Publishing the artifact: upload only changed files from `dist/`, and remove the old hashed JS file.
