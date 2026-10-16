@@ -88,7 +88,7 @@ export class CpuPlayer {
         if (d.lob.superLob) {
           // a super lob's slam can't be caught: stand off it, between the landing and the goal, to grab the skid
           tx = clampX(d.lob.tx + me.side * C.SUPER_LOB_STANDOFF, me.side);
-          if (d.lob.lobSuper?.kind === 'corner') tz = d.lob.tz + (me.z > d.lob.tz ? 1 : -1) * 1.2;
+          if (d.lob.lobSuper?.kind === 'corner' || (d.lob.lobSuper?.kind === 'bounce' && d.lob.bounces === 0)) tz = d.lob.tz + (me.z > d.lob.tz ? 1 : -1) * 1.2;
         }
         timeToArrive = (d.lob.T - d.lob.t) / C.DT;
         urgent = true;

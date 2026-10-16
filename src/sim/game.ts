@@ -506,7 +506,16 @@ function updateDisc(g: GameState) {
         d.vz = t < C.DECOY_SPLIT ? 0 : C.DECOY_DRIFT * d.zigSign;
         break;
       case 'rush': {
-        // crawls out of the hand, then explodes to top speed
+        // crawls out of the hand, then explodes to top speed, swerving at the burst toward the corner the defender left open
+        if (t >= C.RUSH_RAMP && !d.superDone) {
+          d.superDone = true;
+          const opp = g.players[d.thrower === 0 ? 1 : 0];
+          const goalX = d.superDir * C.COURT_HALF_LEN;
+          const tz = (opp.z > d.z ? -1 : 1) * (C.COURT_HALF_WID - C.RUSH_CORNER_MARGIN);
+          const dx = goalX - d.x, dz = tz - d.z, l = Math.hypot(dx, dz) || 1;
+          d.vx = dx / l;
+          d.vz = dz / l;
+        }
         const k = Math.min(1, t / C.RUSH_RAMP);
         const sp = d.superBase * (C.RUSH_START + ((d.superDef?.speed ?? 1.6) - C.RUSH_START) * k * k);
         const len = Math.hypot(d.vx, d.vz) || 1;
@@ -628,7 +637,8 @@ function landLob(g: GameState) {
     d.superDef = ls?.stun ? { name: ls.name, kind: 'straight', stun: ls.stun } : null;
     d.lob = null;
     d.vx = dir * C.SUPER_SKID;
-    d.vz = ls?.kind === 'corner' ? (p.z > d.z ? -1 : 1) * C.SUPER_SKID_CORNER : 0;
+    // corner lobs (and the last bounce of a bouncing lob) skid diagonally away from the defender
+    d.vz = ls?.kind === 'corner' || ls?.kind === 'bounce' ? (p.z > d.z ? -1 : 1) * C.SUPER_SKID_CORNER : 0;
     d.az = 0;
     d.h = 0.25;
     d.thrower = 1 - landSide;

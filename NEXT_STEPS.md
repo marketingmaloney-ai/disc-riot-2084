@@ -32,8 +32,16 @@ game should be polished and have more fighters, more supers and **multiplayer**.
     - The bounce lobs (Vega, Nova, Saki: 2–6%).
   - Fixed: quake knockdowns no longer hand the disc to the knocked player. The CPU stands off super-lob slams.
 
+## Balance: DONE (2026-10-16 04:30 session)
+- Win rates (768 hard-vs-hard CPU matches): vega 43 · kaito 55 · roxy 50 · brick 48 · nova 51 · diesel 50 · saki 48 · zara 43.
+- All 24 supers score between 21% and 79%.
+- Changes:
+  - Rush supers swerve toward the open corner at the burst; bouncing super lobs end in a corner skid.
+  - The CPU positions smartly against super lobs.
+  - Stat nudges.
+
 ## Next, in order
-1. **Finish balance** (in progress). Run `npx vitest run`, then `BALANCE=1 BALANCE_N=10 npx vitest run src/sim/balance.test.ts --silent=false -t "character matrix"`.
+1. ~~**Finish balance**~~ (done; history below). Run `npx vitest run`, then `BALANCE=1 BALANCE_N=10 npx vitest run src/sim/balance.test.ts --silent=false -t "character matrix"`.
    - Before the last round of fixes: Vega won 74% (spiral and orbit too strong); Kaito 40% and Zara 43% were weak.
    - Permafrost, decoy and rush supers almost never scored, and super lobs scored 0%.
    - Fixes just applied, not yet measured: weaker spiral and orbit, faster Permafrost, the CPU gets fooled by decoys, rush aims at the open corner, and super-lob slams can't be caught.
