@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'Russo One'; src: url('../../node_modules/@fontsource/russo-one/files/russo-one-latin-400-normal.woff2'); }
+@font-face { font-family: 'Monoton'; src: url('../../node_modules/@fontsource/monoton/files/monoton-latin-400-normal.woff2'); }
+@font-face { font-family: 'Orbitron'; font-weight: 900; src: url('../../node_modules/@fontsource/orbitron/files/orbitron-latin-900-normal.woff2'); }
+:root { --pink: #ff2e9a; --cyan: #19e6ff; --yellow: #ffe600; --bg: #12052a;
+  --chrome: linear-gradient(180deg, #ffffff 0%, #c9d6ff 38%, #4a3a8a 50%, #ffd6f2 62%, #ffffff 100%); }
+html, body { margin: 0; background: var(--bg); overflow: hidden; }
+.canvas { position: relative; overflow: hidden; background: var(--bg); }
+.bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: saturate(1.2) brightness(0.55); }
+.grid { position: absolute; left: -20%; right: -20%; bottom: -10%; height: 45%;
+  background: linear-gradient(transparent 0 96%, rgba(255,46,154,.9) 96%) 0 0 / 100% 12%,
+              linear-gradient(90deg, transparent 0 96%, rgba(25,230,255,.7) 96%) 0 0 / 7% 100%;
+  transform: perspective(500px) rotateX(62deg); transform-origin: bottom; opacity: .8; }
+.sun { position: absolute; border-radius: 50%; background: linear-gradient(#ffe600, #ff7a00 45%, #ff2e9a 75%);
+  -webkit-mask: repeating-linear-gradient(180deg, #000 0 8%, transparent 8% 10%); box-shadow: 0 0 120px rgba(255,46,154,.8); }
+.logo { position: absolute; left: 0; right: 0; text-align: center; line-height: .88; filter: drop-shadow(0 0 30px rgba(255,46,154,.75)); }
+.l1 { font-family: 'Russo One'; background: var(--chrome); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 4px #ff2e9a; transform: skewX(-8deg); display: inline-block; letter-spacing: .02em; }
+.l2 { font-family: 'Monoton'; color: var(--cyan); text-shadow: 0 0 14px var(--cyan), 0 0 40px var(--cyan), 0 0 80px #0077ff; letter-spacing: .06em; }
+.disc { position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff7a8, #ffe600 30%, #ff9a00 70%);
+  box-shadow: 0 0 0 calc(var(--d) * .06) #ff2e9a, 0 0 calc(var(--d) * .5) #ffd23a, 0 0 calc(var(--d) * 1.1) rgba(255,46,154,.6); }
+.disc { background: radial-gradient(ellipse at 45% 40%, #fffbd0 0, #ffe600 22%, #ffb000 55%, #ff7a00 78%, #ff2e9a 100%); }
+.disc::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; border: calc(var(--d) * .025) solid rgba(255,255,255,.55); }
+.disc::after { content: ''; position: absolute; inset: 30%; border-radius: 50%; border: calc(var(--d) * .02) solid rgba(255,46,154,.55); }
+.trail { position: absolute; height: 6%; border-radius: 999px; background: linear-gradient(90deg, transparent, rgba(255,230,0,.9)); filter: blur(2px); }
+.fighters { position: absolute; display: flex; justify-content: center; align-items: flex-end; }
+.fighters img { height: 100%; filter: drop-shadow(0 0 24px rgba(25,230,255,.45)); }
+.tag { position: absolute; left: 0; right: 0; text-align: center; font-family: 'Orbitron'; font-weight: 900; color: #ffd6f2; letter-spacing: .35em; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+const P = new URLSearchParams(location.search), kind = P.get('kind');
+const W = +P.get('w'), H = +P.get('h');
+const root = document.getElementById('root');
+const bgImg = '../../public/assets/arenas/sunset/backdrop.jpg';
+const f = (c) => `../../public/assets/characters/${c}/portrait.png`;
+let html = '';
+if (kind === 'icon') {
+  // 1024 square, no transparency, readable at 60px: disc + "DISC RIOT" + 2084
+  html = `<div class="canvas" style="width:${W}px;height:${H}px">
+    <div class="bg" style="background-image:url(${bgImg});filter:saturate(1.3) brightness(.35) blur(3px)"></div>
+    <div class="sun" style="width:62%;height:62%;left:19%;top:6%"></div>
+    <div class="grid"></div>
+    <div class="trail" style="width:62%;left:-4%;top:57%;height:7%;transform:rotate(-12deg)"></div>
+    <div class="trail" style="width:48%;left:6%;top:66%;height:3%;transform:rotate(-12deg);opacity:.7"></div>
+    <div class="disc" style="--d:340px;width:340px;height:340px;left:50%;top:38%;transform:rotate(-12deg) scaleY(.42)"></div>
+    <div class="logo" style="top:7%"><div class="l1" style="font-size:236px">DISC</div><br><div class="l1" style="font-size:236px">RIOT</div></div>
+    <div class="logo" style="bottom:5%"><div class="l2" style="font-size:150px">2084</div></div>
+  </div>`;
+} else if (kind === 'splash') {
+  html = `<div class="canvas" style="width:${W}px;height:${H}px">
+    <div class="sun" style="width:34%;height:34%;left:33%;top:18%;opacity:.85"></div>
+    <div class="grid" style="height:38%"></div>
+    <div class="logo" style="top:24%"><div class="l1" style="font-size:300px">DISC RIOT</div><br><div class="l2" style="font-size:210px">2084</div></div>
+    <div class="fighters" style="left:20%;right:20%;bottom:20%;height:24%;gap:2%">${['vega','kaito','roxy','brick'].map(c=>`<img src="${f(c)}">`).join('')}</div>
+  </div>`;
+} else if (kind === 'feature') {
+  // Google Play feature graphic 1024x500
+  html = `<div class="canvas" style="width:${W}px;height:${H}px">
+    <div class="bg" style="background-image:url(${bgImg})"></div>
+    <div class="grid" style="height:40%"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 42% 60% at 50% 48%, rgba(18,5,42,.82), rgba(18,5,42,.35) 70%, transparent)"></div>
+    <div class="fighters" style="left:-2%;width:30%;bottom:0;height:70%">${['vega','roxy'].map(c=>`<img src="${f(c)}" style="margin-right:-22%">`).join('')}</div>
+    <div class="fighters" style="right:-2%;width:30%;bottom:0;height:70%">${['kaito','brick'].map(c=>`<img src="${f(c)}" style="margin-left:-22%">`).join('')}</div>
+    <div class="logo" style="top:15%"><div class="l1" style="font-size:96px">DISC RIOT</div><br><div class="l2" style="font-size:66px">2084</div></div>
+    <div class="tag" style="bottom:12%;font-size:18px">ARCADE DISC BATTLES</div>
+  </div>`;
+}
+root.innerHTML = html;
+</script></body></html>

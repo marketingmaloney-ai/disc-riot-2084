@@ -501,6 +501,14 @@ if (touch) {
 }
 
 // Browsers only allow audio after a user gesture: unlock on the first key, tap or click anywhere.
+// Leaving the app (home button, app switcher, lock): pause the match and go silent; resume on return.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    audio.suspend();
+    if (!demo && game && game.phase !== 'matchEnd' && !paused) togglePause();
+  } else audio.resume();
+});
+
 const firstGesture = () => {
   audio.unlock();
   // start the right music inside the gesture (iOS only allows media to begin from a tap)

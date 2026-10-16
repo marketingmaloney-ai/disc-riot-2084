@@ -183,6 +183,18 @@ export class AudioEngine {
     return true;
   }
 
+  /** App backgrounded / phone locked: silence everything (the OS may also suspend us). */
+  suspend() {
+    if (!this.ctx) return;
+    void this.ctx.suspend();
+    this.musicEl?.pause();
+  }
+  resume() {
+    if (!this.ctx) return;
+    void this.ctx.resume();
+    if (this.track && this.musicEl?.src) void this.musicEl.play().catch(() => {});
+  }
+
   setMuted(m: boolean) {
     this.muted = m;
     if (this.master) this.master.gain.value = m ? 0 : 0.8;

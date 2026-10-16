@@ -8,7 +8,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 1. What it is
 - A **Windjammers-style, fast-paced arcade flying-disc game**, a full playable prototype in **three.js**.
 - Repo: `github.com/marketingmaloney-ai/disc-riot-2084` (private, branch `main`).
-- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 30 as of 2026-10-16: licensed music from Openverse, Kenney CC0 sound effects + arcade announcer, Quendel crowd, CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
+- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 31 as of 2026-10-16: pauses when backgrounded; v30: licensed music from Openverse, Kenney CC0 sound effects + arcade announcer, Quendel crowd, CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
   Republish it from `dist/` after `npm run build`.
 
 ## 2. Owner preferences and working style
@@ -113,6 +113,15 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - All 4 arenas have a painted court and backdrop.
 - Menus work on phones; the play area no longer shrinks after rotation; there are no ghost fighters.
 - The game is playable end to end on desktop and iPhone.
+
+## App store release (prepared 2026-10-16)
+- Capacitor 8 wraps the game: `ios/` (Swift Package Manager, no CocoaPods) and `android/`. App ID `com.maloneymarketing.discriot2084`; name "Disc Riot 2084"; free, no ads, no purchases, no data collected.
+- Landscape only, full screen (iOS status bar hidden; Android immersive), iPhone-only (no iPad screenshots needed), export-compliance flag set.
+- Icon, splash and Play feature graphic are rendered from `tools/store/art.html`; captioned screenshots from `tools/store/shot.html` (App Store 2868×1320, Play 1920×1080).
+- Listing copy, age-rating and privacy answers: `tools/store/LISTING.md`. Privacy policy page: https://claude.ai/artifact/SNVH5YCwZMoJvbwwtevfc2 (the owner must set it to "Anyone with the link").
+- Step-by-step build and upload: `RELEASE.md`. `npm run app:sync`, then `npm run app:ios` / `app:android`.
+- Owner chose: both stores, free. As of 2026-10-16 they had no Apple Developer account yet. Builds happen on the home Mac (Xcode + Android Studio).
+- Google Play: new personal accounts need a 14-day closed test with 12+ testers before production.
 
 ## 8. Open items / next steps
 - **batch05:** 4 portraits and 4 super cut-ins. The prompts are queued; run them in Flow or via the Antigravity agent.
