@@ -35,6 +35,9 @@ const hud = new Hud(hudEl);
 const menuInput = new MenuInput();
 const touch = isTouchDevice() ? new TouchSource(document.getElementById('app')!) : null;
 touch?.setVisible(false);
+// shared-screen 2P: Player 2's controls on the right half (made on first use)
+let touch2: TouchSource | null = null;
+let shareScreen = false;
 
 let game: GameState;
 let controllers: [Controller, Controller];
@@ -99,6 +102,10 @@ function humanSources(): [InputSource, InputSource] {
     const srcs: InputSource[] = [new KeyboardSource(SOLO_KEYS), ...pads.map((i) => new GamepadSource(i))];
     if (touch) srcs.push(touch);
     return [new MergedSource(srcs), new KeyboardSource(P2_KEYS)];
+  }
+  if (shareScreen && touch) {
+    if (!touch2) { touch2 = new TouchSource(document.getElementById('app')!, 'r'); touch2.setVisible(false); }
+    return [new MergedSource([new KeyboardSource(P1_KEYS), touch]), new MergedSource([new KeyboardSource(P2_KEYS), touch2])];
   }
   if (pads.length >= 2) {
     return [new MergedSource([new KeyboardSource(P1_KEYS), new GamepadSource(pads[0])]), new MergedSource([new KeyboardSource(P2_KEYS), new GamepadSource(pads[1])])];
@@ -168,7 +175,12 @@ function frame(now: number) {
     pauseBtn?.classList.toggle('hidden', demo || game.phase === 'matchEnd' || (screens.childElementCount > 0 && !paused));
     // joystick + A/B only while actually playing: over the pause menu or results they swallow the menu taps
     const tv = touchWanted && !demo && !paused && game.phase !== 'matchEnd' && screens.childElementCount === 0;
-    if (tv !== touchShown) { touchShown = tv; touch?.setVisible(tv); }
+    if (tv !== touchShown) {
+      touchShown = tv;
+      touch?.setHalf(tv && shareScreen && mode === '2p' ? 'l' : null);
+      touch?.setVisible(tv);
+      touch2?.setVisible(tv && shareScreen && mode === '2p');
+    }
     renderer.render(game, paused ? 1 : acc / DT, paused ? 0 : dt);
     if (demo && game.phase === 'matchEnd' && !loading) void startDemo(); // once, not every frame while it loads
   }
@@ -259,12 +271,22 @@ function modeScreen() {
   const s = show(`<div class="title-h">SELECT MODE</div>`);
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
-    { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; if (touch) controllerScreen(); else void charSelect(); } },
+    { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; shareScreen = false; if (touch) twoPlayerScreen(); else void charSelect(); } },
     { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
     { label: 'CREDITS', action: () => void creditsScreen() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
+}
+
+/** 2P on a touch device: both players share the screen, or Player 2 uses a controller. */
+function twoPlayerScreen() {
+  const s = show(`<div class="title-h">2 PLAYER VERSUS</div>`);
+  menu(s, [
+    { label: 'SHARE THIS SCREEN', action: () => { shareScreen = true; void charSelect(); } },
+    { label: 'USE A CONTROLLER', action: () => { shareScreen = false; controllerScreen(); } },
+  ], modeScreen);
+  s.insertAdjacentHTML('beforeend', `<div class="hint">SHARE: EACH PLAYER GETS A STICK AND A / B ON THEIR SIDE · BEST ON A TABLET</div>`);
 }
 
 /**
@@ -526,6 +548,7 @@ requestAnimationFrame(frame);
 if (params.get('quick')) {
   picks = [params.get('p1') ?? 'vega', params.get('p2') ?? 'roxy'];
   arenaIdx = Number(params.get('arena') ?? 0);
-  mode = '1p';
+  mode = params.get('share') ? '2p' : '1p'; // &share=1: shared-screen 2P (touch devices)
+  shareScreen = mode === '2p';
   beginVersus();
 } else titleScreen();

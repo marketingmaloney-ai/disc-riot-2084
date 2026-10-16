@@ -1,7 +1,10 @@
 import type { InputFrame } from '../sim/types';
 import type { InputSource } from './input';
 
-/** On-screen floating joystick (left half) + A/B buttons (right side). */
+/**
+ * On-screen floating joystick (left half) + A/B buttons (right side).
+ * `half` = 'l' / 'r': shared-screen 2P, each player gets one half (stick on the outer edge, buttons inside).
+ */
 export class TouchSource implements InputSource {
   label = 'Touch';
   private root: HTMLDivElement;
@@ -13,9 +16,9 @@ export class TouchSource implements InputSource {
   private aPressed = false;
   private bPressed = false;
 
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, half?: 'l' | 'r') {
     this.root = document.createElement('div');
-    this.root.className = 'touch-ui';
+    this.root.className = 'touch-ui' + (half ? ` half-${half}` : '');
     this.root.innerHTML = `
       <div class="touch-stick-zone"></div>
       <div class="touch-base"><div class="touch-knob"></div></div>
@@ -90,6 +93,11 @@ export class TouchSource implements InputSource {
     this.aPressed = false;
     this.bPressed = false;
     return f;
+  }
+
+  /** Shared-screen 2P: squeeze this player's controls into the left half ('l'), or back to full screen (null). */
+  setHalf(half: 'l' | null) {
+    this.root.classList.toggle('half-l', half === 'l');
   }
 
   setVisible(v: boolean) {

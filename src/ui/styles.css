@@ -146,6 +146,15 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .touch-btn small { font-size: 9px; font-family: 'Orbitron'; letter-spacing: 0.1em; }
 .touch-a { right: max(4vw, env(safe-area-inset-right)); bottom: 8vh; background: radial-gradient(circle at 35% 35%, #ff86c4, var(--pink)); box-shadow: 0 0 18px var(--pink); }
 .touch-b { right: calc(max(4vw, env(safe-area-inset-right)) + clamp(76px, 15vh, 112px)); bottom: 3vh; background: radial-gradient(circle at 35% 35%, #9ff4ff, #0a9fc0); box-shadow: 0 0 18px var(--cyan); }
+/* shared-screen 2P: each player owns one half; stick on the outer edge, A/B toward the middle */
+.touch-ui.half-l .touch-stick-zone { width: 28%; }
+.touch-ui.half-l .touch-a { right: auto; left: 41%; bottom: 8vh; }
+.touch-ui.half-l .touch-b { right: auto; left: calc(41% - clamp(76px, 15vh, 112px)); bottom: 3vh; }
+.touch-ui.half-r .touch-stick-zone { left: auto; right: 0; width: 28%; }
+.touch-ui.half-r .touch-a { right: 41%; bottom: 8vh; }
+.touch-ui.half-r .touch-b { right: calc(41% - clamp(76px, 15vh, 112px)); bottom: 3vh; }
+.touch-ui.half-r .touch-knob { background: radial-gradient(circle at 35% 35%, #fff, var(--cyan)); box-shadow: 0 0 16px var(--cyan); }
+.touch-ui.half-r .touch-base { background: rgba(25, 230, 255, 0.12); }
 .touch-btn.down { transform: scale(0.9); filter: brightness(1.4); }
 .pause-btn { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); pointer-events: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-family: 'Orbitron'; font-size: 12px; padding: 6px 10px; }
 
