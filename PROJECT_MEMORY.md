@@ -8,7 +8,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 1. What it is
 - A **Windjammers-style, fast-paced arcade flying-disc game**, a full playable prototype in **three.js**.
 - Repo: `github.com/marketingmaloney-ai/disc-riot-2084` (private, branch `main`).
-- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 29 as of 2026-10-16: licensed music from Openverse + CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
+- Playable build: a private Claude artifact at https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU (version 30 as of 2026-10-16: licensed music from Openverse, Kenney CC0 sound effects + arcade announcer, Quendel crowd, CREDITS screen; v28 had audit fixes, connect-controller screen, freeze jitter, memory leak, REVERSAL text). Sharing is now "Anyone with the link".
   Republish it from `dist/` after `npm run build`.
 
 ## 2. Owner preferences and working style
@@ -121,7 +121,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - Brick's run cycle still comes from an older, pinker still image. It needs a new run clip.
 - Proper knock-back clips for Roxy and Brick; the knockdown currently reuses the get-up from the dive clip.
 - Voice and sound clips for Vega and Kaito.
-- **Sound effects from Openverse:** 36 candidates in `tools/gen-assets/sfx_candidates.json`. Freesound blocks cloud servers, so a home computer must run `python3 tools/gen-assets/fetch_sfx.py` and push `raw/sfx_lib/`; then run `build_sfx_lib.py` in the cloud. Until then the synth SFX play.
+- **Sound effects:** done with Kenney CC0 packs (impacts, UI, power-up, jingles, fighter announcer) and Gregor Quendel's CC BY 4.0 crowd recordings. Sources are in `tools/gen-assets/raw/sfx_lib/`, the mapping is in `sfx_common.json`, and `build_sfx_lib.py` builds them. Throw, dash and lob still use the synth or character voices; the whistle is still synth.
 - Music was chosen without listening (by genre, metadata and spectrogram analysis): the owner should audition it. Alternates per slot are listed in `music.json`.
 - Wikimedia's synthwave tracks (Eternity Arcade, Ru Frequence, Infraction, Alex-Productions) were rate-limited from the cloud (HTTP 429); worth trying from home.
 - Keep checking that the Easy CPU is beatable on a phone. Next lever: make the Easy CPU itself weaker.
@@ -129,7 +129,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 ## 9. Gotchas learned
 - Flow often draws a character twice. Use `process.py split`, or `"figure"` in `approved.json`.
 - Flow's mobile version produces portrait images. Courts get rotated automatically; backdrops must be landscape.
-- Audio sources: Openverse API needs a User-Agent header and allows only 20 results per page anonymously. Jamendo downloads work from the cloud; Freesound (403) and Wikimedia (429) don't. Only CC0 / CC BY assets are used, and every one is credited in `CREDITS.md` and the in-game CREDITS screen.
+- Audio sources: Openverse API needs a User-Agent header and allows only 20 results per page anonymously. Jamendo, kenney.nl and opengameart.org downloads work from the cloud; Freesound (403) and Wikimedia (429) don't. The owner asked to use Agent-Reach to get past those blocks; Claude declined to route around site blocks via proxies and used CC0 packs instead. Only CC0 / CC BY assets are used, and every one is credited in `CREDITS.md` and the in-game CREDITS screen.
 - iOS in-app browsers don't reliably fire `resize`, which is why the renderer checks its size every frame.
 - The audio context must be unlocked by the first tap or key press; that's handled globally.
 - Publishing the artifact: upload only changed files from `dist/`, and remove the old hashed JS file.

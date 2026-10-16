@@ -66,6 +66,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
   const upgraded = !isDemo && mode === '1p';
   audio.setCharacters([p1, p2]);
+  audio.setHuman(!isDemo && mode === '1p' ? 0 : -1);
   game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
   tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
   newAchievements = [];
@@ -76,6 +77,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
     hudEl.classList.remove('hidden');
     touchWanted = ctrls[0].kind === 'human' && ctrls[0].src instanceof MergedSource;
     audio.startMusic(arena); // each arena has its own track
+    audio.announceRound(game); // the opening serve is queued before the loop sees events
   } else {
     hudEl.classList.add('hidden');
     touchWanted = false;
@@ -125,7 +127,7 @@ function tick() {
   if (game.events.length) {
     renderer.handleEvents(game.events, game);
     if (!demo) {
-      audio.handleEvents(game.events);
+      audio.handleEvents(game.events, game);
       hud.events(game.events, game);
       const unlocked = tracker?.onEvents(game.events, game);
       if (unlocked) newAchievements = unlocked;
@@ -187,7 +189,7 @@ const backBtn = document.createElement('button');
 backBtn.className = 'back-btn hidden';
 backBtn.textContent = '‹ BACK';
 let onBack: (() => void) | null = null;
-backBtn.addEventListener('click', () => { if (onBack) { audio.play('menu'); onBack(); } });
+backBtn.addEventListener('click', () => { if (onBack) { audio.play('back'); onBack(); } });
 document.getElementById('app')!.appendChild(backBtn);
 function setBack(fn: (() => void) | null) {
   onBack = fn;
@@ -229,7 +231,7 @@ function menu(el: HTMLElement, items: { label: string; action: () => void }[], b
     if (e.u) { sel = (sel + items.length - 1) % items.length; audio.play('menu'); paint(); }
     if (e.d) { sel = (sel + 1) % items.length; audio.play('menu'); paint(); }
     if (e.ok) { audio.unlock(); audio.play('confirm'); items[sel].action(); }
-    if (e.back && back) { audio.play('menu'); back(); }
+    if (e.back && back) { audio.play('back'); back(); }
   };
   if (back) setBack(back);
 }
@@ -361,6 +363,7 @@ async function cardVisual(id: string): Promise<string> {
 }
 
 async function charSelect() {
+  audio.play('choose');
   const s = show(`<div class="title-h" data-t>SELECT YOUR FIGHTER</div><div class="cs-grid"></div><div class="cs-info"></div><div class="hint">←→ CHOOSE · ENTER / Ⓐ CONFIRM · ESC / Ⓑ BACK</div>`);
   const grid = s.querySelector('.cs-grid')!;
   const info = s.querySelector('.cs-info')!;

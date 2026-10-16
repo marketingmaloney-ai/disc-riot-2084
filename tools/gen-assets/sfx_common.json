@@ -1,0 +1,40 @@
+{
+  "_doc": "Shared game sounds. Sources live in raw/sfx_lib/ (committed). build_sfx_lib.py trims, shapes and normalizes them into public/assets/sfx/common/<name>.mp3. Kenney packs are CC0 (credit appreciated); the crowd recordings are CC BY 4.0 (credit required). vo_* = arcade announcer.",
+  "packs": {
+    "kenney-impact":    { "title": "Impact Sounds", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/impact-sounds" },
+    "kenney-digital":   { "title": "Digital Audio", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/digital-audio" },
+    "kenney-interface": { "title": "Interface Sounds", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/interface-sounds" },
+    "kenney-jingles":   { "title": "Music Jingles", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/music-jingles" },
+    "kenney-scifi":     { "title": "Sci-fi Sounds", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/sci-fi-sounds" },
+    "kenney-voice":     { "title": "Voiceover Pack: Fighter", "artist": "Kenney", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "page": "https://kenney.nl/assets/voiceover-pack-fighter" },
+    "quendel-crowd":    { "title": "Free Crowd Cheering Sounds", "artist": "Gregor Quendel", "license": "CC BY 4.0", "licenseUrl": "https://creativecommons.org/licenses/by/4.0/", "page": "https://opengameart.org/content/free-crowd-cheering-sounds" }
+  },
+  "sounds": {
+    "catch":      { "pack": "kenney-impact", "src": "impactPunch_medium_000.ogg", "max": 0.6, "peak": -2 },
+    "bigcatch":   { "pack": "kenney-scifi", "src": "explosionCrunch_000.ogg", "max": 1.4, "peak": -2 },
+    "punch":      { "pack": "kenney-impact", "src": "impactPunch_heavy_000.ogg", "max": 0.8, "peak": -2 },
+    "wall":       { "pack": "kenney-impact", "src": "impactMetal_light_001.ogg", "max": 0.6, "peak": -6 },
+    "drop":       { "pack": "kenney-impact", "src": "impactSoft_heavy_000.ogg", "max": 0.9, "peak": -2 },
+    "super":      { "pack": "kenney-digital", "src": "powerUp2.ogg", "max": 1.6, "peak": -5 },
+    "ui_move":    { "pack": "kenney-interface", "src": "select_001.ogg", "max": 0.3, "peak": -9 },
+    "ui_confirm": { "pack": "kenney-interface", "src": "confirmation_002.ogg", "max": 0.8, "peak": -6 },
+    "ui_back":    { "pack": "kenney-interface", "src": "back_001.ogg", "max": 0.5, "peak": -8 },
+    "jingle":     { "pack": "kenney-jingles", "src": "jingles_HIT01.ogg", "max": 2.5, "peak": -4 },
+    "jingle_win": { "pack": "kenney-jingles", "src": "jingles_HIT05.ogg", "max": 3.0, "peak": -3 },
+    "score":      { "pack": "quendel-crowd", "src": "crowd_cheer_short.mp3", "max": 3.2, "peak": -4, "fromLoudest": true },
+    "score_big":  { "pack": "quendel-crowd", "src": "crowd_cheer_strong.mp3", "max": 4.2, "peak": -3, "fromLoudest": true },
+    "crowd":      { "pack": "quendel-crowd", "src": "crowd_ambience.mp3", "max": 24, "peak": -12, "loop": true, "stereo": true },
+    "vo_ready":   { "pack": "kenney-voice", "src": "vo_ready.ogg", "max": 1.5, "peak": -1 },
+    "vo_fight":   { "pack": "kenney-voice", "src": "vo_fight.ogg", "max": 1.5, "peak": -1 },
+    "vo_round_1": { "pack": "kenney-voice", "src": "vo_round_1.ogg", "max": 1.8, "peak": -1 },
+    "vo_round_2": { "pack": "kenney-voice", "src": "vo_round_2.ogg", "max": 1.8, "peak": -1 },
+    "vo_round_3": { "pack": "kenney-voice", "src": "vo_round_3.ogg", "max": 1.8, "peak": -1 },
+    "vo_round_4": { "pack": "kenney-voice", "src": "vo_round_4.ogg", "max": 1.8, "peak": -1 },
+    "vo_round_5": { "pack": "kenney-voice", "src": "vo_round_5.ogg", "max": 1.8, "peak": -1 },
+    "vo_sudden_death": { "pack": "kenney-voice", "src": "vo_sudden_death.ogg", "max": 2.0, "peak": -1 },
+    "vo_you_win": { "pack": "kenney-voice", "src": "vo_you_win.ogg", "max": 1.8, "peak": -1 },
+    "vo_you_lose": { "pack": "kenney-voice", "src": "vo_you_lose.ogg", "max": 1.8, "peak": -1 },
+    "vo_winner":  { "pack": "kenney-voice", "src": "vo_winner.ogg", "max": 1.8, "peak": -1 },
+    "vo_choose":  { "pack": "kenney-voice", "src": "vo_choose_your_character.ogg", "max": 2.5, "peak": -1 }
+  }
+}

@@ -4,7 +4,7 @@
 Each slot: download the source once (raw/music/, git-ignored), cut start..end, fade in/out,
 loudness-normalize (two-pass EBU R128 to -16 LUFS, -1.5 dBTP) and encode 128 kbps stereo MP3 ->
 public/assets/music/<slot>.mp3. Also writes public/assets/credits.json (shown on the CREDITS screen)
-and CREDITS.md, from music.json and sfx_library.json.
+and CREDITS.md, from music.json and sfx_common.json.
 
 Usage: python3 tools/gen-assets/build_music.py
 """
@@ -58,17 +58,15 @@ def build_slot(slot: str, s: dict):
 
 
 def write_credits(music: dict):
-    sfx = json.loads((HERE / "sfx_library.json").read_text()) if (HERE / "sfx_library.json").exists() else {"sounds": {}}
+    spec = json.loads((HERE / "sfx_common.json").read_text()) if (HERE / "sfx_common.json").exists() else {"packs": {}, "sounds": {}}
     entries = [{"what": f"Music · {slot.upper()}", "title": s["title"], "artist": s["artist"],
                 "license": s["license"], "licenseUrl": s["licenseUrl"], "page": s["page"]}
                for slot, s in music["slots"].items()]
-    seen = set()
-    for name, s in sfx.get("sounds", {}).items():
-        if s.get("page") in seen:
-            continue
-        seen.add(s.get("page"))
-        entries.append({"what": f"Sound · {name}", "title": s["title"], "artist": s["artist"],
-                        "license": s["license"], "licenseUrl": s.get("licenseUrl", ""), "page": s["page"]})
+    used = {s["pack"] for s in spec["sounds"].values()}
+    for pid, p in spec["packs"].items():
+        if pid in used:
+            entries.append({"what": "Sound effects", "title": p["title"], "artist": p["artist"],
+                            "license": p["license"], "licenseUrl": p["licenseUrl"], "page": p["page"]})
     (ROOT / "public/assets/credits.json").write_text(json.dumps({"credits": entries}, indent=1))
     lines = ["# Credits", "", "DISC RIOT 2084 uses these Creative Commons works, found via [Openverse](https://openverse.org).",
              "Music and sounds were trimmed, faded and loudness-normalized for the game.", ""]

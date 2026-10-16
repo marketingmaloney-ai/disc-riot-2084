@@ -1,11 +1,13 @@
-import type { GameEvent } from '../sim/types';
+import type { GameEvent, GameState } from '../sim/types';
 import { hasAsset } from '../render/assets';
 
 /** Per-character sounds cut from the art videos (tools/gen-assets/sfx.json). Missing ones use the synth. */
 const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
 
 /** Shared sound effects (tools/gen-assets/sfx_candidates.json -> public/assets/sfx/common/). Missing ones use the synth. */
-const COMMON_SFX = ['throw', 'catch', 'bigcatch', 'wall', 'score', 'crowd', 'whistle', 'ui_move', 'ui_confirm', 'super', 'drop', 'jingle', 'airhorn', 'announcer'];
+const COMMON_SFX = ['catch', 'bigcatch', 'punch', 'wall', 'drop', 'super', 'ui_move', 'ui_confirm', 'ui_back', 'jingle', 'jingle_win',
+  'score', 'score_big', 'crowd', 'vo_ready', 'vo_fight', 'vo_round_1', 'vo_round_2', 'vo_round_3', 'vo_round_4', 'vo_round_5',
+  'vo_sudden_death', 'vo_you_win', 'vo_you_lose', 'vo_winner', 'vo_choose'];
 /** Licensed music per slot (tools/gen-assets/music.json -> public/assets/music/<slot>.mp3). ARENAS order for matches. */
 const ARENA_TRACKS = ['sunset', 'pier', 'lagoon', 'orbital'];
 const MUSIC_VOL = 0.5;
@@ -79,6 +81,8 @@ export class AudioEngine {
   private trackTimer: number | null = null;
   private crowd: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private announceNext = false;
+  private lastAnnounce = -1e9;
+  private human = -1; // VS CPU: the human player's index, for "YOU WIN" / "YOU LOSE"
 
   unlock() {
     if (this.ctx) { void this.ctx.resume(); return; }
@@ -222,16 +226,16 @@ export class AudioEngine {
     if (!this.ctx || this.muted) return;
     const r = 0.94 + Math.random() * 0.12; // slight pitch variety so repeats don't sound copy-pasted
     switch (name) {
-      case 'throw': if (this.sample('throw', 0.9, 0, r)) return; break;
       case 'catch': if (this.sample('catch', 1, 0, r)) return; break;
-      case 'bigcatch': if (this.sample('bigcatch', 1)) { this.sample('catch', 0.7); return; } break;
-      case 'wall': if (this.sample('wall', 0.55, 0, r)) return; break;
+      case 'bigcatch': if (this.sample('bigcatch', 0.9)) { this.sample('punch', 0.9); return; } break;
+      case 'wall': if (this.sample('wall', 0.6, 0, r)) return; break;
       case 'drop': if (this.sample('drop', 1)) return; break;
-      case 'whistle': if (this.sample('whistle', 0.7)) return; break;
-      case 'menu': if (this.sample('ui_move', 0.6)) return; break;
+      case 'menu': if (this.sample('ui_move', 0.7)) return; break;
+      case 'back': if (this.sample('ui_back', 0.7)) return; this.play('menu'); return;
       case 'confirm': if (this.sample('ui_confirm', 0.8)) return; break;
       case 'charge': if (this.sample('super', 0.8)) return; break;
       case 'setEnd': if (this.sample('jingle', 0.8)) return; break;
+      case 'choose': this.sample('vo_choose', 0.9, 0.1); return;
     }
     switch (name) {
       case 'throw': this.noise(0.18, 0.5, 'bandpass', 900, 3500, 0, undefined, 2); this.tone('triangle', 500, 900, 0.08, 0.15); break;
@@ -260,7 +264,20 @@ export class AudioEngine {
     }
   }
 
-  handleEvents(events: GameEvent[]) {
+  /** Arcade announcer: "ROUND n ... FIGHT!" at the start of each set, "SUDDEN DEATH" at 2-2. */
+  announceRound(g: GameState) {
+    this.announceNext = false;
+    const now = this.ctx?.currentTime ?? 0;
+    if (now - this.lastAnnounce < 3) return; // match start can reach here twice (start + opening serve)
+    this.lastAnnounce = now;
+    if (g.suddenDeath) this.sample('vo_sudden_death', 0.95, 0.2);
+    else if (this.sample(`vo_round_${Math.min(5, g.setNo)}`, 0.95, 0.2)) this.sample('vo_fight', 1, 1.65);
+  }
+
+  /** VS CPU: index of the human player (-1 = none / 2P) for the end-of-match call. */
+  setHuman(p: number) { this.human = p; }
+
+  handleEvents(events: GameEvent[], g?: GameState) {
     for (const e of events) {
       switch (e.type) {
         case 'catch': this.play(e.big ? 'bigcatch' : 'catch'); break;
@@ -277,21 +294,23 @@ export class AudioEngine {
         case 'charge': this.play('charge'); break;
         case 'score':
           this.play('score');
-          this.sample('score', e.big ? 0.9 : 0.6);
-          if (e.big) this.sample('airhorn', 0.45, 0.05);
+          this.sample(e.big ? 'score_big' : 'score', e.big ? 0.9 : 0.65);
           this.duck(0.6, 1.2);
           break;
         case 'drop': this.play('drop'); break;
         case 'serve':
-          if (this.announceNext && this.sample('announcer', 0.9)) this.play('whistle'); // whistle under the call
-          else this.play('whistle');
-          this.announceNext = false;
+          this.play('whistle');
+          if (this.announceNext && g) this.announceRound(g);
           break;
         case 'setEnd': case 'matchEnd': {
           this.play('setEnd');
           this.announceNext = e.type === 'setEnd';
           // winner celebrates, loser pants (once per set end: setEnd and matchEnd can fire together)
           const now = this.ctx?.currentTime ?? 0;
+          if (e.type === 'matchEnd') {
+            this.sample('jingle_win', 0.8, 0.5);
+            if (e.p !== undefined && e.p >= 0) this.sample(this.human < 0 ? 'vo_winner' : e.p === this.human ? 'vo_you_win' : 'vo_you_lose', 1, 1.1);
+          }
           if (e.p !== undefined && e.p >= 0 && now - this.lastEndVoice > 2) {
             this.lastEndVoice = now;
             this.voice(e.p, 'win', 1, 0.35);
