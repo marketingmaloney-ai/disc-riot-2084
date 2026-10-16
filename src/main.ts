@@ -5,7 +5,7 @@ import '@fontsource/orbitron/900.css';
 import '@fontsource/russo-one';
 import '@fontsource/monoton';
 import { DT } from './sim/constants';
-import { CHARACTERS, charById } from './sim/characters';
+import { CHARACTERS, charById, superNames } from './sim/characters';
 import { createGame, step } from './sim/game';
 import type { GameState, InputFrame } from './sim/types';
 import { GameRenderer } from './render/scene';
@@ -395,7 +395,7 @@ async function charSelect() {
     const w = (v: number, lo: number, hi: number) => Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20));
     const bar = (v: number, lo: number, hi: number, bonus: number) =>
       `<div class="bar"><i style="width:${w(v, lo, hi)}%"></i>${bonus > 0 ? `<em style="width:${w(v * (1 + bonus), lo, hi) - w(v, lo, hi)}%"></em>` : ''}</div>`;
-    info.innerHTML = `<div class="who"><div class="n ${who ? 'p2c' : 'p1c'}">${ch.name}</div><div class="sp">SUPER: ${ch.superName}</div><div class="hint">${ch.tagline.toUpperCase()}</div></div>
+    info.innerHTML = `<div class="who"><div class="n ${who ? 'p2c' : 'p1c'}">${ch.name}</div><div class="sp">SUPERS: ${superNames(ch).map((n, i) => `<b title="${["A", "↑/↓ + A", "B"][i]}">${n}</b>`).join(" · ")}</div><div class="hint">${ch.tagline.toUpperCase()}</div></div>
       <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.6, SC.ATTR_SPEED * lv.speed)}<span>POWER</span>${bar(ch.power, 20, 26, SC.ATTR_POWER * lv.power)}<span>TECHNIQUE</span>${bar(ch.curve, 0.6, 1.6, SC.ATTR_TECH_CURVE * lv.technique)}<span>REFLEX</span>${bar(1, 0.8, 1.3, SC.ATTR_REFLEX_REACH * lv.reflex)}</div>`;
   };
   const confirm = () => {

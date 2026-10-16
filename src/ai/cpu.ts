@@ -158,10 +158,16 @@ function predictIntercept(g: GameState, lineX: number, knowsCurve = true): { z: 
   const d = g.disc;
   let x = d.x, z = d.z, vx = d.vx, vz = d.vz, az = knowsCurve ? d.az : 0;
   // Oscillating supers: defend the center line of the wave/zigzag, not its current swing.
-  if (d.kind === 'super' && (d.superKind === 'wave' || d.superKind === 'zigzag')) {
+  if (d.kind === 'super' && (d.superKind === 'wave' || d.superKind === 'zigzag' || d.superKind === 'spiral')) {
     vz = 0;
     az = 0;
     if (d.superKind === 'wave') z = d.z - C.WAVE_AMP * Math.sin(C.WAVE_FREQ * d.superT) * d.zigSign;
+  }
+  // decoys: until the fakes fade, the CPU follows the fake that flies straight
+  if (d.kind === 'super' && d.superKind === 'decoy' && d.superT < C.DECOY_FOOL) {
+    vz = 0;
+    az = 0;
+    z = d.z - Math.max(0, d.superT - C.DECOY_SPLIT) * C.DECOY_DRIFT * d.zigSign;
   }
   if (vx === 0) return null;
   const zLim = C.COURT_HALF_WID - C.DISC_RADIUS;

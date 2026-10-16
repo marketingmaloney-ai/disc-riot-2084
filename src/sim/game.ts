@@ -1,5 +1,5 @@
 import * as C from './constants';
-import { charById } from './characters';
+import { charById, type LobSuperDef } from './characters';
 import type { Disc, GameState, InputFrame, Player, StatLevels } from './types';
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
@@ -14,20 +14,22 @@ function makePlayer(idx: 0 | 1, charId: string, lv?: StatLevels, human = false):
     speed: c.speed * (1 + C.ATTR_SPEED * sp) * (human ? C.HUMAN_SPEED_MULT : 1),
     power: c.power * (1 + C.ATTR_POWER * pw),
     curve: c.curve * (1 + C.ATTR_TECH_CURVE * te),
-    superKind: c.superKind,
-    catchR: C.CATCH_RADIUS * (1 + C.ATTR_REFLEX_REACH * rf) * (human ? C.HUMAN_CATCH_MULT : 1),
+    supers: c.supers,
+    lobSuper: c.lobSuper,
+    catchR: C.CATCH_RADIUS * (c.reach ?? 1) * (1 + C.ATTR_REFLEX_REACH * rf) * (human ? C.HUMAN_CATCH_MULT : 1),
     ssWindow: C.SUPERSONIC_WINDOW + rf,
     ssMult: C.SUPERSONIC_MULT * (1 + C.ATTR_TECH_SS * te),
     x: 0, z: 0, px: 0, pz: 0, dvx: 0, dvz: 0, moving: false,
     state: 'idle', t: 0, holdT: 0, charged: false, serving: false,
     dirHist: [], aAge: 999, bAge: 999,
+    knockT: C.KNOCK_TIME, knockV: C.KNOCK_SPEED, frozen: 0,
   };
 }
 
 function makeDisc(): Disc {
   return {
     mode: 'held', x: 0, z: 0, h: 1, px: 0, pz: 0, ph: 1, vx: 0, vz: 0, az: 0,
-    kind: 'normal', superKind: null, superT: 0, zigSign: 1,
+    kind: 'normal', superKind: null, superDef: null, superBase: 0, superDir: 1, superDone: false, superT: 0, zigSign: 1,
     thrower: -1, holder: -1, lob: null, spin: 0,
   };
 }
@@ -221,9 +223,10 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       if (p.t > C.DASH_RECOVER) setState(p, 'idle');
       return;
     case 'knock':
-      p.x = clamp(p.x - fwd * 3.2 * C.DT, -C.PLAYER_MAX_X, C.PLAYER_MAX_X);
+      // pushed back by a super's impact; ice supers freeze you in place for longer
+      if (p.t < C.KNOCK_TIME) p.x = clamp(p.x - fwd * p.knockV * C.DT, -C.PLAYER_MAX_X, C.PLAYER_MAX_X);
       clampToHalf(p);
-      if (p.t > 0.22) setState(p, 'hold');
+      if (p.t > p.knockT) { p.frozen = 0; setState(p, 'hold'); }
       placeHeld(d, p);
       return;
     case 'dash':
@@ -295,10 +298,12 @@ function tryCatch(g: GameState, p: Player) {
 function catchDisc(g: GameState, p: Player, fromLob: boolean) {
   const d = g.disc;
   const wasSuper = d.kind === 'super';
+  const superDefOnCatch = d.superDef;
   d.mode = 'held';
   d.holder = p.idx;
   d.lob = null;
   d.superKind = null;
+  d.superDef = null;
   p.holdT = 0;
   p.serving = false;
   if (fromLob && d.thrower === p.idx) {
@@ -317,6 +322,10 @@ function catchDisc(g: GameState, p: Player, fromLob: boolean) {
     return;
   }
   if (wasSuper) {
+    const sd = superDefOnCatch;
+    p.knockV = C.KNOCK_SPEED * (sd?.knock ?? 1);
+    p.knockT = C.KNOCK_TIME + (sd?.stun ?? 0);
+    p.frozen = sd?.stun ?? 0;
     setState(p, 'knock');
     g.hitstop = C.HITSTOP_SUPER;
   } else {
@@ -356,24 +365,34 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
   d.az = 0;
   d.superT = 0;
   d.superKind = null;
+  d.superDef = null;
   d.h = 1.0;
   d.x = p.x + fwd * 0.6;
+  let superEvent = 0;
 
   if (p.charged) {
     p.charged = false;
     d.kind = 'super';
-    d.superKind = p.superKind;
+    // stick up/down at release picks the second super; neutral/forward the signature one
+    const v = inp.mz !== 0 ? 1 : 0;
+    const sd = p.supers[v];
+    d.superDef = sd;
+    d.superKind = sd.kind;
+    d.superBase = p.power;
+    d.superDir = fwd;
+    d.superDone = false;
     const opp = g.players[1 - p.idx];
     d.zigSign = inp.mz !== 0 ? Math.sign(inp.mz) : opp.z > 0 ? -1 : 1; // default: break away from the defender
-    sp = p.power * 1.12;
-    const ang = inp.mz * C.ANGLE_SHOT * 0.6;
-    if (p.superKind === 'fireball') sp = p.power * 1.3;
-    if (p.superKind === 'meteor') sp = p.power * C.METEOR_AIR; // hangs in the air, then slams mid-court
+    sp = p.power * (sd.speed ?? 1.12);
+    let ang = inp.mz * C.ANGLE_SHOT * 0.6;
+    if (sd.kind === 'meteor') sp = p.power * C.METEOR_AIR; // hangs in the air, then slams mid-court
+    if (sd.kind === 'rush') { sp = p.power * C.RUSH_START; ang = (opp.z > 0 ? -1 : 1) * C.RUSH_ANGLE; } // burst toward the open corner
+    if (sd.kind === 'wave' || sd.kind === 'zigzag' || sd.kind === 'spiral' || sd.kind === 'orbit' || sd.kind === 'decoy' || sd.kind === 'stopgo') ang = 0;
     d.vx = fwd * Math.cos(ang) * sp;
     d.vz = Math.sin(ang) * sp;
-    if (p.superKind === 'wave' || p.superKind === 'zigzag') d.vz = 0;
+    superEvent = v;
     g.hitstop = C.HITSTOP_CUTIN;
-    g.events.push({ type: 'super', p: p.idx, x: p.x, z: p.z });
+    g.events.push({ type: 'super', p: p.idx, x: p.x, z: p.z, v: superEvent });
   } else {
     const cv = detectCurve(p);
     if (cv !== 0) {
@@ -397,10 +416,10 @@ function throwDisc(g: GameState, p: Player, inp: InputFrame, supersonic: boolean
   setState(p, 'throw');
 }
 
-function startLob(d: Disc, tx: number, tz: number, T: number, peak: number, superLob: boolean) {
+function startLob(d: Disc, tx: number, tz: number, T: number, peak: number, superLob: boolean, lobSuper: LobSuperDef | null = null, bounces = 0) {
   d.mode = 'lob';
   d.holder = -1;
-  d.lob = { sx: d.x, sz: d.z, sh: d.h, tx, tz, t: 0, T, peak, superLob };
+  d.lob = { sx: d.x, sz: d.z, sh: d.h, tx, tz, t: 0, T, peak, superLob, lobSuper, bounces };
 }
 
 function throwLob(g: GameState, p: Player, inp: InputFrame) {
@@ -413,11 +432,11 @@ function throwLob(g: GameState, p: Player, inp: InputFrame) {
   p.charged = false;
   d.thrower = p.idx;
   d.kind = superLob ? 'super' : 'lob';
-  startLob(d, tx, tz, C.LOB_TIME, C.LOB_PEAK, superLob);
+  startLob(d, tx, tz, C.LOB_TIME, C.LOB_PEAK, superLob, superLob ? p.lobSuper : null, superLob ? (p.lobSuper.bounces ?? 0) : 0);
   p.serving = false;
   setState(p, 'lob');
   if (superLob) g.hitstop = C.HITSTOP_CUTIN;
-  g.events.push({ type: superLob ? 'super' : 'lob', p: p.idx, x: tx, z: tz });
+  g.events.push({ type: superLob ? 'super' : 'lob', p: p.idx, x: tx, z: tz, v: superLob ? 2 : undefined });
 }
 
 function selfToss(g: GameState, p: Player) {
@@ -467,8 +486,62 @@ function updateDisc(g: GameState) {
       case 'wave':
         d.vz = C.WAVE_AMP * C.WAVE_FREQ * Math.cos(C.WAVE_FREQ * t) * d.zigSign;
         break;
-      case 'zigzag':
-        d.vz = ((Math.floor(t / C.ZIG_PERIOD) % 2 === 0 ? 1 : -1) * C.ZIG_VZ + C.ZIG_DRIFT) * d.zigSign;
+      case 'zigzag': {
+        const per = d.superDef?.period ?? C.ZIG_PERIOD;
+        const vz = per < C.ZIG_PERIOD ? C.ZIG_VZ * 1.15 : C.ZIG_VZ; // tighter snaps swing harder
+        d.vz = ((Math.floor(t / per) % 2 === 0 ? 1 : -1) * vz + C.ZIG_DRIFT) * d.zigSign;
+        break;
+      }
+      case 'spiral': {
+        // a weave that keeps widening: easy to read early, wild by the goal
+        const amp = C.SPIRAL_AMP0 + C.SPIRAL_GROW * t;
+        d.vz = amp * C.SPIRAL_FREQ * Math.cos(C.SPIRAL_FREQ * t) * d.zigSign;
+        break;
+      }
+      case 'decoy':
+        // the real disc slides into one lane (two fakes are drawn fanning out the other ways)
+        d.vz = t < C.DECOY_SPLIT ? 0 : C.DECOY_DRIFT * d.zigSign;
+        break;
+      case 'rush': {
+        // crawls out of the hand, then explodes to top speed
+        const k = Math.min(1, t / C.RUSH_RAMP);
+        const sp = d.superBase * (C.RUSH_START + ((d.superDef?.speed ?? 1.6) - C.RUSH_START) * k * k);
+        const len = Math.hypot(d.vx, d.vz) || 1;
+        d.vx = (d.vx / len) * sp;
+        d.vz = (d.vz / len) * sp;
+        break;
+      }
+      case 'orbit':
+        // ECLIPSE ORBIT: one full loop around the net, then on toward the goal
+        if (t >= C.ORBIT_AT && t < C.ORBIT_AT + C.ORBIT_TIME) {
+          const w = ((2 * Math.PI) / C.ORBIT_TIME) * C.DT * d.zigSign;
+          const c = Math.cos(w), sn = Math.sin(w);
+          const vx = d.vx * c - d.vz * sn;
+          d.vz = d.vx * sn + d.vz * c;
+          d.vx = vx;
+        } else if (t >= C.ORBIT_AT + C.ORBIT_TIME && !d.superDone) {
+          d.superDone = true; // snap back to straight after the loop
+          d.vx = d.superDir * d.superBase * (d.superDef?.speed ?? 1.05) * C.ORBIT_EXIT;
+          d.vz = 0;
+        }
+        break;
+      case 'stopgo':
+        // BASS DROP: stops dead mid-court ("the drop"), then fires at the corner away from the defender
+        if (t >= C.STOPGO_AT && t < C.STOPGO_AT + C.STOPGO_HOLD) {
+          d.vx = 0;
+          d.vz = 0;
+        } else if (t >= C.STOPGO_AT + C.STOPGO_HOLD && !d.superDone) {
+          d.superDone = true;
+          const opp = g.players[d.thrower === 0 ? 1 : 0];
+          const goalX = d.superDir * C.COURT_HALF_LEN;
+          const tz = (opp.z > 0 ? -1 : 1) * (C.COURT_HALF_WID - 1.0);
+          const dx = goalX - d.x, dz = tz - d.z, len = Math.hypot(dx, dz) || 1;
+          const sp = d.superBase * (d.superDef?.speed ?? 1.45);
+          d.vx = (dx / len) * sp;
+          d.vz = (dz / len) * sp;
+        }
+        break;
+      case 'straight':
         break;
       case 'meteor':
         // rise, slam down just past the net, then skid along the ground (catchable) toward the goal
@@ -522,19 +595,37 @@ function landLob(g: GameState) {
   const p = g.players[landSide];
   const canCatch = p.state !== 'hold' && p.state !== 'knock';
   d.h = 0;
-  if (canCatch && Math.hypot(p.x - L.tx, p.z - L.tz) < p.catchR * 1.25) {
+  // a super lob's slam can't be caught: read where it skids or bounces next and intercept that
+  if (canCatch && !L.superLob && Math.hypot(p.x - L.tx, p.z - L.tz) < p.catchR * 1.25) {
     catchDisc(g, p, true);
     return;
   }
   g.events.push({ type: 'land', x: d.x, z: d.z });
   if (L.superLob) {
-    // Super lob: skids along the ground toward the goal after landing.
+    const ls = L.lobSuper;
+    const dir = landSide === 0 ? -1 : 1; // toward the defender's goal
+    if (ls?.kind === 'bounce' && L.bounces > 0) {
+      // bounces again, deeper and away from the defender
+      const tz2 = clamp(L.tz + (p.z > L.tz ? -1 : 1) * C.LOB_BOUNCE_SIDE, -C.PLAYER_MAX_Z, C.PLAYER_MAX_Z);
+      startLob(d, dir * C.LOB_BOUNCE_X, tz2, C.LOB_BOUNCE_TIME, C.LOB_BOUNCE_PEAK, true, ls, L.bounces - 1);
+      return;
+    }
+    if (ls?.kind === 'quake' && Math.hypot(p.x - L.tx, p.z - L.tz) < (ls.radius ?? 2)) {
+      // shockwave: the defender is knocked down and can't get to the skidding disc
+      p.knockV = C.KNOCK_SPEED;
+      p.knockT = C.KNOCK_TIME + (ls.stun ?? 0.3);
+      p.frozen = 0;
+      setState(p, 'knock');
+      g.events.push({ type: 'wall', x: d.x, z: d.z });
+    }
+    // then it skids along the ground toward the goal
     d.mode = 'ground';
     d.kind = 'super';
     d.superKind = null;
+    d.superDef = ls?.stun ? { name: ls.name, kind: 'straight', stun: ls.stun } : null;
     d.lob = null;
-    d.vx = (landSide === 0 ? -1 : 1) * 14;
-    d.vz = 0;
+    d.vx = dir * C.SUPER_SKID;
+    d.vz = ls?.kind === 'corner' ? (p.z > d.z ? -1 : 1) * C.SUPER_SKID_CORNER : 0;
     d.az = 0;
     d.h = 0.25;
     d.thrower = 1 - landSide;

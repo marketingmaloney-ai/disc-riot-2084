@@ -1,4 +1,4 @@
-import { charById } from '../sim/characters';
+import { charById, superNames } from '../sim/characters';
 import * as C from '../sim/constants';
 import type { GameEvent, GameState } from '../sim/types';
 import { uiImageURL } from '../render/characterArt';
@@ -51,8 +51,9 @@ export class Hud {
   }
 
   /** Full-screen super cut-in; runs while the sim is frozen for HITSTOP_CUTIN ticks. */
-  cutin(g: GameState, idx: number) {
+  cutin(g: GameState, idx: number, v = 0) {
     const c = charById(g.players[idx].charId);
+    const name = superNames(c)[v] ?? superNames(c)[0];
     const side = idx === 0 ? 'l' : 'r';
     const el = document.createElement('div');
     el.className = `cutin cutin-${side}`;
@@ -60,7 +61,7 @@ export class Hud {
     el.style.setProperty('--c2', c.colors.secondary);
     el.innerHTML = `<div class="cutin-band"><div class="cutin-lines"></div>
       ${this.cutinSrc[idx] ? `<img class="cutin-art" src="${this.cutinSrc[idx]}" alt="">` : ''}
-      <div class="cutin-text"><div class="cutin-super">SUPER!</div><div class="cutin-name">${c.superName}</div></div></div>`;
+      <div class="cutin-text"><div class="cutin-super">SUPER!</div><div class="cutin-name">${name}</div></div></div>`;
     this.el.appendChild(el);
     window.setTimeout(() => el.remove(), 900);
   }
@@ -82,7 +83,7 @@ export class Hud {
         const who = charById(g.players[e.p!].charId).name.split(' ')[0];
         this.announce(`${e.pts} POINTS!<span class="pts">${who}</span>`, 1500);
       } else if (e.type === 'super') {
-        this.cutin(g, e.p!);
+        this.cutin(g, e.p!, e.v ?? 0);
       } else if (e.type === 'supersonic') {
         this.announce('POWER SHOT!', 600, true);
       } else if (e.type === 'setEnd') {

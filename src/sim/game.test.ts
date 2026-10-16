@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CpuPlayer, DIFFICULTIES } from '../ai/cpu';
 import { createGame, step } from './game';
+import { CHARACTERS } from './characters';
 import type { GameEvent } from './types';
 
 function playMatch(seedA: number, seedB: number, p1 = 'vega', p2 = 'brick', maxTicks = 60 * 60 * 6) {
@@ -47,6 +48,36 @@ describe('simulation', () => {
       charged = g.events.some((e) => e.type === 'charge' && e.p === p.idx);
     }
     expect(charged).toBe(true);
+  });
+
+  it('fires all three supers for every fighter, and each one resolves cleanly', () => {
+    const idle = { mx: 0, mz: 0, a: false, b: false };
+    for (const c of CHARACTERS) {
+      for (const v of [0, 1, 2]) {
+        const g = createGame(c.id, 'vega');
+        let t = 0;
+        while (!(g.phase === 'play' && g.players[0].state === 'hold') && t++ < 900) {
+          // P1 needs the disc: let the CPU-free sim serve; if P2 serves, wait for a point and the re-serve
+          step(g, [idle, { mx: 0, mz: 0, a: g.players[1].state === 'hold' && g.phase === 'play', b: false }]);
+        }
+        const p = g.players[0];
+        expect(p.state).toBe('hold');
+        p.charged = true;
+        const fwd = -p.side;
+        const shot = v === 0 ? { mx: fwd, mz: 0, a: true, b: false } : v === 1 ? { mx: 0, mz: 1, a: true, b: false } : { mx: fwd, mz: 0, a: false, b: true };
+        step(g, [shot, idle]);
+        const ev = g.events.find((e) => e.type === 'super');
+        expect(ev?.v, `${c.id} super ${v}`).toBe(v);
+        let resolved = false;
+        for (let i = 0; i < 60 * 8 && !resolved; i++) {
+          step(g, [idle, idle]);
+          const d = g.disc;
+          expect(Number.isFinite(d.x) && Number.isFinite(d.z) && Number.isFinite(d.h), `${c.id} super ${v} position`).toBe(true);
+          resolved = g.events.some((e) => e.type === 'score' || e.type === 'catch');
+        }
+        expect(resolved, `${c.id} super ${v} (${[...c.supers.map((s) => s.name), c.lobSuper.name][v]}) resolves`).toBe(true);
+      }
+    }
   });
 
   it('is deterministic', () => {

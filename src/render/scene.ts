@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import * as C from '../sim/constants';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -309,6 +310,7 @@ export class GameRenderer {
   private players: PlayerView[] = [];
   private disc: THREE.Group;
   private discGlow: THREE.Sprite;
+  private decoys: { disc: THREE.Object3D; glow: THREE.Sprite }[] = [];
   private discShadow: THREE.Mesh;
   private reticle: THREE.Mesh;
   private trail = new Trail();
@@ -359,6 +361,16 @@ export class GameRenderer {
     const EFFECTS_LAST = 100;
     this.discGlow.renderOrder = this.trail.mesh.renderOrder = this.particles.points.renderOrder = EFFECTS_LAST;
     this.scene.add(this.disc, this.discGlow, this.discShadow, this.reticle, this.trail.mesh, this.particles.points);
+    // HOLO DECOY / AFTERIMAGE: two fake discs fan out from the real one
+    for (let i = 0; i < 2; i++) {
+      const disc = this.disc.clone();
+      const glow = new THREE.Sprite((this.discGlow.material as THREE.SpriteMaterial).clone());
+      glow.scale.copy(this.discGlow.scale);
+      glow.renderOrder = EFFECTS_LAST;
+      disc.visible = glow.visible = false;
+      this.decoys.push({ disc, glow });
+      this.scene.add(disc, glow);
+    }
 
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => this.resize());
@@ -490,6 +502,8 @@ export class GameRenderer {
       v.setFrame(anim, dt, anim !== v.lastWant);
       v.lastWant = anim;
       v.sprite.renderOrder = 10 + Math.round(z * 10);
+      // ice supers: frozen fighters flash icy blue
+      (v.sprite.material as THREE.SpriteMaterial).color.set(p.frozen > 0 && p.state === 'knock' ? (Math.sin(this.time * 30) > 0 ? '#9fe8ff' : '#d8f6ff') : '#ffffff');
     });
 
     const visible = d.mode !== 'dead' || g.phase === 'point';
@@ -515,6 +529,23 @@ export class GameRenderer {
     const w = d.kind === 'super' ? 0.45 : d.kind === 'supersonic' ? 0.32 : 0.16;
     this.trail.push(this.disc.position, w, flying, dt);
     if (d.kind === 'super' && flying && Math.random() < 0.7 * Math.min(1, dt * 60)) this.particles.burst(dx, dh, dz, tc, 2, 2, 0.35, 0.35);
+
+    // decoys: the real disc drifts one way; one fake keeps straight, the other mirrors the drift, then both fade
+    const showDecoys = d.kind === 'super' && d.superKind === 'decoy' && flying && d.superT > C.DECOY_SPLIT;
+    const fade = showDecoys ? Math.max(0, 1 - (d.superT - 0.3) / 0.25) : 0;
+    this.decoys.forEach((o, i) => {
+      o.disc.visible = o.glow.visible = showDecoys && fade > 0;
+      if (!o.disc.visible) return;
+      const drift = (d.superT - C.DECOY_SPLIT) * C.DECOY_DRIFT * d.zigSign;
+      const lim = C.COURT_HALF_WID - C.DISC_RADIUS;
+      let gz = i === 0 ? dz - drift : dz - drift * 2;
+      if (Math.abs(gz) > lim) gz = Math.sign(gz) * (2 * lim - Math.abs(gz)); // bounce off the side wall like a real disc
+      o.disc.position.set(dx, dh + 0.05, gz);
+      o.disc.rotation.copy(this.disc.rotation);
+      o.disc.scale.setScalar(1.15 * (0.6 + 0.4 * fade));
+      o.glow.position.copy(o.disc.position);
+      (o.glow.material as THREE.SpriteMaterial).color.set(tc).multiplyScalar(3 * fade);
+    });
 
     this.reticle.visible = d.mode === 'lob' && !!d.lob;
     if (d.lob) {
