@@ -27,6 +27,18 @@ Woman, 27. Brown skin, athletic and curvy. A tall electric-blue mohawk with shav
 ### 4. BRICK DIAMOND, Gold Coast (power, slow; super: METEOR SLAM)
 Man, 34. Huge bodybuilder physique. A blond flat-top, a short blond beard and a mustache. Orange mirrored aviators. A sleeveless cropped black leather vest with a chrome shoulder pad on one side. Orange-and-black striped retro swim trunks. Black wrist wraps. Orange high-tops. Big confident laugh. Signature colors: sunset orange #ff7a1a and black.
 
+### 5. NOVA KAIN, Selene City (lunar colony) (speed; supers: ECLIPSE ORBIT, MOONSHOT, ROLLER RUSH)
+Woman, 26, roller-derby star. Platinum-white asymmetric bob with a violet undercut, small violet star tattoos under her left eye, a chrome racing jumpsuit cut as high-cut shorts with violet stripes, violet pads, and white quad roller skates with glowing violet wheels. Signature colors: violet #9b5cff and chrome.
+
+### 6. DIESEL REYES, Mexico City (power, slow; supers: BASS DROP, MIC CHECK, PILEDRIVER)
+Man, 32, luchador DJ. Chrome luchador mask with neon-green trim and a red crest, a black goatee, green DJ headphones, a black tank top with an equalizer print, red-and-green wrestling track pants. Signature colors: neon green #39ff6a and red.
+
+### 7. SAKI VANCE, Seoul (technique; supers: HOLO DECOY, PIXEL STORM, ENCORE)
+Woman, 25, pop-idol hacker. Mint-to-lavender twin tails, a holographic code visor, a white sailor-style crop jacket, a white skort, thigh-high socks, platform sneakers, and a glowing holographic fan. Signature colors: mint #5effd0 and lavender.
+
+### 8. ZARA VOLKOV, Siberia (defense; supers: PERMAFROST, AVALANCHE, BLIZZARD)
+Woman, 29, ice-hockey enforcer. Platinum braids, a scar through her left eyebrow, frost-blue armored hockey pads over a white bodysuit, blue shorts, and ice-blue gauntlets. Signature colors: ice blue #6fd8ff and white.
+
 ## Sprite rules
 - Pure flat #00FF00 background with no floor, shadows or ground line.
 - The character faces RIGHT, shown in 3/4 side view, the way Windjammers sprites face the opponent.
