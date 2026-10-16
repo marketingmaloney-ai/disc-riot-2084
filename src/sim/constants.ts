@@ -106,3 +106,4 @@ export const RUSH_ANGLE = 0.32; // rad toward the far corner, away from the defe
 export const DECOY_FOOL = 0.32; // s the CPU follows the straight fake before it reads the real disc
 export const SUPER_LOB_STANDOFF = 1.4; // m the CPU backs off a super lob's landing spot toward its goal
 export const RUSH_CORNER_MARGIN = 1.8; // m inside the side wall that the rush swerve aims for
+export const INPUT_BUFFER = 6; // ticks (0.1 s) a tap stays valid, so slightly early presses still register

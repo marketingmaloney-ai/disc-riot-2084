@@ -81,7 +81,7 @@ function placeHeld(d: Disc, p: Player) {
 /** Advance the game exactly one fixed tick. Pure function of (state, inputs). */
 export function step(g: GameState, inputs: [InputFrame, InputFrame]) {
   g.events = [];
-  for (let i = 0; i < 2; i++) recordInput(g.players[i], inputs[i]);
+  for (let i = 0; i < 2; i++) recordInput(g.players[i], inputs[i], g.hitstop > 0);
 
   if (g.hitstop > 0) { g.hitstop--; return; }
   g.tick++;
@@ -138,11 +138,24 @@ export function step(g: GameState, inputs: [InputFrame, InputFrame]) {
   d.spin += C.DT * (d.mode === 'flight' ? 30 : d.mode === 'lob' ? 14 : 2);
 }
 
-function recordInput(p: Player, inp: InputFrame) {
+function recordInput(p: Player, inp: InputFrame, frozen: boolean) {
   p.dirHist.push({ mx: inp.mx, mz: inp.mz });
   if (p.dirHist.length > C.CURVE_WINDOW) p.dirHist.shift();
-  p.aAge = inp.a ? 0 : Math.min(999, p.aAge + 1);
-  p.bAge = inp.b ? 0 : Math.min(999, p.bAge + 1);
+  // presses don't age during a freeze (catch / super hit-stop), so a tap made then still counts
+  p.aAge = inp.a ? 0 : frozen ? p.aAge : Math.min(999, p.aAge + 1);
+  p.bAge = inp.b ? 0 : frozen ? p.bAge : Math.min(999, p.bAge + 1);
+}
+
+/** A / B pressed within the input buffer; consumes the press so it fires only once. */
+function takeA(p: Player): boolean {
+  if (p.aAge > C.INPUT_BUFFER) return false;
+  p.aAge = 999;
+  return true;
+}
+function takeB(p: Player): boolean {
+  if (p.bAge > C.INPUT_BUFFER) return false;
+  p.bAge = 999;
+  return true;
 }
 
 function settlePlayers(g: GameState) {
@@ -203,13 +216,14 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       p.holdT += C.DT;
       placeHeld(d, p);
       const maxHold = p.serving ? C.HOLD_MAX * 2 : C.HOLD_MAX;
-      if (p.bAge === 0) {
+      if (takeB(p)) {
         const back = inp.mx * fwd < 0;
         if (back && !p.charged) selfToss(g, p);
         else throwLob(g, p, inp);
-      } else if (p.aAge === 0 && !p.serving && p.holdT <= (C.SUPERSONIC_AFTER + (ssWindow(g, p) - p.ssWindow)) * C.DT) {
+      } else if (p.aAge <= C.INPUT_BUFFER && !p.serving && p.holdT <= (C.SUPERSONIC_AFTER + (ssWindow(g, p) - p.ssWindow)) * C.DT) {
+        p.aAge = 999;
         throwDisc(g, p, inp, true); // A right after the catch: power shot
-      } else if (p.aAge === 0 || p.holdT >= maxHold) {
+      } else if (takeA(p) || p.holdT >= maxHold) {
         throwDisc(g, p, inp, false);
       }
       return;
@@ -249,8 +263,8 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       let mx = inp.mx, mz = inp.mz;
       const len = Math.hypot(mx, mz);
       if (len > 0) { mx /= len; mz /= len; }
-      if (p.bAge === 0 && tryBlock(g, p)) return;
-      if (p.aAge === 0 && len > 0) {
+      if (p.bAge <= C.INPUT_BUFFER && tryBlock(g, p)) { p.bAge = 999; return; }
+      if (len > 0 && takeA(p)) {
         setState(p, 'dash');
         p.dvx = mx * p.speed * C.DASH_MULT;
         p.dvz = mz * p.speed * C.DASH_MULT;

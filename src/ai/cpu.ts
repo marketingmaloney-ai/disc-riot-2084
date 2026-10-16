@@ -12,7 +12,7 @@ export interface Difficulty {
 }
 
 export const DIFFICULTIES: Record<'easy' | 'normal' | 'hard', Difficulty> = {
-  easy: { reaction: 15, error: 0.75, supersonic: 0.03, dash: 0.3, variety: 0.25, holdMin: 14, holdMax: 40 },
+  easy: { reaction: 20, error: 0.95, supersonic: 0, dash: 0.12, variety: 0.15, holdMin: 18, holdMax: 44 }, // a learning partner: slow reads, loose aim, no power shots
   normal: { reaction: 10, error: 0.45, supersonic: 0.15, dash: 0.7, variety: 0.5, holdMin: 6, holdMax: 26 },
   hard: { reaction: 6, error: 0.24, supersonic: 0.4, dash: 1, variety: 0.7, holdMin: 2, holdMax: 14 },
 };

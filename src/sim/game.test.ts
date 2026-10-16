@@ -80,6 +80,22 @@ describe('simulation', () => {
     }
   });
 
+  it('keeps a throw tapped during a catch freeze-frame', () => {
+    const g = createGame('vega', 'kaito');
+    const idle = { mx: 0, mz: 0, a: false, b: false };
+    let t = 0;
+    while (!(g.phase === 'play' && g.players[0].state === 'hold') && t++ < 900) step(g, [idle, { mx: 0, mz: 0, a: g.players[1].state === 'hold' && g.phase === 'play', b: false }]);
+    g.players[0].holdT = 0.5; // past the power-shot window: a plain throw
+    g.hitstop = 5; // as right after a catch
+    step(g, [{ mx: 0, mz: 0, a: true, b: false }, idle]); // tap during the freeze
+    let threw = false;
+    for (let i = 0; i < 12 && !threw; i++) {
+      step(g, [idle, idle]);
+      threw = g.events.some((e) => e.type === 'throw' && e.p === 0);
+    }
+    expect(threw).toBe(true);
+  });
+
   it('is deterministic', () => {
     const a = playMatch(5, 9, 'kaito', 'roxy');
     const b = playMatch(5, 9, 'kaito', 'roxy');
