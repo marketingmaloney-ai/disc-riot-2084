@@ -40,13 +40,19 @@ game should be polished and have more fighters, more supers and **multiplayer**.
   - The CPU positions smartly against super lobs.
   - Stat nudges.
 
+## Game feel: DONE (published as v33)
+- Input buffering: A/B taps made during a catch freeze-frame or up to 6 frames early are kept, not dropped. Regression test added.
+- Catch "pop": the catcher's sprite squashes and springs back; bigger on super catches. This adds to the existing shake, particles and hit-stop.
+- Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
+- Owner to check on iPhone: does Easy now feel winnable?
+
 ## Next, in order
 1. ~~**Finish balance**~~ (done; history below). Run `npx vitest run`, then `BALANCE=1 BALANCE_N=10 npx vitest run src/sim/balance.test.ts --silent=false -t "character matrix"`.
    - Before the last round of fixes: Vega won 74% (spiral and orbit too strong); Kaito 40% and Zara 43% were weak.
    - Permafrost, decoy and rush supers almost never scored, and super lobs scored 0%.
    - Fixes just applied, not yet measured: weaker spiral and orbit, faster Permafrost, the CPU gets fooled by decoys, rush aims at the open corner, and super-lob slams can't be caught.
    - Target: every fighter at 42–58% overall; every super scoring 15–45%.
-2. **Game feel pass:** hit-stop, shake, input buffering, touch controls, and an easier Easy CPU on iPhone.
+2. ~~**Game feel pass:**~~ (done, v33) hit-stop, shake, input buffering, touch controls, and an easier Easy CPU on iPhone.
 3. **Multiplayer** (new request). Recommended path, as a quick decision for the owner:
    - (a) local same-device 2P on iPad/phone;
    - (b) **online versus**. The sim is deterministic at 60 Hz, which suits rollback netcode: a small relay/WebRTC server, with Game Center / Play Games matchmaking later.
