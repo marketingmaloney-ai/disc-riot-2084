@@ -297,3 +297,18 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .cr-row b { color: var(--cyan); letter-spacing: 0.05em; }
 .cr-row a { color: var(--yellow); font-size: 0.85em; }
 .cr-note { opacity: 0.7; font-size: 0.85em; margin-top: 6px; }
+
+/* ---------- online versus ---------- */
+.room-code { color: var(--cyan); letter-spacing: 0.25em; text-shadow: 0 0 14px var(--cyan); }
+.room-input {
+  font-family: 'Russo One'; font-size: clamp(32px, 9vh, 56px); letter-spacing: 0.35em; text-align: center; text-transform: uppercase;
+  width: 6.2em; padding: 0.15em 0 0.15em 0.35em; margin: 2vh auto; display: block; color: #fff; background: rgba(10, 4, 30, 0.8);
+  border: 3px solid var(--cyan); border-radius: 12px; box-shadow: 0 0 18px rgba(25, 230, 255, 0.4); outline: none; user-select: text; -webkit-user-select: text;
+}
+.net-err { color: #ff6b8a; font-family: 'Orbitron'; font-size: 13px; letter-spacing: 0.1em; min-height: 1.4em; text-align: center; margin: 1vh 0; }
+.net-wait {
+  position: absolute; left: 50%; top: 22%; transform: translateX(-50%); padding: 8px 18px; border-radius: 8px; pointer-events: none;
+  font-family: 'Orbitron'; font-weight: 700; font-size: 14px; letter-spacing: 0.15em; color: #fff; background: rgba(10, 4, 30, 0.75);
+  border: 2px solid var(--cyan); animation: blink 1s steps(2) infinite;
+}
+.net-wait.hidden { display: none; }

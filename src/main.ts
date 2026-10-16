@@ -24,6 +24,8 @@ import type { Achievement } from './meta/achievements';
 import { charProfile, freePoints, totalLevel } from './meta/progress';
 import { upgradeScreen } from './ui/upgrades';
 import * as SC from './sim/constants';
+import { RollbackSession, type NetMsg } from './net/rollback';
+import { cleanCode, newRoomCode, RoomLink, type Msg } from './net/online';
 
 type Controller = { kind: 'human'; src: InputSource } | { kind: 'cpu'; ai: CpuPlayer };
 
@@ -45,7 +47,7 @@ let demo = true;
 let paused = false;
 let acc = 0;
 let difficulty: keyof typeof DIFFICULTIES = 'normal';
-let mode: '1p' | '2p' = '1p';
+let mode: '1p' | '2p' | 'online' = '1p';
 let picks: [string, string] = ['vega', 'kaito'];
 let arenaIdx = 0;
 let onMenuInput: ((e: ReturnType<MenuInput['poll']>) => void) | null = null;
@@ -58,6 +60,20 @@ let loading = 0; // startMatch calls still loading art
 let touchWanted = false; // this match is played with the on-screen controls
 let touchShown = false;
 
+// online versus: the room link, this match's rollback session, and lobby state
+let link: RoomLink | null = null;
+let session: RollbackSession | null = null;
+let netBuffer: NetMsg[] = []; // match messages that arrive while this phone is still loading the arena
+let remotePick: string | null = null;
+let waitingToGo = false; // host: arena chosen, waiting for the opponent's fighter
+let votes = { me: false, them: false }; // rematch
+let resultsShown = false;
+let matchGen = 0; // online: counts matches in this room, so a finished match's late messages are ignored
+const waitEl = document.createElement('div');
+waitEl.className = 'net-wait hidden';
+waitEl.textContent = 'WAITING FOR OPPONENT…';
+document.getElementById('app')!.appendChild(waitEl);
+
 async function startMatch(p1: string, p2: string, arena: number, ctrls: [Controller, Controller], isDemo: boolean) {
   // a newer startMatch began while this one was loading: drop this one entirely
   loading++;
@@ -69,13 +85,20 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   // Upgrades apply only to the human in VS CPU; 2P versus stays on base stats.
   const upgraded = !isDemo && mode === '1p';
   audio.setCharacters([p1, p2]);
-  audio.setHuman(!isDemo && mode === '1p' ? 0 : -1);
+  const online = !isDemo && mode === 'online' && !!link;
+  audio.setHuman(!isDemo && mode === '1p' ? 0 : online ? link!.idx : -1);
   game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
   tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
   newAchievements = [];
   acc = 0;
+  const gen = matchGen;
+  session = online ? new RollbackSession(game, link!.idx, (m) => link?.send({ ...m, g: gen })) : null;
+  resultsShown = false;
+  if (session) { for (const m of netBuffer) session.receive(m); }
+  netBuffer = [];
   if (!isDemo) {
-    const lbl = (c: Controller, i: number) => (c.kind === 'cpu' ? `CPU · ${difficulty.toUpperCase()}` : `PLAYER ${i + 1}`);
+    const lbl = (c: Controller, i: number) =>
+      c.kind === 'cpu' ? `CPU · ${difficulty.toUpperCase()}` : online ? (i === link!.idx ? 'YOU' : 'RIVAL · ONLINE') : `PLAYER ${i + 1}`;
     hud.setup(game, [lbl(ctrls[0], 0), lbl(ctrls[1], 1)]);
     hudEl.classList.remove('hidden');
     touchWanted = ctrls[0].kind === 'human' && ctrls[0].src instanceof MergedSource;
@@ -98,7 +121,7 @@ function startDemo() {
 
 function humanSources(): [InputSource, InputSource] {
   const pads = connectedPads();
-  if (mode === '1p') {
+  if (mode !== '2p') {
     const srcs: InputSource[] = [new KeyboardSource(SOLO_KEYS), ...pads.map((i) => new GamepadSource(i))];
     if (touch) srcs.push(touch);
     return [new MergedSource(srcs), new KeyboardSource(P2_KEYS)];
@@ -118,6 +141,12 @@ function humanSources(): [InputSource, InputSource] {
 
 function beginVersus() {
   const [s1, s2] = humanSources();
+  if (mode === 'online') {
+    // the opponent's input comes over the network; both slots just need a valid controller
+    clearScreens();
+    void startMatch(picks[0], picks[1], arenaIdx, [{ kind: 'human', src: s1 }, { kind: 'human', src: s1 }], false);
+    return;
+  }
   const ctrls: [Controller, Controller] = [
     { kind: 'human', src: s1 },
     mode === '1p' ? { kind: 'cpu', ai: new CpuPlayer(1, DIFFICULTIES[difficulty], (Math.random() * 1e9) | 0) } : { kind: 'human', src: s2 },
@@ -128,6 +157,23 @@ function beginVersus() {
 
 // ---------------------------------------------------------------- main loop
 function tick() {
+  if (session) {
+    const src = (controllers[session.me] as { src: InputSource }).src;
+    const ev = session.tick(() => src.poll());
+    endTick();
+    game = session.game; // a rollback swaps in a re-simulated state object
+    if (ev?.length) {
+      renderer.handleEvents(ev, game);
+      audio.handleEvents(ev, game);
+      hud.events(ev, game);
+    }
+    // only once the final frames are confirmed by both sides (a rollback could still undo that last goal)
+    if (game.phase === 'matchEnd' && !resultsShown && session.remoteConfirmed >= session.frame - 1) {
+      resultsShown = true;
+      window.setTimeout(showResults, 1600);
+    }
+    return;
+  }
   const inputs = controllers.map((c) => (c.kind === 'human' ? c.src.poll() : c.ai.think(game))) as [InputFrame, InputFrame];
   endTick();
   step(game, inputs);
@@ -181,6 +227,7 @@ function frame(now: number) {
       touch?.setVisible(tv);
       touch2?.setVisible(tv && shareScreen && mode === '2p');
     }
+    waitEl.classList.toggle('hidden', !(session && session.stalledFor > 20 && game.phase !== 'matchEnd'));
     renderer.render(game, paused ? 1 : acc / DT, paused ? 0 : dt);
     if (demo && game.phase === 'matchEnd' && !loading) void startDemo(); // once, not every frame while it loads
   }
@@ -272,6 +319,7 @@ function modeScreen() {
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
     { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; shareScreen = false; if (touch) twoPlayerScreen(); else void charSelect(); } },
+    { label: 'ONLINE VERSUS', action: () => onlineScreen() },
     { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
     { label: 'HOW TO PLAY', action: () => howTo() },
     { label: 'CREDITS', action: () => void creditsScreen() },
@@ -422,6 +470,7 @@ async function charSelect() {
   };
   const confirm = () => {
     audio.play('confirm');
+    if (mode === 'online') { onlinePicked(CHARACTERS[cursor[0]].id); return; }
     if (who === 0 && mode === '2p') { picks[0] = CHARACTERS[cursor[0]].id; who = 1; paint(); return; }
     if (who === 0) {
       picks[0] = CHARACTERS[cursor[0]].id;
@@ -435,7 +484,7 @@ async function charSelect() {
     c.addEventListener('click', () => { cursor[who] = i; confirm(); });
   });
   paint();
-  const goBack = () => { if (who === 1) { who = 0; paint(); } else modeScreen(); };
+  const goBack = () => { if (who === 1) { who = 0; paint(); } else if (mode === 'online') leaveOnline(); else modeScreen(); };
   setBack(goBack);
   onMenuInput = (e) => {
     const n = CHARACTERS.length;
@@ -444,6 +493,146 @@ async function charSelect() {
     if (e.ok) confirm();
     if (e.back) goBack();
   };
+}
+
+// ---------------------------------------------------------------- online versus
+function onlineScreen() {
+  const s = show(`<div class="title-h">ONLINE VERSUS</div>`);
+  menu(s, [
+    { label: 'CREATE ROOM', action: () => void connectRoom(newRoomCode(), true) },
+    { label: 'JOIN ROOM', action: () => joinScreen() },
+  ], modeScreen);
+  s.insertAdjacentHTML('beforeend', `<div class="hint">CREATE A ROOM AND SEND THE 4-LETTER CODE TO A FRIEND</div>`);
+}
+
+function joinScreen() {
+  const s = show(`<div class="title-h">JOIN ROOM</div>
+    <input class="room-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE">
+    <div class="net-err"></div>`);
+  const input = s.querySelector('.room-input') as HTMLInputElement;
+  const go = () => {
+    const code = cleanCode(input.value);
+    if (code.length === 4) void connectRoom(code, false);
+    else (s.querySelector('.net-err') as HTMLElement).textContent = 'ENTER THE 4-LETTER CODE';
+  };
+  input.addEventListener('input', () => { input.value = cleanCode(input.value); });
+  input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); });
+  menu(s, [{ label: 'JOIN', action: go }], onlineScreen);
+  onMenuInput = (e) => { if (e.back) onlineScreen(); }; // typing must not drive the menu
+  window.setTimeout(() => input.focus(), 50);
+}
+
+async function connectRoom(code: string, creating: boolean) {
+  leaveOnline(false);
+  const s = show(`<div class="title-h">ROOM <span class="room-code">${code}</span></div><div class="sub blink">CONNECTING…</div>`);
+  setBack(() => leaveOnline());
+  onMenuInput = (e) => { if (e.back) leaveOnline(); };
+  try {
+    link = await RoomLink.join(code);
+  } catch (err) {
+    if (!s.isConnected) return;
+    const e = show(`<div class="title-h">ONLINE VERSUS</div><div class="net-err">${(err as Error).message}</div>`);
+    menu(e, [{ label: 'BACK', action: onlineScreen }], onlineScreen);
+    return;
+  }
+  if (!s.isConnected) { link.close(); link = null; return; } // backed out while connecting
+  mode = 'online';
+  remotePick = null;
+  waitingToGo = false;
+  votes = { me: false, them: false };
+  link.onMessage = onNetMessage;
+  link.onLeft = opponentLeft;
+  link.onPeer = () => void charSelect();
+  if (link.peer) { void charSelect(); return; }
+  s.querySelector('.sub')!.outerHTML = creating
+    ? `<div class="sub">SEND THIS CODE TO A FRIEND</div><div class="sub blink">WAITING FOR A PLAYER TO JOIN…</div>`
+    : `<div class="sub blink">WAITING FOR THE OTHER PLAYER…</div>`;
+}
+
+function onNetMessage(m: Msg) {
+  if (m.t === 'in' || m.t === 'sync') {
+    if (m.g !== matchGen) return;
+    if (session) session.receive(m as NetMsg);
+    else netBuffer.push(m as NetMsg);
+  } else if (m.t === 'pick') {
+    remotePick = String(m.c);
+    if (waitingToGo) arenaChosen();
+  } else if (m.t === 'go' && link?.idx === 1) {
+    picks = [String(m.p1), String(m.p2)];
+    arenaIdx = Number(m.arena) % ARENAS.length;
+    startOnline();
+  } else if (m.t === 'again') {
+    votes.them = true;
+    maybeRematch();
+  }
+}
+
+/** This player locked in a fighter: the host chooses the arena next, the guest waits for the host. */
+function onlinePicked(id: string) {
+  if (!link) return;
+  picks[link.idx] = id;
+  link.send({ t: 'pick', c: id });
+  if (link.idx === 0) arenaSelect();
+  else {
+    const s = show(`<div class="title-h">${charById(id).name}</div><div class="sub blink">THE HOST IS CHOOSING THE ARENA…</div>`);
+    setBack(() => void charSelect());
+    onMenuInput = (e) => { if (e.back) void charSelect(); };
+    void s;
+  }
+}
+
+/** Arena picked. Offline: on to the VS screen. Online host: start once the opponent has picked. */
+function arenaChosen() {
+  if (mode !== 'online' || !link) { void vsScreen(); return; }
+  if (!remotePick) {
+    waitingToGo = true;
+    show(`<div class="title-h">${ARENAS[arenaIdx].name}</div><div class="sub blink">WAITING FOR YOUR OPPONENT TO PICK…</div>`);
+    setBack(() => { waitingToGo = false; arenaSelect(); });
+    return;
+  }
+  waitingToGo = false;
+  picks[1] = remotePick;
+  link.send({ t: 'go', p1: picks[0], p2: picks[1], arena: arenaIdx });
+  startOnline();
+}
+
+function startOnline() {
+  matchGen++;
+  votes = { me: false, them: false };
+  session = null;
+  netBuffer = [];
+  void vsScreen();
+}
+
+function maybeRematch() {
+  if (!votes.me || !votes.them || !link) return;
+  if (link.idx === 0) {
+    link.send({ t: 'go', p1: picks[0], p2: picks[1], arena: arenaIdx });
+    startOnline();
+  } // the guest starts when the host's 'go' arrives
+}
+
+function opponentLeft() {
+  const wasPlaying = !!session && game?.phase !== 'matchEnd';
+  link?.close();
+  link = null;
+  session = null;
+  mode = '1p';
+  hudEl.classList.add('hidden');
+  void startDemo();
+  const s = show(`<div class="title-h">OPPONENT LEFT</div><div class="sub">${wasPlaying ? 'THE MATCH WAS ABANDONED' : 'THE ROOM IS CLOSED'}</div>`);
+  menu(s, [{ label: 'OK', action: () => { audio.startTitleMusic(); modeScreen(); } }], modeScreen);
+}
+
+function leaveOnline(toMenu = true) {
+  link?.close();
+  link = null;
+  session = null;
+  netBuffer = [];
+  if (mode === 'online') mode = '1p';
+  if (!toMenu) return;
+  if (!demo) { hudEl.classList.add('hidden'); audio.startTitleMusic(); void startDemo(); }
+  onlineScreen();
 }
 
 function arenaSelect() {
@@ -455,7 +644,7 @@ function arenaSelect() {
     d.style.backgroundImage = `linear-gradient(180deg, ${a.sky[0]}, ${a.sky[1]} 55%, ${a.sky[2]} 60%, ${a.sand[0]} 62%, ${a.sand[1]})`;
     d.innerHTML = `<div class="nm">${a.name}<br><span class="nation">${a.subtitle}</span></div>`;
     d.addEventListener('pointerenter', () => { arenaIdx = i; paint(); });
-    d.addEventListener('click', () => { arenaIdx = i; audio.play('confirm'); vsScreen(); });
+    d.addEventListener('click', () => { arenaIdx = i; audio.play('confirm'); arenaChosen(); });
     grid.appendChild(d);
     return d;
   });
@@ -463,7 +652,7 @@ function arenaSelect() {
   paint();
   onMenuInput = (e) => {
     if (e.l || e.r) { arenaIdx = (arenaIdx + (e.l ? ARENAS.length - 1 : 1)) % ARENAS.length; audio.play('menu'); paint(); }
-    if (e.ok) { audio.play('confirm'); vsScreen(); }
+    if (e.ok) { audio.play('confirm'); arenaChosen(); }
     if (e.back) charSelect();
   };
   setBack(charSelect);
@@ -480,10 +669,22 @@ async function vsScreen() {
     </div>
     <div class="sub">${ARENAS[arenaIdx].name} · ${ARENAS[arenaIdx].subtitle}</div>`);
   audio.play('super');
-  window.setTimeout(beginVersus, 2200);
+  const m = mode, gen = matchGen;
+  // the opponent may leave (or the player back out) during the VS screen
+  window.setTimeout(() => { if (mode === m && gen === matchGen && (m !== 'online' || link)) beginVersus(); }, 2200);
 }
 
 function togglePause() {
+  if (session) {
+    // online: the match can't stop for one player; this is just a quit menu over the running game
+    if (screens.childElementCount) { clearScreens(); return; }
+    const s = show(`<div class="title-h">ONLINE MATCH</div>`, 'clear');
+    menu(s, [
+      { label: 'KEEP PLAYING', action: () => clearScreens() },
+      { label: 'QUIT MATCH', action: () => leaveOnline() },
+    ], () => clearScreens());
+    return;
+  }
   paused = !paused;
   if (paused) {
     const s = show(`<div class="title-h">PAUSED</div>`, 'clear');
@@ -504,6 +705,14 @@ function showResults() {
     : '';
   const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>${ach}`, 'results clear');
   const pts = tracker ? freePoints(charProfile(picks[0])) : 0;
+  if (mode === 'online' && link) {
+    votes = { me: false, them: votes.them };
+    menu(s, [
+      { label: 'REMATCH', action: () => { votes.me = true; link?.send({ t: 'again' }); s.querySelector('.menu .btn')!.textContent = votes.them ? 'STARTING…' : 'WAITING FOR OPPONENT…'; maybeRematch(); } },
+      { label: 'LEAVE', action: () => leaveOnline() },
+    ]);
+    return;
+  }
   menu(s, [
     ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { audio.startTitleMusic(); void startDemo(); openUpgrades(modeScreen, picks[0]); } }] : []),
     { label: 'REMATCH', action: () => beginVersus() },
@@ -527,7 +736,7 @@ if (touch) {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     audio.suspend();
-    if (!demo && game && game.phase !== 'matchEnd' && !paused) togglePause();
+    if (!demo && game && game.phase !== 'matchEnd' && !paused && !session) togglePause();
   } else audio.resume();
 });
 
@@ -541,11 +750,20 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
-if (import.meta.env.DEV) (window as unknown as { __game: () => GameState }).__game = () => game;
+if (import.meta.env.DEV) Object.assign(window, { __game: () => game, __net: () => session });
 if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS, hud, audio } });
 await startDemo();
 requestAnimationFrame(frame);
-if (params.get('quick')) {
+if (params.get('room')) {
+  // test shortcut: ?room=ABCD&p1=nova joins that room and auto-picks (the host also picks &arena=)
+  const pick = params.get('p1') ?? 'vega';
+  arenaIdx = Number(params.get('arena') ?? 0);
+  void connectRoom(cleanCode(params.get('room')!), true).then(() => {
+    const auto = () => { if (link) { onlinePicked(pick); if (link.idx === 0) arenaChosen(); } };
+    if (link?.peer) auto();
+    else if (link) link.onPeer = auto;
+  });
+} else if (params.get('quick')) {
   picks = [params.get('p1') ?? 'vega', params.get('p2') ?? 'roxy'];
   arenaIdx = Number(params.get('arena') ?? 0);
   mode = params.get('share') ? '2p' : '1p'; // &share=1: shared-screen 2P (touch devices)

@@ -46,6 +46,16 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Multiplayer (2026-10-16)
+Owner chose: **both** local and online · **free tier only** · **friend room codes**.
+- **Same-device 2P on touch:** DONE (v34). 2 PLAYER VERSUS → SHARE THIS SCREEN gives each player a stick and A/B on their half of the screen; USE A CONTROLLER is the old flow.
+- **Online versus:** BUILT and tested locally (unit tests plus two browser tabs through the real relay in `wrangler dev`). It still needs the relay deployed.
+  - Netcode: rollback (`src/net/rollback.ts`), 2-frame input delay, up to 10 frames of rollback, and time sync. The host sends a state snapshot every second so iPhone and Android can't drift apart.
+  - Relay: `server/`, a Cloudflare Worker plus Durable Object, free plan. About 180 matches a day free.
+  - Menu: ONLINE VERSUS → CREATE ROOM (shows a code) / JOIN ROOM (type the code). Each player picks a fighter; the host picks the arena. Rematch needs both votes; there's an "opponent left" screen.
+  - **Owner to-do:** follow `server/README.md`. Make a free Cloudflare account, `npx wrangler login`, `npx wrangler deploy`, then send Claude the workers.dev URL. Claude then builds with `VITE_NET_URL` and republishes.
+  - To check once deployed: whether the Claude artifact page may open a WebSocket to workers.dev. The iOS/Android apps can regardless.
+
 ## Next, in order
 1. ~~**Finish balance**~~ (done; history below). Run `npx vitest run`, then `BALANCE=1 BALANCE_N=10 npx vitest run src/sim/balance.test.ts --silent=false -t "character matrix"`.
    - Before the last round of fixes: Vega won 74% (spiral and orbit too strong); Kaito 40% and Zara 43% were weak.
@@ -53,7 +63,7 @@ game should be polished and have more fighters, more supers and **multiplayer**.
    - Fixes just applied, not yet measured: weaker spiral and orbit, faster Permafrost, the CPU gets fooled by decoys, rush aims at the open corner, and super-lob slams can't be caught.
    - Target: every fighter at 42–58% overall; every super scoring 15–45%.
 2. ~~**Game feel pass:**~~ (done, v33) hit-stop, shake, input buffering, touch controls, and an easier Easy CPU on iPhone.
-3. **Multiplayer** (new request). Recommended path, as a quick decision for the owner:
+3. ~~**Multiplayer**~~ (built; see above; relay deploy pending). Recommended path, as a quick decision for the owner:
    - (a) local same-device 2P on iPad/phone;
    - (b) **online versus**. The sim is deterministic at 60 Hz, which suits rollback netcode: a small relay/WebRTC server, with Game Center / Play Games matchmaking later.
    - Ask whether online play needs ranked/friends, and whether the owner will pay for a server (about $5–20/month).

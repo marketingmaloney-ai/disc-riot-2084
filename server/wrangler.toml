@@ -1,0 +1,14 @@
+# Deploy (free Cloudflare account):  cd server && npx wrangler login && npx wrangler deploy
+# Then put the printed https://disc-riot-relay.<you>.workers.dev URL into VITE_NET_URL (see RELEASE.md).
+name = "disc-riot-relay"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# Free plan: Durable Objects must use the SQLite storage backend.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
