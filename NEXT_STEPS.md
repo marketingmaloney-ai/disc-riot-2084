@@ -46,6 +46,16 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Hype pass (2026-10-20, v38)
+- `src/ui/hype.ts` (tested in `hype.test.ts`): call-outs and a rally counter. Pure presentation; it never changes the game.
+  - Rally counter under the clock, plus 6-HIT COMBO / ON FIRE and COMBO BREAKER.
+  - SET POINT and MATCH POINT at the serve.
+  - FINAL 10 SECONDS, then the announcer counts 3-2-1 and calls TIME.
+  - Streaks ("3 IN A ROW", "UNSTOPPABLE"), COMEBACK, FLAWLESS.
+  - Slow-motion punch-in on set- or match-winning goals; offline only, since online both phones must keep pace.
+- New Kenney announcer clips: combo, combo breaker, final round, 3/2/1, time, flawless victory, it's a tie, player 1/2. The deciding set is announced as "FINAL ROUND".
+- Dev play-testing: `?quick=1&auto=1` lets a Hard CPU play P1.
+
 ## Multiplayer (2026-10-16)
 Owner chose: **both** local and online · **free tier only** · **friend room codes**.
 - **Same-device 2P on touch:** DONE (v34). 2 PLAYER VERSUS → SHARE THIS SCREEN gives each player a stick and A/B on their half of the screen; USE A CONTROLLER is the old flow.
