@@ -1,5 +1,6 @@
 import type { GameEvent, GameState } from '../sim/types';
 import { hasAsset } from '../render/assets';
+import * as C from '../sim/constants';
 
 /** Per-character sounds cut from the art videos (tools/gen-assets/sfx.json). Missing ones use the synth. */
 const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
@@ -7,7 +8,9 @@ const VOICE_NAMES = ['throw', 'shout', 'dash', 'lob', 'block', 'win', 'lose'];
 /** Shared sound effects (tools/gen-assets/sfx_candidates.json -> public/assets/sfx/common/). Missing ones use the synth. */
 const COMMON_SFX = ['catch', 'bigcatch', 'punch', 'wall', 'drop', 'super', 'ui_move', 'ui_confirm', 'ui_back', 'jingle', 'jingle_win',
   'score', 'score_big', 'crowd', 'vo_ready', 'vo_fight', 'vo_round_1', 'vo_round_2', 'vo_round_3', 'vo_round_4', 'vo_round_5',
-  'vo_sudden_death', 'vo_you_win', 'vo_you_lose', 'vo_winner', 'vo_choose'];
+  'vo_sudden_death', 'vo_you_win', 'vo_you_lose', 'vo_winner', 'vo_choose',
+  'vo_combo', 'vo_combo_breaker', 'vo_final_round', 'vo_1', 'vo_2', 'vo_3', 'vo_time', 'vo_flawless_victory', 'vo_its_a_tie',
+  'vo_player_1', 'vo_player_2'];
 /** Licensed music per slot (tools/gen-assets/music.json -> public/assets/music/<slot>.mp3). ARENAS order for matches. */
 const ARENA_TRACKS = ['sunset', 'pier', 'lagoon', 'orbital'];
 const MUSIC_VOL = 0.5;
@@ -141,6 +144,11 @@ export class AudioEngine {
   }
 
   /** Play a shared sample; false if it isn't available (caller falls back to synth). */
+  /** Announcer / hype clip by common sfx name (see ui/hype.ts). */
+  callout(name: string, when = 0) {
+    this.sample(name, 0.95, when);
+  }
+
   private sample(name: string, vol = 1, when = 0, rate = 1): boolean {
     if (!this.ctx || this.muted) return false;
     const buf = this.voices.get(`common/${name}`);
@@ -282,8 +290,9 @@ export class AudioEngine {
     const now = this.ctx?.currentTime ?? 0;
     if (now - this.lastAnnounce < 3) return; // match start can reach here twice (start + opening serve)
     this.lastAnnounce = now;
+    const decider = g.sets[0] === C.SETS_TO_WIN - 1 && g.sets[1] === C.SETS_TO_WIN - 1;
     if (g.suddenDeath) this.sample('vo_sudden_death', 0.95, 0.2);
-    else if (this.sample(`vo_round_${Math.min(5, g.setNo)}`, 0.95, 0.2)) this.sample('vo_fight', 1, 1.65);
+    else if (this.sample(decider ? 'vo_final_round' : `vo_round_${Math.min(5, g.setNo)}`, 0.95, 0.2)) this.sample('vo_fight', 1, 1.65);
   }
 
   /** VS CPU: index of the human player (-1 = none / 2P) for the end-of-match call. */
@@ -321,7 +330,10 @@ export class AudioEngine {
           const now = this.ctx?.currentTime ?? 0;
           if (e.type === 'matchEnd') {
             this.sample('jingle_win', 0.8, 0.5);
-            if (e.p !== undefined && e.p >= 0) this.sample(this.human < 0 ? 'vo_winner' : e.p === this.human ? 'vo_you_win' : 'vo_you_lose', 1, 1.1);
+            if (e.p !== undefined && e.p >= 0) {
+              if (this.human >= 0) this.sample(e.p === this.human ? 'vo_you_win' : 'vo_you_lose', 1, 1.1);
+              else if (this.sample(`vo_player_${e.p + 1}`, 1, 1.1)) this.sample('vo_winner', 1, 2.0); // 2P: "PLAYER 2 ... WINNER!"
+            }
           }
           if (e.p !== undefined && e.p >= 0 && now - this.lastEndVoice > 2) {
             this.lastEndVoice = now;

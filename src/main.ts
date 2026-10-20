@@ -23,6 +23,7 @@ import { MatchTracker } from './meta/tracker';
 import type { Achievement } from './meta/achievements';
 import { charProfile, freePoints, totalLevel } from './meta/progress';
 import { upgradeScreen } from './ui/upgrades';
+import { Hype } from './ui/hype';
 import * as SC from './sim/constants';
 import { RollbackSession, type NetMsg } from './net/rollback';
 import { cleanCode, newRoomCode, RoomLink, type Msg } from './net/online';
@@ -68,6 +69,9 @@ let remotePick: string | null = null;
 let waitingToGo = false; // host: arena chosen, waiting for the opponent's fighter
 let votes = { me: false, them: false }; // rematch
 let resultsShown = false;
+const hype = new Hype();
+let timeScale = 1; // < 1 during a slow-motion finish
+let slowUntil = 0;
 let matchGen = 0; // online: counts matches in this room, so a finished match's late messages are ignored
 const waitEl = document.createElement('div');
 waitEl.className = 'net-wait hidden';
@@ -92,6 +96,8 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   newAchievements = [];
   acc = 0;
   const gen = matchGen;
+  hype.reset();
+  timeScale = 1;
   session = online ? new RollbackSession(game, link!.idx, (m) => link?.send({ ...m, g: gen })) : null;
   resultsShown = false;
   if (session) { for (const m of netBuffer) session.receive(m); }
@@ -147,8 +153,10 @@ function beginVersus() {
     void startMatch(picks[0], picks[1], arenaIdx, [{ kind: 'human', src: s1 }, { kind: 'human', src: s1 }], false);
     return;
   }
+  // dev play-testing: &auto=1 hands Player 1 to a hard CPU (the match still runs as a real VS CPU game)
+  const auto = import.meta.env.DEV && new URLSearchParams(location.search).has('auto');
   const ctrls: [Controller, Controller] = [
-    { kind: 'human', src: s1 },
+    auto ? { kind: 'cpu', ai: new CpuPlayer(0, DIFFICULTIES.hard, 77) } : { kind: 'human', src: s1 },
     mode === '1p' ? { kind: 'cpu', ai: new CpuPlayer(1, DIFFICULTIES[difficulty], (Math.random() * 1e9) | 0) } : { kind: 'human', src: s2 },
   ];
   clearScreens();
@@ -167,6 +175,7 @@ function tick() {
       audio.handleEvents(ev, game);
       hud.events(ev, game);
     }
+    if (ev) runHype(ev, false);
     // only once the final frames are confirmed by both sides (a rollback could still undo that last goal)
     if (game.phase === 'matchEnd' && !resultsShown && session.remoteConfirmed >= session.frame - 1) {
       resultsShown = true;
@@ -177,6 +186,7 @@ function tick() {
   const inputs = controllers.map((c) => (c.kind === 'human' ? c.src.poll() : c.ai.think(game))) as [InputFrame, InputFrame];
   endTick();
   step(game, inputs);
+  if (!demo) runHype(game.events, true);
   if (game.events.length) {
     renderer.handleEvents(game.events, game);
     if (!demo) {
@@ -187,6 +197,20 @@ function tick() {
       if (game.events.some((e) => e.type === 'matchEnd')) window.setTimeout(showResults, 1600);
     }
   }
+}
+
+/** Hype call-outs: banner line, announcer, and (offline only: online both phones must keep pace) slow motion. */
+function runHype(events: typeof game.events, allowSlowmo: boolean) {
+  for (const c of hype.update(events, game)) {
+    if (c.text) hud.callout(c.text, c.hot, c.low ? 2400 : 1500, c.low);
+    if (c.vo) audio.callout(c.vo, c.voDelay ?? 0);
+    if (c.slowmo && allowSlowmo) {
+      timeScale = 0.25;
+      slowUntil = performance.now() + 1300;
+      renderer.finisher();
+    }
+  }
+  hud.rally(hype.rally);
 }
 
 let last = performance.now();
@@ -211,7 +235,8 @@ function frame(now: number) {
 
   if (game) {
     if (!paused) {
-      acc += dt;
+      if (timeScale < 1 && performance.now() > slowUntil) timeScale = Math.min(1, timeScale + dt * 3); // ease back to speed
+      acc += dt * timeScale;
       while (acc >= DT) { tick(); acc -= DT; }
     } else {
       endTick();

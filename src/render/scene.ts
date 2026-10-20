@@ -318,6 +318,11 @@ export class GameRenderer {
   private particles = new Particles();
   private shake = 0;
   private superZoom = 0;
+  /** Slow-motion finish: a harder punch-in than a super. */
+  finisher() {
+    this.superZoom = 1.5;
+    this.shake = Math.max(this.shake, 0.8);
+  }
   private time = 0;
   private camBase = new THREE.Vector3(0, 13.5, 15.0);
   private lookAt = new THREE.Vector3(0, 0, -2.75);

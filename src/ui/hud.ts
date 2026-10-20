@@ -31,7 +31,7 @@ export class Hud {
           <div><div class="hud-name p1c">${c1.name}</div><div class="hud-set">${labels[0]}</div><div class="pips" data-p="1"></div><div class="charge" data-c="1"></div></div>
           <div class="hud-score" data-s="1">0</div>
         </div>
-        <div class="hud-mid"><div class="hud-time">45</div><div class="hud-set">SET 1</div></div>
+        <div class="hud-mid"><div class="hud-time">45</div><div class="hud-set">SET 1</div><div class="rally"></div></div>
         <div class="hud-side p2">
           <div style="text-align:right"><div class="hud-name p2c">${c2.name}</div><div class="hud-set">${labels[1]}</div><div class="pips" data-p="2" style="justify-content:flex-end"></div><div class="charge" data-c="2"></div></div>
           <div class="hud-score" data-s="2">0</div>
@@ -43,6 +43,8 @@ export class Hud {
     this.setLbl = this.el.querySelector('.hud-mid .hud-set')!;
     this.pips1 = this.el.querySelector('[data-p="1"]')!;
     this.pips2 = this.el.querySelector('[data-p="2"]')!;
+    this.rallyEl = this.el.querySelector('.rally');
+    this.rallyShown = -1;
     this.ch1 = this.el.querySelector('[data-c="1"]')!;
     this.ch2 = this.el.querySelector('[data-c="2"]')!;
     this.last = [-1, -1];
@@ -64,6 +66,32 @@ export class Hud {
       <div class="cutin-text"><div class="cutin-super">SUPER!</div><div class="cutin-name">${name}</div></div></div>`;
     this.el.appendChild(el);
     window.setTimeout(() => el.remove(), 900);
+  }
+
+  private calloutEl: HTMLElement | null = null;
+  private calloutTimer = 0;
+  private rallyEl: HTMLElement | null = null;
+  private rallyShown = -1;
+
+  /** Second banner line, below the main announcement (combos, set point, streaks...). */
+  callout(text: string, hot = false, ms = 1500, low = false) {
+    this.calloutEl?.remove();
+    const a = document.createElement('div');
+    a.className = 'callout' + (hot ? ' hot' : '') + (low ? ' low' : '');
+    a.textContent = text;
+    this.el.appendChild(a);
+    this.calloutEl = a;
+    clearTimeout(this.calloutTimer);
+    this.calloutTimer = window.setTimeout(() => a.remove(), ms);
+  }
+
+  /** Live rally counter under the clock: appears at 3 catches, heats up with length. */
+  rally(n: number) {
+    if (!this.rallyEl || n === this.rallyShown) return;
+    this.rallyShown = n;
+    this.rallyEl.textContent = n >= 3 ? `RALLY ×${n}` : '';
+    this.rallyEl.className = 'rally' + (n >= 10 ? ' fire' : n >= 6 ? ' warm' : '');
+    if (n >= 3) { this.rallyEl.classList.remove('bump'); void this.rallyEl.offsetWidth; this.rallyEl.classList.add('bump'); }
   }
 
   announce(html: string, ms = 1300, small = false, extra = '') {
@@ -93,7 +121,8 @@ export class Hud {
         // fires on the same tick as the super cut-in, which covers the middle of the screen: show it below the band
         this.announce('REVERSAL!', 1100, true, ' rev');
       } else if (e.type === 'serve' && g.score[0] === 0 && g.score[1] === 0) {
-        this.announce(g.suddenDeath ? 'SUDDEN DEATH' : `SET ${g.setNo}`, 1100, g.suddenDeath);
+        const decider = g.sets[0] === C.SETS_TO_WIN - 1 && g.sets[1] === C.SETS_TO_WIN - 1;
+        this.announce(g.suddenDeath ? 'SUDDEN DEATH' : decider ? 'FINAL SET' : `SET ${g.setNo}`, 1100, g.suddenDeath);
       }
     }
   }

@@ -318,3 +318,17 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   border: 2px solid var(--cyan); animation: blink 1s steps(2) infinite;
 }
 .net-wait.hidden { display: none; }
+
+/* ---------- hype: call-out line + rally counter ---------- */
+.callout {
+  position: absolute; left: 50%; top: 70%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 6;
+  font-family: 'Russo One'; font-size: clamp(16px, 3.2vw, 40px); letter-spacing: 0.06em; color: #fff;
+  text-shadow: 0 0 12px var(--cyan), 3px 3px 0 var(--ink); animation: calloutIn 0.35s cubic-bezier(.2,1.6,.4,1) both;
+}
+.callout.low { top: 80%; }
+.callout.hot { color: #ffe600; text-shadow: 0 0 14px var(--pink), 0 0 30px #ff7a1a, 3px 3px 0 var(--ink); }
+@keyframes calloutIn { from { transform: translateX(-50%) scale(2.2); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+.rally { font-family: 'Russo One'; font-size: clamp(11px, 1.6vw, 20px); letter-spacing: 0.12em; color: var(--cyan); text-shadow: 2px 2px 0 var(--ink); min-height: 1.2em; }
+.rally.warm { color: #ffe600; text-shadow: 0 0 10px #ff7a1a, 2px 2px 0 var(--ink); }
+.rally.fire { color: #fff; text-shadow: 0 0 8px var(--pink), 0 0 18px #ff7a1a, 2px 2px 0 var(--ink); }
+.rally.bump { animation: bump 0.3s ease-out; }
