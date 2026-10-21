@@ -28,7 +28,8 @@ class PlayerView {
     this.tex = art.texture.clone();
     this.tex.needsUpdate = true;
     this.tex.magFilter = THREE.LinearFilter;
-    const mat = new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05 });
+    // highp: iPhones default fragment shaders to mediump, too coarse for uv maths on a 4k atlas
+    const mat = new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05, precision: 'highp' });
     // A sprite is a camera-facing quad: it leans back with the view, so a disc behind the fighter but up at
     // chest height is nearer the camera than the sprite there and drew over him. Keep the sprite's look, but
     // give the depth test an upright card standing at the feet: each corner gets the depth of the point where
@@ -48,13 +49,34 @@ class PlayerView {
       // figure turns dark. Samples outside this frame's rect count as empty (neighbouring frames in the atlas).
       sh.uniforms.uOutline = this.outlineU;
       sh.uniforms.uRect = this.rectU;
+      sh.uniforms.uStride = this.strideU;
+      sh.uniforms.uFootX = this.footXU;
       sh.fragmentShader = sh.fragmentShader
-        .replace('void main() {', `uniform vec2 uOutline; uniform vec4 uRect;
+        .replace('void main() {', `uniform vec2 uOutline; uniform vec4 uRect; uniform float uStride; uniform float uFootX;
         float inkA( vec2 uv ) {
           if ( uv.x < uRect.x || uv.y < uRect.y || uv.x > uRect.z || uv.y > uRect.w ) return 0.0;
           return texture2D( map, uv ).a;
         }
         void main() {`)
+        // Sample through our own uv: (1) a placeholder stride for fighters without run art — the legs below the
+        // hips scissor back and forth; (2) nothing outside this frame's rect is ever drawn, so the padding
+        // around it can't pick up neighbouring frames (phones sample a smaller mip, which bleeds).
+        .replace('#include <map_fragment>', `
+        vec2 muv = vMapUv;
+        #ifdef USE_MAP
+        if ( uStride != 0.0 ) {
+          vec2 lo = ( muv - uRect.xy ) / ( uRect.zw - uRect.xy );
+          float hip = 0.46;
+          if ( lo.y < hip ) {
+            float k = ( hip - lo.y ) / hip;
+            // smooth across the crotch (a hard split duplicated a sliver of leg); wide enough never to fold
+            float side = clamp( ( uFootX - lo.x ) / 0.25, -1.0, 1.0 );
+            muv.x += uStride * k * side * ( uRect.z - uRect.x );
+          }
+        }
+        vec4 sampledDiffuseColor = ( muv.x < uRect.x || muv.y < uRect.y || muv.x > uRect.z || muv.y > uRect.w ) ? vec4( 0.0 ) : texture2D( map, muv );
+        diffuseColor *= sampledDiffuseColor;
+        #endif`)
         .replace('#include <alphatest_fragment>', `
         #ifdef USE_MAP
         if ( diffuseColor.a < 0.5 && uOutline.x > 0.0 ) {
@@ -62,7 +84,7 @@ class PlayerView {
           for ( int i = 0; i < 8; i++ ) {
             float a = float( i ) * 0.7853982;
             vec2 d = vec2( cos( a ), sin( a ) ) * uOutline;
-            o = max( o, max( inkA( vMapUv + d ), inkA( vMapUv + d * 0.5 ) ) );
+            o = max( o, max( inkA( muv + d ), inkA( muv + d * 0.5 ) ) );
           }
           if ( o > 0.4 ) diffuseColor = vec4( 0.03, 0.01, 0.07, o * opacity );
         } else {
@@ -84,7 +106,7 @@ class PlayerView {
     this.shadow.rotation.x = -Math.PI / 2;
     this.shadow.scale.set(1.3, 0.8, 1);
     this.shadow.position.y = 0.01;
-    this.aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(auraColor).multiplyScalar(2), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    this.aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(auraColor).multiplyScalar(2), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, toneMapped: false }));
     this.aura.center.set(0.5, 0.2);
     this.aura.scale.set(2.4, 3.2, 1);
     this.aura.visible = false;
@@ -118,6 +140,8 @@ class PlayerView {
   }
 
   private outlineU = { value: new THREE.Vector2(0, 0) };
+  private strideU = { value: 0 };
+  private footXU = { value: 0.5 };
   private rectU = { value: new THREE.Vector4(0, 0, 1, 1) };
 
   /** Point the texture at one frame and size + anchor the sprite from its rect (frames differ in size). */
@@ -129,6 +153,7 @@ class PlayerView {
     const r = { ...raw, x: raw.x - m, y: raw.y - m, w: raw.w + 2 * m, h: raw.h + 2 * m, footX: raw.footX + m, footY: raw.footY + m };
     this.rectU.value.set(raw.x / r.atlasW, 1 - (raw.y + raw.h) / r.atlasH, (raw.x + raw.w) / r.atlasW, 1 - raw.y / r.atlasH);
     this.outlineU.value.set(INK_PX / r.atlasW, INK_PX / r.atlasH);
+    this.footXU.value = raw.footX / raw.w;
     const k = (PLAYER_HEIGHT * (this.art.meta.heightScale ?? 1)) / r.refH; // world units per atlas px
     this.baseW = r.w * k;
     this.baseH = r.h * k;
@@ -154,11 +179,13 @@ class PlayerView {
   private applyMotion(anim: string) {
     const t = this.animT;
     let lean = 0, sx = 1, sy = 1, hop = 0;
+    this.strideU.value = 0;
     switch (anim) {
       case 'idle': sy = 1 + 0.018 * Math.sin(t * 6); sx = 1 - 0.01 * Math.sin(t * 6); break;
       case 'run': {
         const c = Math.abs(Math.sin(t * 13));
-        hop = c * 0.14; lean = 0.13; sy = 0.95 + c * 0.07; sx = 1.04 - c * 0.05;
+        hop = c * 0.1; lean = 0.13; sy = 0.96 + c * 0.05; sx = 1.03 - c * 0.04;
+        this.strideU.value = Math.sin(t * 13) * 0.16; // legs scissor in step with the bob
         break;
       }
       case 'dash': lean = 0.38; sx = 1.16; sy = 0.84; break;
@@ -176,6 +203,7 @@ class PlayerView {
     this.hop = hop;
   }
   private resetMotion() {
+    this.strideU.value = 0;
     (this.sprite.material as THREE.SpriteMaterial).rotation = 0;
     this.sprite.scale.set(this.baseW, this.baseH, 1);
     this.hop = 0;
@@ -563,6 +591,7 @@ export class GameRenderer {
       v.aura.position.set(x, 0, z - 0.05);
       v.halo.position.set(x, 0, z - 0.1);
       v.halo.renderOrder = 9 + Math.round(z * 10);
+      v.aura.renderOrder = 9 + Math.round(z * 10);
       v.aura.visible = p.charged;
       if (p.charged) {
         const s = 1 + 0.12 * Math.sin(this.time * 18);
