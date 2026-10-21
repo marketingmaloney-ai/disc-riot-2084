@@ -1,6 +1,7 @@
 import * as C from './constants';
 import { charById, type LobSuperDef } from './characters';
 import type { Disc, GameState, InputFrame, Player, StatLevels } from './types';
+import { DEFAULT_COURT, zonePoints, type CourtRules } from './courts';
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -37,7 +38,7 @@ function makeDisc(): Disc {
 export function createGame(
   p1Char: string,
   p2Char: string,
-  bigZoneHalf = C.BIG_ZONE_HALF,
+  court: CourtRules = DEFAULT_COURT,
   levels: [StatLevels?, StatLevels?] = [],
   humans: [boolean, boolean] = [false, false],
 ): GameState {
@@ -47,7 +48,7 @@ export function createGame(
     disc: makeDisc(),
     score: [0, 0], sets: [0, 0], setNo: 1, setTime: C.SET_TIME,
     phase: 'serve', phaseT: C.SERVE_DELAY, server: 0, hitstop: 0,
-    lastScorer: -1, lastPts: 0, matchWinner: -1, bigZoneHalf, suddenDeath: false, events: [],
+    lastScorer: -1, lastPts: 0, matchWinner: -1, court, suddenDeath: false, events: [],
   };
   resetForServe(g);
   return g;
@@ -239,7 +240,7 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
     case 'knock':
       // pushed back by a super's impact; ice supers freeze you in place for longer
       if (p.t < C.KNOCK_TIME) p.x = clamp(p.x - fwd * p.knockV * C.DT, -C.PLAYER_MAX_X, C.PLAYER_MAX_X);
-      clampToHalf(p);
+      clampToHalf(g, p);
       // knocked down by a super lob's quake: the disc stays loose, so recover empty-handed
       const holding = d.mode === 'held' && d.holder === p.idx;
       if (p.t > p.knockT) { p.frozen = 0; setState(p, holding ? 'hold' : 'idle'); }
@@ -249,7 +250,7 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       if (lockUnderToss(g, p)) { setState(p, 'idle'); return; }
       p.x += p.dvx * C.DT;
       p.z += p.dvz * C.DT;
-      clampToHalf(p);
+      clampToHalf(g, p);
       p.moving = true;
       if (p.t > C.DASH_TIME) setState(p, 'recover');
       tryCatch(g, p);
@@ -273,7 +274,7 @@ function updatePlayer(g: GameState, p: Player, inp: InputFrame) {
       }
       p.x += mx * p.speed * C.DT;
       p.z += mz * p.speed * C.DT;
-      clampToHalf(p);
+      clampToHalf(g, p);
       p.moving = len > 0;
       if (p.state !== (p.moving ? 'walk' : 'idle')) p.state = p.moving ? 'walk' : 'idle';
       tryCatch(g, p);
@@ -295,10 +296,15 @@ function lockUnderToss(g: GameState, p: Player): boolean {
   return true;
 }
 
-function clampToHalf(p: Player) {
+function clampToHalf(g: GameState, p: Player) {
   if (p.side < 0) p.x = clamp(p.x, -C.PLAYER_MAX_X, -C.PLAYER_MIN_X);
   else p.x = clamp(p.x, C.PLAYER_MIN_X, C.PLAYER_MAX_X);
   p.z = clamp(p.z, -C.PLAYER_MAX_Z, C.PLAYER_MAX_Z);
+  if (g.court.bumpers.length) {
+    pushOutOfBumpers(g, p);
+    if (p.side < 0) p.x = clamp(p.x, -C.PLAYER_MAX_X, -C.PLAYER_MIN_X);
+    else p.x = clamp(p.x, C.PLAYER_MIN_X, C.PLAYER_MAX_X);
+  }
 }
 
 function tryCatch(g: GameState, p: Player) {
@@ -590,6 +596,8 @@ function updateDisc(g: GameState) {
   d.x += d.vx * C.DT;
   d.z += d.vz * C.DT;
 
+  hitBumpers(g);
+
   const zLim = C.COURT_HALF_WID - C.DISC_RADIUS;
   if (Math.abs(d.z) > zLim) {
     d.z = Math.sign(d.z) * zLim;
@@ -608,9 +616,57 @@ function updateDisc(g: GameState) {
   if (Math.abs(d.x) > xLim) {
     const goalSide = Math.sign(d.x); // +1 = right player's goal
     const scorer = goalSide > 0 ? 0 : 1;
-    const big = Math.abs(d.z) < g.bigZoneHalf;
+    const pts = zonePoints(g.court, d.z);
     d.x = goalSide * xLim;
-    award(g, scorer, big ? C.POINTS_BIG : C.POINTS_SMALL, big);
+    award(g, scorer, pts, pts >= C.POINTS_BIG);
+  }
+}
+
+/**
+ * Bumpers (some arenas): a disc in flight or skidding along the ground glances off into a new lane. Supers punch
+ * straight through, and lobs fly over.
+ */
+function hitBumpers(g: GameState) {
+  const d = g.disc;
+  if (d.superKind || d.mode === 'lob') return;
+  const hit = deflect(g.court, d.x, d.z, d.vx, d.vz);
+  if (!hit) return;
+  d.x = hit.x; d.z = hit.z; d.vx = hit.vx; d.vz = hit.vz;
+  d.az = 0; // a deflection straightens the curve
+  g.events.push({ type: 'bumper', x: hit.bx, z: hit.bz });
+}
+
+/** Bounce a disc at (x, z) moving (vx, vz) off the court's bumpers, or null if it touches none. Shared with the CPU. */
+export function deflect(court: CourtRules, x: number, z: number, vx: number, vz: number) {
+  for (const b of court.bumpers) {
+    const dx = x - b.x, dz = z - b.z;
+    const dist = Math.hypot(dx, dz), min = b.r + C.DISC_RADIUS;
+    if (dist >= min || dist === 0) continue;
+    const nx = dx / dist, nz = dz / dist;
+    const vn = vx * nx + vz * nz;
+    if (vn >= 0) continue; // already moving away
+    let ox = (vx - 2 * vn * nx) * C.BUMPER_KICK, oz = (vz - 2 * vn * nz) * C.BUMPER_KICK;
+    // A bumper redirects the shot's lane but never sends it back at the thrower (who is still recovering
+    // from the throw: play-testing showed reversed shots scored 3-4x as often). Keep it travelling the same
+    // way along x with at least BUMPER_MIN_FWD of its speed, the rest goes sideways.
+    const sp = Math.hypot(ox, oz);
+    const fwd = Math.sign(vx) || 1;
+    ox = fwd * clamp(Math.abs(ox), sp * C.BUMPER_MIN_FWD, sp * C.BUMPER_MAX_FWD); // max: even a dead-centre hit kicks sideways
+    oz = (Math.sign(oz) || (dz >= 0 ? 1 : -1)) * Math.sqrt(Math.max(0, sp * sp - ox * ox));
+    return { x: b.x + nx * min, z: b.z + nz * min, vx: ox, vz: oz, bx: b.x, bz: b.z };
+  }
+  return null;
+}
+
+/** Players walk around bumpers rather than through them. */
+function pushOutOfBumpers(g: GameState, p: Player) {
+  for (const b of g.court.bumpers) {
+    const dx = p.x - b.x, dz = p.z - b.z;
+    const dist = Math.hypot(dx, dz), min = b.r + C.PLAYER_RADIUS;
+    if (dist >= min) continue;
+    if (dist === 0) { p.z += min; continue; }
+    p.x = b.x + (dx / dist) * min;
+    p.z = b.z + (dz / dist) * min;
   }
 }
 

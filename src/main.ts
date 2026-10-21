@@ -7,6 +7,7 @@ import '@fontsource/monoton';
 import { DT } from './sim/constants';
 import { CHARACTERS, charById, superNames } from './sim/characters';
 import { createGame, step } from './sim/game';
+import { courtRules } from './sim/courts';
 import type { GameState, InputFrame } from './sim/types';
 import { GameRenderer } from './render/scene';
 import { ARENAS } from './render/arena';
@@ -92,7 +93,7 @@ async function startMatch(p1: string, p2: string, arena: number, ctrls: [Control
   audio.setCharacters([p1, p2]);
   const online = !isDemo && mode === 'online' && !!link;
   audio.setHuman(!isDemo && mode === '1p' ? 0 : online ? link!.idx : -1);
-  game = createGame(p1, p2, ARENAS[arena].bigZone, upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
+  game = createGame(p1, p2, courtRules(ARENAS[arena].id), upgraded ? [charProfile(p1).levels] : [], [ctrls[0].kind === 'human', ctrls[1].kind === 'human']);
   tracker = upgraded ? new MatchTracker(0, p1, p2, ARENAS[arena].id, difficulty) : null;
   newAchievements = [];
   acc = 0;
@@ -434,7 +435,8 @@ function howTo() {
       <b>REVERSAL</b><span>TAP A JUST BEFORE A SUPER HITS YOU TO FIRE YOUR OWN SUPER BACK</span>
       <b>LOB</b><span>B WHILE HOLDING — WAIT LONGER TO DROP IT SHORTER</span>
       <b>SUPER</b><span>B JUST BEFORE A DISC HITS YOU TO POP IT UP, OR ← + B TO TOSS. STAND ON THE RING TO CHARGE, THEN THROW!</span>
-      <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS · DROPPED DISC = 2 PTS · 30 S SETS · TIED SET COUNTS FOR BOTH · 2–2 = SUDDEN DEATH</span>
+      <b>SCORE</b><span>GOAL ZONES 3 / 5 PTS (EACH ARENA HAS ITS OWN LAYOUT) · DROPPED DISC = 2 PTS · 30 S SETS · TIED SET COUNTS FOR BOTH · 2–2 = SUDDEN DEATH</span>
+      <b>BUMPERS</b><span>LASER LAGOON &amp; ORBITAL CABANA: POSTS KICK SHOTS INTO A NEW LANE · SUPERS SMASH THROUGH · LOBS FLY OVER</span>
       <b>UPGRADES</b><span>WIN MATCHES & UNLOCK ACHIEVEMENTS IN VS CPU TO EARN POINTS · SPEND THEM IN FIGHTER UPGRADES</span>
       <b>PAUSE</b><span>ESC / P · START</span>
     </div>`);
@@ -673,7 +675,7 @@ function arenaSelect() {
     d.className = 'arena-card';
     // the arena's painted backdrop as the preview; the sky/sand gradient shows if it's missing or still loading
     d.style.backgroundImage = `url(assets/arenas/${a.id}/backdrop.jpg), linear-gradient(180deg, ${a.sky[0]}, ${a.sky[1]} 55%, ${a.sky[2]} 60%, ${a.sand[0]} 62%, ${a.sand[1]})`;
-    d.innerHTML = `<div class="nm">${a.name}<br><span class="nation">${a.subtitle}</span></div>`;
+    d.innerHTML = `${a.feature ? `<div class="feat">${a.feature}</div>` : ''}<div class="nm">${a.name}<br><span class="nation">${a.subtitle}</span></div>`;
     d.addEventListener('pointerenter', () => { arenaIdx = i; paint(); });
     d.addEventListener('click', () => { arenaIdx = i; audio.play('confirm'); arenaChosen(); });
     grid.appendChild(d);

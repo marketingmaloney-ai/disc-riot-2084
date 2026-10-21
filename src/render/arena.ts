@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { hasAsset } from './assets';
 import * as C from '../sim/constants';
+import { courtRules } from '../sim/courts';
 
 export interface ArenaDef {
   id: string;
@@ -12,29 +13,29 @@ export interface ArenaDef {
   neonB: string;
   night: boolean;
   scene: 'sunset' | 'city' | 'boardwalk' | 'space';
-  bigZone: number; // half-width of the 5-point goal zone (gameplay variety per court)
+  feature?: string; // arena-select note for courts with special rules (sim/courts.ts)
 }
 
 export const ARENAS: ArenaDef[] = [
   {
     id: 'sunset', name: 'SUNSET STRIP', subtitle: 'MIAMI 2084',
     sky: ['#1a0638', '#8a1f7a', '#ff8a3d'], sand: ['#f0b98a', '#d98a6a'],
-    neonA: '#ff2e9a', neonB: '#19e6ff', night: false, scene: 'sunset', bigZone: 1.65,
+    neonA: '#ff2e9a', neonB: '#19e6ff', night: false, scene: 'sunset',
   },
   {
     id: 'pier', name: 'NEON PIER', subtitle: 'NEO-TOKYO BAY',
     sky: ['#03020d', '#1b0a3a', '#5a1a6e'], sand: ['#3a2a52', '#221a36'],
-    neonA: '#19e6ff', neonB: '#ff2e9a', night: true, scene: 'city', bigZone: 1.35,
+    neonA: '#19e6ff', neonB: '#ff2e9a', night: true, scene: 'city',
   },
   {
     id: 'lagoon', name: 'LASER LAGOON', subtitle: 'VENICE BEACH 2084',
     sky: ['#2a7bff', '#ff8ad8', '#ffd28a'], sand: ['#f6d2a0', '#e0a878'],
-    neonA: '#b6ff2e', neonB: '#ff2e9a', night: false, scene: 'boardwalk', bigZone: 2.05,
+    neonA: '#b6ff2e', neonB: '#ff2e9a', night: false, scene: 'boardwalk', feature: '5s IN THE CORNERS · BUMPERS',
   },
   {
     id: 'orbital', name: 'ORBITAL CABANA', subtitle: 'LOW EARTH ORBIT',
     sky: ['#000000', '#07051a', '#1a0f4a'], sand: ['#cfd6ff', '#8a8fc0'],
-    neonA: '#ffe600', neonB: '#19e6ff', night: true, scene: 'space', bigZone: 1.1,
+    neonA: '#ffe600', neonB: '#19e6ff', night: true, scene: 'space', feature: 'SPLIT 5s · 4 BUMPERS',
   },
 ];
 
@@ -286,7 +287,8 @@ const BACKDROP_BACK = 1.0;
 export interface ArenaView {
   group: THREE.Group;
   goalZones: THREE.Mesh[][]; // [side 0 left, side 1 right] -> meshes
-  flashGoal(side: number, big: boolean): void;
+  flashGoal(side: number, z: number): void;
+  hitBumper(x: number, z: number): void;
   update(t: number): void;
 }
 
@@ -417,26 +419,26 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     group.add(post);
   }
 
-  // goals: zones on back walls
+  // goals: zones on back walls, from this court's rules (sim/courts.ts)
+  const rules = courtRules(def.id);
   const goalZones: THREE.Mesh[][] = [[], []];
-  const segs: [number, number, boolean][] = [
-    [-W, -def.bigZone, false],
-    [-def.bigZone, def.bigZone, true],
-    [def.bigZone, W, false],
-  ];
+  const zoneColor = (pts: number) => (pts >= 5 ? '#ff2e9a' : pts >= 3 ? '#ffd21a' : '#19e6ff');
+  const segs = rules.zones.map((zn) => [zn.z0, zn.z1, zn.pts] as const);
   for (const side of [0, 1]) {
     const x = side === 0 ? -L - 0.1 : L + 0.1;
     const frame = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.9, 2 * W + 0.5), new THREE.MeshStandardMaterial({ color: '#241638', metalness: 0.9, roughness: 0.35 }));
     frame.position.set(x + (side === 0 ? -0.2 : 0.2), 0.95, 0);
     group.add(frame);
-    for (const [z0, z1, big] of segs) {
-      const col = big ? '#ff2e9a' : '#ffd21a';
+    for (const [z0, z1, pts] of segs) {
+      const col = zoneColor(pts);
       const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(col).multiplyScalar(1.3), transparent: true, opacity: 0.85, toneMapped: false });
       const zone = new THREE.Mesh(new THREE.PlaneGeometry(z1 - z0 - 0.12, 1.5), m);
       zone.rotation.y = side === 0 ? Math.PI / 2 : -Math.PI / 2;
       zone.position.set(x + (side === 0 ? -0.06 : 0.06), 0.85, (z0 + z1) / 2);
       zone.userData.baseColor = new THREE.Color(col).multiplyScalar(1.3);
       zone.userData.flash = 0;
+      zone.userData.z0 = z0;
+      zone.userData.z1 = z1;
       group.add(zone);
       goalZones[side].push(zone);
       // points label
@@ -445,13 +447,38 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
         g.textAlign = 'center';
         g.textBaseline = 'middle';
         g.fillStyle = '#1a0b2e';
-        g.fillText(big ? '5' : '3', 128, 68);
+        g.fillText(String(pts), 128, 68);
       });
-      const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.45), new THREE.MeshBasicMaterial({ map: label, transparent: true, toneMapped: false }));
+      const lw = Math.min(0.9, z1 - z0 - 0.2);
+      const lbl = new THREE.Mesh(new THREE.PlaneGeometry(lw, lw / 2), new THREE.MeshBasicMaterial({ map: label, transparent: true, toneMapped: false }));
       lbl.rotation.y = zone.rotation.y;
       lbl.position.set(zone.position.x + (side === 0 ? 0.01 : -0.01), 1.1, zone.position.z);
       group.add(lbl);
     }
+  }
+
+  // bumpers: chrome posts with a neon ring that flares when the disc glances off
+  const bumpers: { obj: THREE.Group; ring: THREE.MeshBasicMaterial; base: THREE.Color; x: number; z: number; flash: number }[] = [];
+  for (const b of rules.bumpers) {
+    const obj = new THREE.Group();
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(b.r * 0.82, b.r, 0.75, 24), new THREE.MeshStandardMaterial({ color: '#1e1430', metalness: 0.9, roughness: 0.25 }));
+    post.position.y = 0.375;
+    post.castShadow = true;
+    const base = new THREE.Color(def.neonB).multiplyScalar(1.8);
+    const ringMat = new THREE.MeshBasicMaterial({ color: base.clone(), toneMapped: false });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(b.r * 0.9, 0.06, 8, 32), ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.77;
+    const band = new THREE.Mesh(new THREE.TorusGeometry(b.r * 1.0, 0.035, 6, 32), ringMat);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = 0.2;
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(b.r * 1.7, 32), new THREE.MeshBasicMaterial({ color: base.clone().multiplyScalar(0.35), transparent: true, opacity: 0.5, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending }));
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = 0.02;
+    obj.add(post, ring, band, glow);
+    obj.position.set(b.x, 0, b.z);
+    group.add(obj);
+    bumpers.push({ obj, ring: ringMat, base, x: b.x, z: b.z, flash: 0 });
   }
 
   // crowd/stands behind far wall: rows of glowing light sticks for life
@@ -482,11 +509,12 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
   rim.position.set(0, 4, -W);
   group.add(rim);
 
-  function flashGoal(side: number, big: boolean) {
-    for (const z of goalZones[side]) {
-      const isBig = z === goalZones[side][1];
-      if (isBig === big) z.userData.flash = 1;
-    }
+  function flashGoal(side: number, z: number) {
+    for (const m of goalZones[side]) if (z >= m.userData.z0 - 0.3 && z <= m.userData.z1 + 0.3) m.userData.flash = 1;
+  }
+
+  function hitBumper(x: number, z: number) {
+    for (const b of bumpers) if (Math.abs(b.x - x) < 0.01 && Math.abs(b.z - z) < 0.01) b.flash = 1;
   }
 
   function update(t: number) {
@@ -505,7 +533,13 @@ export async function buildArena(def: ArenaDef): Promise<ArenaView> {
     }
     lights.instanceMatrix.needsUpdate = true;
     netMat.opacity = 0.28 + 0.08 * Math.sin(t * 5);
+    for (const b of bumpers) {
+      b.ring.color.copy(b.base).multiplyScalar(1 + b.flash * 2.2 + 0.15 * Math.sin(t * 6 + b.x));
+      const s = 1 + b.flash * 0.18;
+      b.obj.scale.set(s, 1, s);
+      b.flash = Math.max(0, b.flash - 0.045);
+    }
   }
 
-  return { group, goalZones, flashGoal, update };
+  return { group, goalZones, flashGoal, hitBumper, update };
 }

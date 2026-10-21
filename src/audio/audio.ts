@@ -143,12 +143,12 @@ export class AudioEngine {
     }
   }
 
-  /** Play a shared sample; false if it isn't available (caller falls back to synth). */
   /** Announcer / hype clip by common sfx name (see ui/hype.ts). */
   callout(name: string, when = 0) {
     this.sample(name, 0.95, when);
   }
 
+  /** Play a shared sample; false if it isn't available (caller falls back to synth). */
   private sample(name: string, vol = 1, when = 0, rate = 1): boolean {
     if (!this.ctx || this.muted) return false;
     const buf = this.voices.get(`common/${name}`);
@@ -310,6 +310,7 @@ export class AudioEngine {
         case 'lob': case 'toss': if (!this.voice(e.p, 'lob')) this.play('lob'); break;
         case 'block': if (!this.voice(e.p, 'block') && !this.voice(e.p, 'lob')) this.play('lob'); break;
         case 'wall': this.play('wall'); break;
+        case 'bumper': if (!this.sample('wall', 1, 0, 1.45)) this.play('wall'); this.sample('punch', 0.45, 0, 1.6); break;
         case 'dash': if (!this.voice(e.p, 'dash', 0.8)) this.play('dash'); break;
         case 'land': this.play('land'); break;
         case 'charge': this.play('charge'); break;
@@ -380,11 +381,18 @@ export class AudioEngine {
       if (this.track !== slot) return;
       el.src = url;
       el.currentTime = 0;
-      void el.play().catch(() => {});
+      // iOS can refuse a play() that isn't inside a tap (the arena track starts after the VS screen):
+      // if it does, start it on the next touch instead of staying on silence or the old track
+      void el.play().catch(() => this.playOnNextTap(slot));
       this.fadeMusic(MUSIC_VOL, 0.8);
     };
     if (this.trackTimer !== null) clearTimeout(this.trackTimer);
     if (!el.paused && el.src) { this.fadeMusic(0, 0.45); this.trackTimer = window.setTimeout(swap, 470); } else swap();
+  }
+
+  private playOnNextTap(slot: string) {
+    const go = () => { if (this.track === slot && this.musicEl?.paused) void this.musicEl.play().catch(() => {}); };
+    for (const ev of ['pointerdown', 'touchend', 'keydown'] as const) window.addEventListener(ev, go, { once: true, capture: true });
   }
 
   private fadeMusic(to: number, secs: number) {

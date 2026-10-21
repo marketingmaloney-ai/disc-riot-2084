@@ -6,6 +6,7 @@
 import { describe, it } from 'vitest';
 import { CpuPlayer, DIFFICULTIES, type Difficulty } from '../ai/cpu';
 import { CHARACTERS } from './characters';
+import { COURTS, courtRules } from './courts';
 import { createGame, step } from './game';
 
 const env = (globalThis as unknown as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
@@ -37,8 +38,8 @@ const blank = (): Stats => ({
   supers: 0, superScores: 0, supersonic: 0, supersonicScores: 0, curves: 0, curveScores: 0, lobs: 0, catches: 0, byChar: {}, superV: {},
 });
 
-export function playMatch(c1: string, c2: string, d1: Difficulty, d2: Difficulty, seed: number, arenaZone?: number, s = blank()) {
-  const g = createGame(c1, c2, arenaZone);
+export function playMatch(c1: string, c2: string, d1: Difficulty, d2: Difficulty, seed: number, court?: string, s = blank()) {
+  const g = createGame(c1, c2, court ? courtRules(court) : undefined);
   const ai = [new CpuPlayer(0, d1, seed * 7 + 1), new CpuPlayer(1, d2, seed * 13 + 5)];
   let ticks = 0, rally = 0, pointStart = 0;
   let lastShot = '';
@@ -138,12 +139,12 @@ describe.runIf(RUN)('balance', () => {
     }
   });
 
-  it('arena zones', () => {
-    console.log('\n=== ARENA 5-PT ZONE (hard vs hard) ===');
-    for (const z of [1.1, 1.35, 1.65, 2.05]) {
+  it('arena courts', () => {
+    console.log('\n=== ARENA COURTS (hard vs hard) ===');
+    for (const z of Object.keys(COURTS)) {
       const s = blank();
       for (let seed = 1; seed <= N * 2; seed++) playMatch(CHARACTERS[seed % 4].id, CHARACTERS[(seed + 2) % 4].id, DIFFICULTIES.hard, DIFFICULTIES.hard, seed, z, s);
-      console.log(`  zone ${z}: 5pt share ${pct(s.pts['5'] ?? 0, s.points)}, avg match ${(s.seconds / s.matches).toFixed(0)}s, points/match ${(s.points / s.matches).toFixed(1)}`);
+      console.log(`  ${z}: wins L/R ${s.wins[0]}/${s.wins[1]}, 5pt share ${pct(s.pts['5'] ?? 0, s.points)}, avg match ${(s.seconds / s.matches).toFixed(0)}s, points/match ${(s.points / s.matches).toFixed(1)}`);
     }
   });
 });

@@ -1,4 +1,5 @@
 import type { LobSuperDef, SuperDef, SuperKind } from './characters';
+import type { CourtRules } from './courts';
 
 /** One tick of input for one player, in court space. mx>0 = toward +x (screen right), mz>0 = toward camera. */
 /** Attribute upgrade levels (0..MAX_ATTR_LEVEL) earned through achievements. VS CPU only. */
@@ -90,7 +91,7 @@ export type Phase = 'serve' | 'play' | 'point' | 'setEnd' | 'matchEnd';
 export interface GameEvent {
   type:
     | 'catch' | 'throw' | 'supersonic' | 'curve' | 'super' | 'lob' | 'toss' | 'block'
-    | 'wall' | 'score' | 'drop' | 'reversal' | 'dash' | 'charge' | 'serve' | 'setEnd' | 'matchEnd' | 'land';
+    | 'wall' | 'bumper' | 'score' | 'drop' | 'reversal' | 'dash' | 'charge' | 'serve' | 'setEnd' | 'matchEnd' | 'land';
   p?: number;
   x?: number;
   z?: number;
@@ -116,7 +117,7 @@ export interface GameState {
   lastScorer: number;
   lastPts: number;
   matchWinner: number;
-  bigZoneHalf: number; // arena-specific 5-point zone half-width
+  court: CourtRules; // arena-specific goal zones and bumpers
   suddenDeath: boolean; // sets tied at 2-2: next score wins the match
   events: GameEvent[];
 }

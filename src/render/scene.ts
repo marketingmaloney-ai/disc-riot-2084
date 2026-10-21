@@ -11,6 +11,8 @@ import { charById } from '../sim/characters';
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const PLAYER_HEIGHT = 3.0;
+const INK_PAD = 7; // atlas px of padding around each packed frame (the packer leaves 8 px clear)
+const INK_PX = 7; // outline thickness in atlas px
 const TRAIL_STEP = 1 / 60; // seconds of game time between trail samples
 const RUN_TO_IDLE = 0.12; // seconds of standing still before the run cycle gives way to idle
 
@@ -18,6 +20,7 @@ class PlayerView {
   sprite: THREE.Sprite;
   shadow: THREE.Mesh;
   aura: THREE.Sprite;
+  halo: THREE.Sprite; // faint dark backing so the fighter separates from bright / neon backgrounds
   tex: THREE.Texture;
   anim = 'idle';
   animT = 0;
@@ -41,6 +44,36 @@ class PlayerView {
         gl_Position.z = onCard.z / onCard.w * gl_Position.w;
       }
       #include <logdepthbuf_vertex>`);
+      // Comic-book ink outline so fighters read against the neon courts: a transparent pixel next to the
+      // figure turns dark. Samples outside this frame's rect count as empty (neighbouring frames in the atlas).
+      sh.uniforms.uOutline = this.outlineU;
+      sh.uniforms.uRect = this.rectU;
+      sh.fragmentShader = sh.fragmentShader
+        .replace('void main() {', `uniform vec2 uOutline; uniform vec4 uRect;
+        float inkA( vec2 uv ) {
+          if ( uv.x < uRect.x || uv.y < uRect.y || uv.x > uRect.z || uv.y > uRect.w ) return 0.0;
+          return texture2D( map, uv ).a;
+        }
+        void main() {`)
+        .replace('#include <alphatest_fragment>', `
+        #ifdef USE_MAP
+        if ( diffuseColor.a < 0.5 && uOutline.x > 0.0 ) {
+          float o = 0.0;
+          for ( int i = 0; i < 8; i++ ) {
+            float a = float( i ) * 0.7853982;
+            vec2 d = vec2( cos( a ), sin( a ) ) * uOutline;
+            o = max( o, max( inkA( vMapUv + d ), inkA( vMapUv + d * 0.5 ) ) );
+          }
+          if ( o > 0.4 ) diffuseColor = vec4( 0.03, 0.01, 0.07, o * opacity );
+        } else {
+          // a little extra contrast and saturation, and keep whites just under the bloom threshold (0.9) so
+          // pale outfits don't melt into glow under the neon
+          vec3 c = ( diffuseColor.rgb - 0.5 ) * 1.1 + 0.5;
+          float l = dot( c, vec3( 0.299, 0.587, 0.114 ) );
+          diffuseColor.rgb = clamp( mix( vec3( l ), c, 1.15 ), 0.0, 1.0 ) * 0.86;
+        }
+        #endif
+        #include <alphatest_fragment>`);
     };
     this.sprite = new THREE.Sprite(mat);
     this.showFrame('idle', 0);
@@ -55,6 +88,9 @@ class PlayerView {
     this.aura.center.set(0.5, 0.2);
     this.aura.scale.set(2.4, 3.2, 1);
     this.aura.visible = false;
+    this.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: '#000000', transparent: true, opacity: 0.42, depthWrite: false, depthTest: false }));
+    this.halo.center.set(0.5, 0.12);
+    this.halo.scale.set(2.3, 3.6, 1);
   }
 
   /** `restart`: the requested anim changed this frame, so a one-shot re-entered (throw, hold, throw) plays again. */
@@ -81,9 +117,18 @@ class PlayerView {
     else this.resetMotion();
   }
 
+  private outlineU = { value: new THREE.Vector2(0, 0) };
+  private rectU = { value: new THREE.Vector4(0, 0, 1, 1) };
+
   /** Point the texture at one frame and size + anchor the sprite from its rect (frames differ in size). */
   private showFrame(anim: string, f: number) {
-    const r = frameRect(this.art.meta, anim, f);
+    const raw = frameRect(this.art.meta, anim, f);
+    // Packed atlases trim each frame tight with a clear margin around it: pad the quad by INK_PAD px so the
+    // outline has room outside the silhouette (legacy grid sheets already have room inside each cell).
+    const m = this.art.meta.anims[anim]?.rects || this.art.meta.anims.idle?.rects ? INK_PAD : 0;
+    const r = { ...raw, x: raw.x - m, y: raw.y - m, w: raw.w + 2 * m, h: raw.h + 2 * m, footX: raw.footX + m, footY: raw.footY + m };
+    this.rectU.value.set(raw.x / r.atlasW, 1 - (raw.y + raw.h) / r.atlasH, (raw.x + raw.w) / r.atlasW, 1 - raw.y / r.atlasH);
+    this.outlineU.value.set(INK_PX / r.atlasW, INK_PX / r.atlasH);
     const k = (PLAYER_HEIGHT * (this.art.meta.heightScale ?? 1)) / r.refH; // world units per atlas px
     this.baseW = r.w * k;
     this.baseH = r.h * k;
@@ -140,6 +185,7 @@ class PlayerView {
     (this.sprite.material as THREE.Material).dispose();
     this.shadow.geometry.dispose();
     (this.shadow.material as THREE.Material).dispose();
+    (this.halo.material as THREE.Material).dispose();
     (this.aura.material as THREE.Material).dispose(); // the glow texture itself is shared: kept
   }
   /** true when the current frame already shows the disc in hand (so the 3D disc is hidden) */
@@ -428,12 +474,12 @@ export class GameRenderer {
     const [built, arts] = await Promise.all([buildArena(arena), Promise.all([loadCharacterArt(p1), loadCharacterArt(p2)])]);
     if (gen !== this.setupGen) return false;
     if (this.arena) { this.scene.remove(this.arena.group); disposeTree(this.arena.group); }
-    for (const p of this.players) { this.scene.remove(p.sprite, p.shadow, p.aura); p.dispose(); }
+    for (const p of this.players) { this.scene.remove(p.sprite, p.shadow, p.aura, p.halo); p.dispose(); }
     this.arena = built;
     this.scene.add(this.arena.group);
     (this.scene.fog as THREE.Fog).color.set(arena.sky[1]);
     this.players = arts.map((a, i) => new PlayerView(a, i === 0 ? -1 : 1, charById(i === 0 ? p1 : p2).colors.primary));
-    for (const p of this.players) this.scene.add(p.sprite, p.shadow, p.aura);
+    for (const p of this.players) this.scene.add(p.halo, p.sprite, p.shadow, p.aura);
     return true;
   }
 
@@ -462,6 +508,11 @@ export class GameRenderer {
           this.shake = Math.max(this.shake, e.big ? 0.5 : 0.12);
           if (e.p !== undefined && this.players[e.p]) this.players[e.p].pop = e.big ? 1 : 0.7;
           break;
+        case 'bumper':
+          this.arena?.hitBumper(e.x!, e.z!);
+          this.particles.burst(e.x!, 0.6, e.z!, '#ffffff', 14, 6);
+          this.shake = Math.max(this.shake, 0.15);
+          break;
         case 'wall':
           this.particles.burst(e.x!, 0.8, e.z!, '#19e6ff', 14, 6, 0.3, 0.35);
           this.shake = Math.max(this.shake, 0.08);
@@ -481,7 +532,7 @@ export class GameRenderer {
         case 'score':
           this.shake = Math.max(this.shake, e.big ? 0.7 : 0.45);
           this.particles.burst(e.x!, 1, e.z!, e.big ? '#ff2e9a' : '#ffd21a', 140, 14, 0.55, 1.0);
-          this.arena?.flashGoal(e.x! < 0 ? 0 : 1, !!e.big);
+          this.arena?.flashGoal(e.x! < 0 ? 0 : 1, e.z!);
           break;
         case 'drop':
           this.particles.burst(e.x!, 0.1, e.z!, '#f0b98a', 40, 5, 0.4, 0.6);
@@ -510,6 +561,8 @@ export class GameRenderer {
       v.sprite.position.set(x, v.hop, z);
       v.shadow.position.set(x, 0.01, z);
       v.aura.position.set(x, 0, z - 0.05);
+      v.halo.position.set(x, 0, z - 0.1);
+      v.halo.renderOrder = 9 + Math.round(z * 10);
       v.aura.visible = p.charged;
       if (p.charged) {
         const s = 1 + 0.12 * Math.sin(this.time * 18);

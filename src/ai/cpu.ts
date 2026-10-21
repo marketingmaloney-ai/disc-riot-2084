@@ -1,3 +1,4 @@
+import { deflect } from '../sim/game';
 import * as C from '../sim/constants';
 import type { GameState, InputFrame } from '../sim/types';
 
@@ -181,6 +182,10 @@ function predictIntercept(g: GameState, lineX: number, knowsCurve = true): { z: 
     x += vx * C.DT;
     z += vz * C.DT;
     if (Math.abs(z) > zLim) { z = Math.sign(z) * zLim; vz = -vz; az = -az; }
+    if (!d.superKind && g.court.bumpers.length) {
+      const b = deflect(g.court, x, z, vx, vz);
+      if (b) { ({ x, z, vx, vz } = b); az = 0; }
+    }
     if ((vx > 0 && x >= lineX) || (vx < 0 && x <= lineX)) return { z, ticks: i };
   }
   return null;

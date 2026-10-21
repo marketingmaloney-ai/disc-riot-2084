@@ -107,3 +107,9 @@ export const DECOY_FOOL = 0.32; // s the CPU follows the straight fake before it
 export const SUPER_LOB_STANDOFF = 1.4; // m the CPU backs off a super lob's landing spot toward its goal
 export const RUSH_CORNER_MARGIN = 1.8; // m inside the side wall that the rush swerve aims for
 export const INPUT_BUFFER = 6; // ticks (0.1 s) a tap stays valid, so slightly early presses still register
+
+// Bumpers (arena-specific posts, see courts.ts)
+export const BUMPER_KICK = 1.0; // speed multiplier on a deflection
+export const BUMPER_MIN_FWD = 0.7; // after a deflection, at least this share of the speed runs along x (toward a goal)
+export const BUMPER_MAX_FWD = 0.9; // ...and at most this share, so every hit visibly kicks it sideways
+export const PLAYER_RADIUS = 0.42; // body size for walking around bumpers
