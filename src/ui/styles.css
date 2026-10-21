@@ -332,3 +332,70 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .rally.warm { color: #ffe600; text-shadow: 0 0 10px #ff7a1a, 2px 2px 0 var(--ink); }
 .rally.fire { color: #fff; text-shadow: 0 0 8px var(--pink), 0 0 18px #ff7a1a, 2px 2px 0 var(--ink); }
 .rally.bump { animation: bump 0.3s ease-out; }
+
+/* speed gun */
+.speed-tag {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 4; white-space: nowrap;
+  font-family: 'Russo One'; font-size: clamp(16px, 2.6vw, 30px); color: #fff; text-shadow: 0 0 10px var(--cyan), 2px 2px 0 var(--ink);
+  animation: speedUp 1.1s ease-out forwards;
+}
+.speed-tag small { font-size: 0.45em; margin-left: 3px; letter-spacing: 0.1em; opacity: 0.9; }
+.speed-tag.hot { color: #ffe600; text-shadow: 0 0 12px var(--pink), 0 0 24px #ff7a1a, 2px 2px 0 var(--ink); }
+@keyframes speedUp {
+  0% { opacity: 0; transform: translate(-50%, -60%) scale(1.8); }
+  15% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -190%) scale(0.9); }
+}
+
+/* ---------- victory screen ---------- */
+.vic { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; }
+.vic-band {
+  position: absolute; left: -10%; right: -10%; top: 12%; bottom: 12%; transform: skewY(-6deg); opacity: 0.85;
+  background: linear-gradient(90deg, var(--c1), #1a0b2e 60%, var(--c2)); animation: vicBand 0.5s cubic-bezier(.2,1,.3,1) both;
+}
+.vic-r .vic-band { background: linear-gradient(270deg, var(--c1), #1a0b2e 60%, var(--c2)); }
+@keyframes vicBand { from { transform: skewY(-6deg) scaleX(0); } to { transform: skewY(-6deg) scaleX(1); } }
+.vic-art {
+  position: absolute; bottom: 0; left: 2vw; height: 96%; max-width: 46vw; object-fit: contain; object-position: bottom;
+  filter: drop-shadow(0 0 22px var(--c1)); animation: vicArt 0.6s 0.15s cubic-bezier(.2,1.2,.3,1) both;
+}
+.vic-r .vic-art { left: auto; right: 2vw; transform: scaleX(-1); animation-name: vicArtR; }
+@keyframes vicArt { from { transform: translateX(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes vicArtR { from { transform: scaleX(-1) translateX(-40%); opacity: 0; } to { transform: scaleX(-1); opacity: 1; } }
+.vic-info {
+  position: relative; margin-left: 46vw; width: 50vw; display: flex; flex-direction: column; align-items: center; gap: 1.4vh; text-align: center;
+  animation: vicInfo 0.5s 0.3s ease-out both;
+}
+.vic-r .vic-info { margin-left: 4vw; }
+@keyframes vicInfo { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.vic-head { font-family: 'Russo One'; font-size: clamp(14px, 2.4vw, 30px); letter-spacing: 0.3em; color: #fff; text-shadow: 0 0 12px var(--cyan); }
+.vic-head.lose { color: #ff6b8a; text-shadow: 0 0 12px #ff2e2e; }
+.vic .winner { line-height: 1; }
+.vic-quote { font-family: 'Orbitron'; font-style: italic; font-size: clamp(11px, 1.5vw, 19px); color: #fff; max-width: 44vw; text-shadow: 2px 2px 0 var(--ink); }
+.vic-sets { font-family: 'Orbitron'; font-weight: 700; letter-spacing: 0.25em; font-size: clamp(10px, 1.2vw, 15px); opacity: 0.85; }
+.vic-stats { display: flex; gap: 1.6vw; }
+.vic-stats > div { background: rgba(8, 2, 20, 0.7); border: 1px solid rgba(255,255,255,0.25); padding: 0.6vh 1vw; display: flex; flex-direction: column; align-items: center; min-width: 9vw; }
+.vic-stats span { font-size: clamp(8px, 0.9vw, 12px); letter-spacing: 0.15em; opacity: 0.8; }
+.vic-stats b { font-family: 'Russo One'; font-size: clamp(15px, 2.2vw, 28px); color: #ffe600; }
+.vic-stats small { font-size: 0.5em; }
+.vic-stats i { font-style: normal; font-size: clamp(8px, 0.9vw, 12px); color: var(--cyan); }
+.vic .menu { margin-top: 0.5vh; }
+@media (max-height: 520px) {
+  .vic-info { gap: 1vh; padding-top: 0; }
+  .vic .winner { font-size: clamp(20px, 8vh, 36px); }
+  .vic-head { font-size: 13px; }
+  .vic-quote { font-size: 11px; }
+  .vic-sets { display: none; }
+  .vic-stats > div { padding: 2px 8px; }
+  .vic-stats b { font-size: 16px; }
+  /* achievements: names only, on one line */
+  .vic .ach-unlocked { padding: 3px 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px; max-height: none; overflow: visible; }
+  .vic .ach-h { width: 100%; font-size: 10px; }
+  .vic .ach-row { display: contents; }
+  .vic .ach-row span { display: none; }
+  .vic .ach-row b, .vic .ach-row i { font-size: 10px; }
+  /* menu as a 2 x 2 grid */
+  .vic .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; min-width: 0; }
+  .vic .menu .btn { font-size: 12px; padding: 6px 6px; white-space: nowrap; }
+}

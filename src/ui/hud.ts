@@ -85,6 +85,17 @@ export class Hud {
     this.calloutTimer = window.setTimeout(() => a.remove(), ms);
   }
 
+  /** Speed-gun readout that pops up over the thrower's head and floats away. */
+  speedTag(kmh: number, x: number, y: number, hot: boolean) {
+    const t = document.createElement('div');
+    t.className = 'speed-tag' + (hot ? ' hot' : '');
+    t.innerHTML = `${kmh}<small>KM/H</small>`;
+    t.style.left = `${x}px`;
+    t.style.top = `${y}px`;
+    this.el.appendChild(t);
+    window.setTimeout(() => t.remove(), 1100);
+  }
+
   /** Live rally counter under the clock: appears at 3 catches, heats up with length. */
   rally(n: number) {
     if (!this.rallyEl || n === this.rallyShown) return;

@@ -318,6 +318,13 @@ export class GameRenderer {
   private particles = new Particles();
   private shake = 0;
   private superZoom = 0;
+  /** World point -> pixels in the stage element (for HUD labels that follow the action). */
+  toScreen(x: number, y: number, z: number) {
+    const v = new THREE.Vector3(x, y, z).project(this.camera);
+    const r = this.renderer.domElement.getBoundingClientRect();
+    return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
+  }
+
   /** Slow-motion finish: a harder punch-in than a super. */
   finisher() {
     this.superZoom = 1.5;
@@ -401,10 +408,13 @@ export class GameRenderer {
     this.composer.setSize(w, h);
     this.bloom.resolution.set(w / 2, h / 2);
     this.camera.aspect = w / h;
-    // Keep the whole court visible on narrow screens.
+    // Keep the whole court visible on narrow screens; on wide phones (iPhone landscape is ~2.16:1) the court
+    // has room to spare at the sides, so move in (up to 15% closer) and the fighters read bigger.
     const minAspect = 16 / 9;
-    const k = Math.max(1, minAspect / this.camera.aspect);
+    const wide = Math.min(1, Math.max(0, (this.camera.aspect - minAspect) / (2.1 - minAspect)));
+    const k = Math.max(1, minAspect / this.camera.aspect) * (1 - 0.15 * wide);
     this.camBase.set(0, 13.5 * k, 15.0 * k);
+    this.lookAt.set(0, 0, -2.75 + 0.55 * wide);
     this.camera.updateProjectionMatrix();
   }
 

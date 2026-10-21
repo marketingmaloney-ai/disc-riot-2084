@@ -10,7 +10,8 @@ import { createGame, step } from './sim/game';
 import type { GameState, InputFrame } from './sim/types';
 import { GameRenderer } from './render/scene';
 import { ARENAS } from './render/arena';
-import { frameDataURL, loadCharacterArt } from './render/characterArt';
+import { frameDataURL, loadCharacterArt, uiImageURL } from './render/characterArt';
+import { winQuote } from './ui/victory';
 import { CpuPlayer, DIFFICULTIES } from './ai/cpu';
 import {
   connectedPads, endTick, GamepadSource, KeyboardSource, MenuInput, MergedSource,
@@ -203,6 +204,10 @@ function tick() {
 function runHype(events: typeof game.events, allowSlowmo: boolean) {
   for (const c of hype.update(events, game)) {
     if (c.text) hud.callout(c.text, c.hot, c.low ? 2400 : 1500, c.low);
+    if (c.speed) {
+      const at = renderer.toScreen(c.speed.x, 3.6, c.speed.z);
+      hud.speedTag(c.speed.kmh, at.x, at.y, c.speed.kmh >= hype.stats.fastest.kmh && c.speed.kmh >= 220);
+    }
     if (c.vo) audio.callout(c.vo, c.voDelay ?? 0);
     if (c.slowmo && allowSlowmo) {
       timeScale = 0.25;
@@ -723,23 +728,47 @@ function togglePause() {
 
 function showResults() {
   hudEl.classList.add('hidden');
-  const w = charById(game.players[game.matchWinner].charId);
+  const wi = game.matchWinner;
+  const w = charById(game.players[wi].charId);
+  const me = mode === 'online' && link ? link.idx : mode === '1p' ? 0 : -1;
+  const headline = me < 0 ? `PLAYER ${wi + 1} WINS` : wi === me ? 'YOU WIN!' : 'YOU LOSE';
+  const st = hype.stats;
+  const shortName = (p: number) => charById(game.players[p].charId).name.split(' ')[0];
+  const stats = [
+    st.fastest.p >= 0 ? `<div><span>FASTEST SHOT</span><b>${st.fastest.kmh}<small> KM/H</small></b><i>${shortName(st.fastest.p)}</i></div>` : '',
+    `<div><span>LONGEST RALLY</span><b>${st.longestRally}<small> HITS</small></b></div>`,
+    `<div><span>SUPERS SCORED</span><b>${st.supersScored[0]} - ${st.supersScored[1]}</b></div>`,
+  ].join('');
   const ach = newAchievements.length
     ? `<div class="ach-unlocked"><div class="ach-h">ACHIEVEMENTS UNLOCKED</div>${newAchievements
         .map((a) => `<div class="ach-row"><b>${a.name}</b><span>${a.desc}</span><i>+${a.points} PT${a.points > 1 ? 'S' : ''}</i></div>`)
         .join('')}</div>`
     : '';
-  const s = show(`<div class="sub">MATCH OVER</div><div class="winner">${w.name} WINS!</div><div class="sub">${game.sets[0]} - ${game.sets[1]}</div>${ach}`, 'results clear');
+  const s = show(`
+    <div class="vic ${wi === 0 ? 'vic-l' : 'vic-r'}" style="--c1:${w.colors.primary};--c2:${w.colors.secondary}">
+      <div class="vic-band"><div class="cutin-lines"></div></div>
+      <img class="vic-art" alt="">
+      <div class="vic-info">
+        <div class="vic-head ${me >= 0 && wi !== me ? 'lose' : ''}">${headline}</div>
+        <div class="winner">${w.name}</div>
+        <div class="vic-quote">“${winQuote(w.id)}”</div>
+        <div class="vic-sets">SETS ${game.sets[0]} - ${game.sets[1]}</div>
+        <div class="vic-stats">${stats}</div>
+        ${ach}
+      </div>
+    </div>`, 'results clear');
+  const info = s.querySelector('.vic-info') as HTMLElement;
+  void uiImageURL(w.id, 'cutin', 'win').then((u) => { (s.querySelector('.vic-art') as HTMLImageElement).src = u; });
   const pts = tracker ? freePoints(charProfile(picks[0])) : 0;
   if (mode === 'online' && link) {
     votes = { me: false, them: votes.them };
-    menu(s, [
+    menu(info, [
       { label: 'REMATCH', action: () => { votes.me = true; link?.send({ t: 'again' }); s.querySelector('.menu .btn')!.textContent = votes.them ? 'STARTING…' : 'WAITING FOR OPPONENT…'; maybeRematch(); } },
       { label: 'LEAVE', action: () => leaveOnline() },
     ]);
     return;
   }
-  menu(s, [
+  menu(info, [
     ...(pts > 0 ? [{ label: `SPEND ${pts} UPGRADE POINT${pts > 1 ? 'S' : ''}`, action: () => { audio.startTitleMusic(); void startDemo(); openUpgrades(modeScreen, picks[0]); } }] : []),
     { label: 'REMATCH', action: () => beginVersus() },
     { label: 'CHARACTER SELECT', action: () => { audio.startTitleMusic(); void startDemo(); charSelect(); } },
@@ -777,7 +806,7 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 // Allow URL shortcuts for testing: ?quick=1 jumps straight into VS CPU.
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) Object.assign(window, { __game: () => game, __net: () => session });
-if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, arenas: ARENAS, hud, audio } });
+if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, showResults, hype, arenas: ARENAS, hud, audio } });
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('room')) {

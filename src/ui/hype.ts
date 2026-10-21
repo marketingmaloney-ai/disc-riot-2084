@@ -10,11 +10,20 @@ export interface Callout {
   voDelay?: number;
   slowmo?: boolean; // set / match winning goal
   low?: boolean; // sits under the taller SET banner
+  speed?: { kmh: number; p: number; x: number; z: number }; // speed-gun readout for a power shot or super
 }
 
 const COMBO_AT = 6; // catches in one rally
 const FIRE_AT = 10;
 const COMEBACK_GAP = 7;
+/** Speed gun: m/s on our 16 m arcade court, shown as "km/h" scaled to feel like a full-size one. */
+export const toKmh = (ms: number) => Math.round(ms * 3.6 * 2);
+
+export interface MatchStats {
+  fastest: { kmh: number; p: number };
+  longestRally: number;
+  supersScored: [number, number];
+}
 
 /**
  * Arcade hype layer: rally combos, set / match point, the final-seconds countdown, streaks, comebacks and
@@ -22,6 +31,7 @@ const COMEBACK_GAP = 7;
  */
 export class Hype {
   rally = 0;
+  stats: MatchStats = { fastest: { kmh: 0, p: -1 }, longestRally: 0, supersScored: [0, 0] };
   private streak = { p: -1, n: 0 };
   private maxGap = [0, 0]; // biggest deficit each player has faced this set
   private comebackDone = false;
@@ -30,6 +40,7 @@ export class Hype {
 
   reset() {
     this.rally = 0;
+    this.stats = { fastest: { kmh: 0, p: -1 }, longestRally: 0, supersScored: [0, 0] };
     this.streak = { p: -1, n: 0 };
     this.maxGap = [0, 0];
     this.comebackDone = false;
@@ -47,8 +58,15 @@ export class Hype {
       this.comebackDone = false;
     }
     for (const e of events) {
-      if (e.type === 'catch') {
+      if ((e.type === 'supersonic' || e.type === 'super') && e.p !== undefined) {
+        const d = g.disc;
+        const ms = e.type === 'super' && d.superDef ? d.superBase * (d.superDef.speed ?? 1.12) : Math.hypot(d.vx, d.vz);
+        const kmh = toKmh(ms);
+        if (kmh > this.stats.fastest.kmh) this.stats.fastest = { kmh, p: e.p };
+        out.push({ speed: { kmh, p: e.p, x: g.players[e.p].x, z: g.players[e.p].z } });
+      } else if (e.type === 'catch') {
         this.rally++;
+        this.stats.longestRally = Math.max(this.stats.longestRally, this.rally);
         if (this.rally === COMBO_AT) out.push({ text: `${COMBO_AT}-HIT COMBO!`, vo: 'vo_combo' });
         else if (this.rally === FIRE_AT) out.push({ text: 'ON FIRE!', hot: true });
         else if (this.rally > FIRE_AT && this.rally % 5 === 0) out.push({ text: `${this.rally}-HIT RALLY!`, hot: true });
@@ -59,6 +77,7 @@ export class Hype {
       } else if (e.type === 'score') { // a dropped disc also ends in a 'score' for the other side
         const p = e.p ?? -1;
         const finisher = p >= 0 && (g.suddenDeath || g.score[p] >= C.SET_POINTS);
+        if (p >= 0 && e.shot === 'super') this.stats.supersScored[p]++;
         if (this.rally >= COMBO_AT) out.push({ text: `COMBO BREAKER! · ${this.rally} HITS`, vo: 'vo_combo_breaker', voDelay: 0.5 });
         if (p >= 0) {
           this.streak = this.streak.p === p ? { p, n: this.streak.n + 1 } : { p, n: 1 };
