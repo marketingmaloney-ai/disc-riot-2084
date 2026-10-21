@@ -46,6 +46,16 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Arena rules + contrast (2026-10-21, v40)
+- `src/sim/courts.ts` holds each arena's goal wall and bumpers.
+  - Unchanged: Sunset Strip and Neon Pier (classic 3-5-3, no bumpers).
+  - Laser Lagoon: 5 in the corners (|z| > 3.1), 3 in the middle, two posts on the net line.
+  - Orbital Cabana: a 3-5-3-5-3 wall and four posts at (±1.8, ±2.0).
+- Bumpers kick a shot into a new lane, never back at the thrower; supers smash through and lobs fly over. The CPU predicts deflections.
+- Tuned so a bumped shot scores about as often as a normal one (11-13% vs 14%). The first version let reversed shots score 41-54%.
+- Fighters: a shader ink outline (atlas frames padded 7 px), +contrast and saturation, kept under the bloom threshold, and a faint dark halo.
+- Music: each arena already had its own track (verified). If iOS refuses the track change, it now starts on the next tap.
+
 ## Hype pass (2026-10-20, v38)
 - `src/ui/hype.ts` (tested in `hype.test.ts`): call-outs and a rally counter. Pure presentation; it never changes the game.
   - Rally counter under the clock, plus 6-HIT COMBO / ON FIRE and COMBO BREAKER.
