@@ -466,40 +466,55 @@ async function cardVisual(id: string): Promise<string> {
 
 async function charSelect() {
   audio.play('choose');
-  const s = show(`<div class="title-h" data-t>SELECT YOUR FIGHTER</div><div class="cs-grid"></div><div class="cs-info"></div><div class="hint">←→ CHOOSE · ENTER / Ⓐ CONFIRM · ESC / Ⓑ BACK</div>`);
-  const grid = s.querySelector('.cs-grid')!;
-  const info = s.querySelector('.cs-info')!;
+  // Carousel: one fighter at a time, big in the middle with their stats; arrows / swipe / ←→ to browse,
+  // faded neighbours peek in at the edges so it's clear there are more.
+  const s = show(`<div class="title-h" data-t>SELECT YOUR FIGHTER</div>
+    <div class="cs-car">
+      <div class="cs-peek l"></div>
+      <button class="cs-arrow l" aria-label="Previous">‹</button>
+      <div class="cs-main"></div>
+      <div class="cs-panel"></div>
+      <button class="cs-arrow r" aria-label="Next">›</button>
+      <div class="cs-peek r"></div>
+    </div>
+    <div class="cs-dots"></div>
+    <div class="menu cs-go"><button class="btn sel">SELECT</button></div>
+    <div class="hint">←→ / SWIPE TO BROWSE · ENTER / Ⓐ SELECT · ESC / Ⓑ BACK</div>`, 'cs-screen');
   const visuals = await Promise.all(CHARACTERS.map((c) => cardVisual(c.id)));
-  const cards = CHARACTERS.map((c, i) => {
-    const d = document.createElement('div');
-    d.className = 'card';
-    const cp = charProfile(c.id);
-    const badge = mode === '1p' ? `<div class="lvl">LV ${totalLevel(cp)}${freePoints(cp) > 0 ? ` <b>+${freePoints(cp)}</b>` : ''}</div>` : '';
-    d.innerHTML = `${visuals[i]}${badge}<div class="nm">${c.name}<br><span class="nation">${c.nation}</span></div>`;
-    grid.appendChild(d);
-    return d;
-  });
+  const n = CHARACTERS.length;
+  const main = s.querySelector('.cs-main') as HTMLElement;
+  const panel = s.querySelector('.cs-panel') as HTMLElement;
+  const peekL = s.querySelector('.cs-peek.l') as HTMLElement;
+  const peekR = s.querySelector('.cs-peek.r') as HTMLElement;
+  const dots = s.querySelector('.cs-dots') as HTMLElement;
+  const goBtn = s.querySelector('.cs-go .btn') as HTMLElement;
+  dots.innerHTML = CHARACTERS.map(() => '<i></i>').join('');
   let cursor = [0, 1];
   let who = 0; // which player is picking
   const title = s.querySelector('[data-t]')!;
-  const paint = () => {
+  const paint = (dir = 0) => {
     title.textContent = who === 0 ? (mode === '2p' ? 'PLAYER 1 · SELECT' : 'SELECT YOUR FIGHTER') : 'PLAYER 2 · SELECT';
-    cards.forEach((c, i) => {
-      c.classList.toggle('p1', cursor[0] === i);
-      c.classList.toggle('p2', mode === '2p' && who === 1 && cursor[1] === i);
-      c.querySelectorAll('.tag').forEach((t) => t.remove());
-      if (cursor[0] === i) c.insertAdjacentHTML('beforeend', `<div class="tag t1">1P</div>`);
-      if (mode === '2p' && who === 1 && cursor[1] === i) c.insertAdjacentHTML('beforeend', `<div class="tag t2">2P</div>`);
-    });
-    const ch = CHARACTERS[cursor[who]];
+    const i = cursor[who];
+    const ch = CHARACTERS[i];
+    const cp = charProfile(ch.id);
+    const badge = mode === '1p' ? `<div class="lvl">LV ${totalLevel(cp)}${freePoints(cp) > 0 ? ` <b>+${freePoints(cp)}</b>` : ''}</div>` : '';
+    const tag = mode === '2p' ? `<div class="tag ${who ? 't2' : 't1'}">${who ? '2P' : '1P'}</div>` : '';
+    main.innerHTML = `<div class="card ${who ? 'p2' : 'p1'} ${dir ? (dir > 0 ? 'in-r' : 'in-l') : ''}" style="--cc:${ch.colors.primary}">${visuals[i]}${badge}${tag}</div>`;
+    peekL.innerHTML = visuals[(i + n - 1) % n];
+    peekR.innerHTML = visuals[(i + 1) % n];
     // base bar + bonus segment from upgrades (VS CPU only)
-    const lv = mode === '1p' && who === 0 ? charProfile(ch.id).levels : { speed: 0, power: 0, technique: 0, reflex: 0 };
+    const lv = mode === '1p' && who === 0 ? cp.levels : { speed: 0, power: 0, technique: 0, reflex: 0 };
     const w = (v: number, lo: number, hi: number) => Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20));
     const bar = (v: number, lo: number, hi: number, bonus: number) =>
       `<div class="bar"><i style="width:${w(v, lo, hi)}%"></i>${bonus > 0 ? `<em style="width:${w(v * (1 + bonus), lo, hi) - w(v, lo, hi)}%"></em>` : ''}</div>`;
-    info.innerHTML = `<div class="who"><div class="n ${who ? 'p2c' : 'p1c'}">${ch.name}</div><div class="sp">SUPERS: ${superNames(ch).map((n, i) => `<b title="${["A", "↑/↓ + A", "B"][i]}">${n}</b>`).join(" · ")}</div><div class="hint">${ch.tagline.toUpperCase()}</div></div>
-      <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.6, SC.ATTR_SPEED * lv.speed)}<span>POWER</span>${bar(ch.power, 20, 26, SC.ATTR_POWER * lv.power)}<span>TECHNIQUE</span>${bar(ch.curve, 0.6, 1.6, SC.ATTR_TECH_CURVE * lv.technique)}<span>REFLEX</span>${bar(1, 0.8, 1.3, SC.ATTR_REFLEX_REACH * lv.reflex)}</div>`;
+    panel.innerHTML = `<div class="cs-name ${who ? 'p2c' : 'p1c'}">${ch.name}</div>
+      <div class="cs-nation">${ch.nation} · ${ch.tagline.toUpperCase()}</div>
+      <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.6, SC.ATTR_SPEED * lv.speed)}<span>POWER</span>${bar(ch.power, 20, 26, SC.ATTR_POWER * lv.power)}<span>TECHNIQUE</span>${bar(ch.curve, 0.6, 1.6, SC.ATTR_TECH_CURVE * lv.technique)}<span>REFLEX</span>${bar(ch.reach ?? 1, 0.8, 1.3, SC.ATTR_REFLEX_REACH * lv.reflex)}</div>
+      <div class="cs-supers">${superNames(ch).map((nm, k) => `<div><kbd>${['A', '↑↓+A', 'B'][k]}</kbd><b>${nm}</b></div>`).join('')}</div>`;
+    panel.classList.remove('in'); void panel.offsetWidth; panel.classList.add('in');
+    dots.querySelectorAll('i').forEach((d, k) => d.classList.toggle('on', k === i));
   };
+  const move = (d: number) => { cursor[who] = (cursor[who] + d + n) % n; audio.play('menu'); paint(d); };
   const confirm = () => {
     audio.play('confirm');
     if (mode === 'online') { onlinePicked(CHARACTERS[cursor[0]].id); return; }
@@ -511,17 +526,36 @@ async function charSelect() {
     } else picks[1] = CHARACTERS[cursor[1]].id;
     arenaSelect();
   };
-  cards.forEach((c, i) => {
-    c.addEventListener('pointerenter', () => { cursor[who] = i; paint(); });
-    c.addEventListener('click', () => { cursor[who] = i; confirm(); });
+  s.querySelector('.cs-arrow.l')!.addEventListener('click', () => move(-1));
+  s.querySelector('.cs-arrow.r')!.addEventListener('click', () => move(1));
+  peekL.addEventListener('click', () => move(-1));
+  peekR.addEventListener('click', () => move(1));
+  goBtn.addEventListener('click', () => { audio.unlock(); confirm(); });
+  dots.querySelectorAll('i').forEach((d, k) => d.addEventListener('click', () => { const dir = k - cursor[who]; if (dir) { cursor[who] = k; audio.play('menu'); paint(dir); } }));
+  // swipe anywhere on the carousel; a plain tap on the big card selects
+  const car = s.querySelector('.cs-car') as HTMLElement;
+  let sx = 0, sy = 0, lx = 0, ly = 0, down = false;
+  const finish = (target: EventTarget | null, tapOk: boolean) => {
+    if (!down) return;
+    down = false;
+    const dx = lx - sx, dy = ly - sy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
+    else if (tapOk && Math.abs(dx) < 10 && Math.abs(dy) < 10 && main.contains(target as Node)) confirm();
+  };
+  car.addEventListener('pointerdown', (e) => {
+    if ((e.target as HTMLElement).closest('.cs-arrow, .cs-peek')) return; // those have their own clicks
+    down = true; sx = lx = e.clientX; sy = ly = e.clientY;
   });
+  car.addEventListener('pointermove', (e) => { if (down) { lx = e.clientX; ly = e.clientY; } });
+  car.addEventListener('pointerup', (e) => { lx = e.clientX; ly = e.clientY; finish(e.target, true); });
+  // the browser may take over a drag (scroll / image drag): still count the swipe it had made so far
+  car.addEventListener('pointercancel', () => finish(null, false));
   paint();
   const goBack = () => { if (who === 1) { who = 0; paint(); } else if (mode === 'online') leaveOnline(); else modeScreen(); };
   setBack(goBack);
   onMenuInput = (e) => {
-    const n = CHARACTERS.length;
-    if (e.l) { cursor[who] = (cursor[who] + n - 1) % n; audio.play('menu'); paint(); }
-    if (e.r) { cursor[who] = (cursor[who] + 1) % n; audio.play('menu'); paint(); }
+    if (e.l) move(-1);
+    if (e.r) move(1);
     if (e.ok) confirm();
     if (e.back) goBack();
   };

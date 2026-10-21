@@ -400,3 +400,44 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .vic .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; min-width: 0; }
   .vic .menu .btn { font-size: 12px; padding: 6px 6px; white-space: nowrap; }
 }
+
+/* ---------- fighter select carousel ---------- */
+.cs-car { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; gap: 3vw; touch-action: pan-y; }
+.cs-main .card { width: auto; height: min(52vh, 460px); aspect-ratio: 3 / 4.2; cursor: pointer; border-color: var(--cc); box-shadow: 0 0 28px var(--cc); transform: none; }
+.cs-main .card.in-r { animation: csInR 0.28s cubic-bezier(.2,1,.3,1); }
+.cs-main .card.in-l { animation: csInL 0.28s cubic-bezier(.2,1,.3,1); }
+@keyframes csInR { from { transform: translateX(30%) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes csInL { from { transform: translateX(-30%) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+.cs-main .card .lvl { font-size: clamp(9px, 1.2vw, 14px); }
+.cs-panel { width: min(40vw, 520px); display: flex; flex-direction: column; gap: 1.2vh; }
+.cs-panel.in { animation: csPanel 0.3s ease-out; }
+@keyframes csPanel { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.cs-name { font-family: 'Russo One'; font-size: clamp(20px, 3.4vw, 46px); line-height: 1; text-shadow: 3px 3px 0 var(--ink); }
+.cs-nation { font-family: 'Orbitron'; font-size: clamp(9px, 1.1vw, 14px); letter-spacing: 0.12em; opacity: 0.85; }
+.cs-panel .stats { min-width: 0; }
+.cs-supers { display: flex; flex-direction: column; gap: 3px; font-size: clamp(10px, 1.25vw, 16px); }
+.cs-supers div { display: flex; align-items: center; gap: 8px; }
+.cs-supers kbd { font-family: 'Orbitron'; font-weight: 900; font-size: 0.75em; min-width: 3.6em; text-align: center; padding: 1px 4px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); }
+.cs-supers b { color: var(--yellow); letter-spacing: 0.05em; }
+.cs-arrow {
+  pointer-events: auto; z-index: 2; width: clamp(40px, 6vh, 64px); height: clamp(40px, 6vh, 64px); border-radius: 50%; border: 2px solid var(--cyan);
+  background: rgba(10, 4, 30, 0.75); color: #fff; font-size: clamp(26px, 4vh, 40px); line-height: 1; cursor: pointer; box-shadow: 0 0 14px rgba(25,230,255,0.45);
+}
+.cs-arrow:active { transform: scale(0.9); }
+.cs-peek { position: absolute; top: 50%; height: 34vh; aspect-ratio: 3 / 4.2; transform: translateY(-50%); opacity: 0.28; filter: grayscale(0.6); overflow: hidden; cursor: pointer; pointer-events: auto; }
+.cs-peek.l { left: max(-6vh, env(safe-area-inset-left)); }
+.cs-peek.r { right: max(-6vh, env(safe-area-inset-right)); }
+.cs-peek img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.cs-dots { display: flex; gap: 8px; }
+.cs-dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.25); cursor: pointer; pointer-events: auto; }
+.cs-dots i.on { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+.cs-go { min-width: 0; }
+.cs-go .btn { min-width: 220px; }
+@media (max-height: 520px) {
+  .cs-screen { gap: 1vh; }
+  .cs-main .card { height: 54vh; }
+  .cs-panel { gap: 0.8vh; }
+  .cs-peek { height: 30vh; }
+  .cs-go .btn { padding: 5px 16px; min-width: 180px; }
+}
+.cs-car img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
