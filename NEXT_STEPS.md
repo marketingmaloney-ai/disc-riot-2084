@@ -46,6 +46,11 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Run cycles (2026-10-22, v43)
+- Album items 32-35 were run clips after all: turnaround videos with the fighter several times side by side (Zara's has a clean single-figure run). They are now `raw/<id>/vid_R_v1.mp4`, extracted with the new `"crop": [x0, x1]` (process.py `--crop`).
+- Diesel's source is only 568x320 and the copies overlap, so a few frames have a stray sliver. A clean single-figure run clip would improve him.
+- Still missing (procedural fallback): B (dash, lob, block) for Nova, Diesel and Zara; win for Diesel and Zara.
+
 ## Arena rules + contrast (2026-10-21, v40)
 - `src/sim/courts.ts` holds each arena's goal wall and bumpers.
   - Unchanged: Sunset Strip and Neon Pier (classic 3-5-3, no bumpers).
