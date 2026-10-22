@@ -115,6 +115,8 @@ def build_character(cid: str, spec: dict):
                 vargs += ["--dur", a["dur"]]
             if "figure" in a:  # Flow drew the character twice: keep "left" / "right" / "largest"
                 vargs += ["--figure", a["figure"]]
+            if "crop" in a:  # turnaround clip: [x0, x1] band of the width holding the wanted figure
+                vargs += ["--crop", f"{a['crop'][0]},{a['crop'][1]}"]
             stamp = vdir / "args.txt"
             key = " ".join(map(str, vargs[1:])) + f" {(HERE / a['video']).stat().st_mtime}"
             if not (stamp.exists() and stamp.read_text() == key):  # same clip + settings: reuse frames

@@ -275,6 +275,23 @@ def keep_figure(arr, which="left"):
     return drop_faint(out)
 
 
+def drop_edge_bits(arr):
+    """After a crop: drop pieces of the neighbouring figures (anything touching the left / right edge that is
+    much smaller than the main figure)."""
+    a = (arr[..., 3] > 40).astype(np.uint8)
+    n, lbl, st, _ = cv2.connectedComponentsWithStats(a, 8)
+    if n <= 2:
+        return arr
+    big = st[1:, cv2.CC_STAT_AREA].max()
+    w = arr.shape[1]
+    out = arr.copy()
+    for i in range(1, n):
+        x, cw, area = st[i, cv2.CC_STAT_LEFT], st[i, cv2.CC_STAT_WIDTH], st[i, cv2.CC_STAT_AREA]
+        if (x <= 1 or x + cw >= w - 1) and area < big * 0.35:
+            out[..., 3][lbl == i] = 0
+    return drop_faint(out)
+
+
 def drop_faint(arr):
     """Clear faint soft-edge pixels (alpha <= 40) that no longer border a kept solid pixel."""
     near = cv2.dilate((arr[..., 3] > 40).astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
@@ -337,8 +354,10 @@ def cmd_split(inp, outdir):
     print(f"{src.name}: {len(figs)} figure(s) -> {out}")
 
 
-def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None):
-    """Video (green screen) -> keyed, trimmed frames k_0000.png... + numbered contact sheet.jpg."""
+def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None, crop=None):
+    """Video (green screen) -> keyed, trimmed frames k_0000.png... + numbered contact sheet.jpg.
+    crop "x0,x1": keep only that horizontal band (fractions of the width) first, for turnaround clips that
+    show the character several times side by side (front / side / side / back) standing still."""
     import shutil
     import subprocess
     try:
@@ -354,7 +373,11 @@ def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None):
     cmd = [ffmpeg, "-loglevel", "error", "-ss", str(start)]
     if dur:
         cmd += ["-t", str(dur)]
-    cmd += ["-i", str(inp), "-vf", f"fps={fps}", str(out / "raw_%04d.png")]
+    vf = f"fps={fps}"
+    if crop:
+        x0, x1 = (float(v) for v in str(crop).split(","))
+        vf = f"crop=iw*{x1 - x0:.4f}:ih:iw*{x0:.4f}:0," + vf
+    cmd += ["-i", str(inp), "-vf", vf, str(out / "raw_%04d.png")]
     subprocess.run(cmd, check=True)
     raws = sorted(out.glob("raw_*.png"))
     thumbs = []
@@ -365,6 +388,8 @@ def cmd_video(inp, outdir, fps=24, start=0.0, dur=None, figure=None):
         if (arr[..., 3] > 40).sum() < arr[..., 3].size * 0.002:
             k.unlink()  # empty frame (character left the shot)
         else:
+            if crop:
+                arr = drop_edge_bits(arr)
             if figure:
                 arr = keep_figure(arr, figure)
             Image.fromarray(clean_frame(arr), "RGBA").save(k)
@@ -414,7 +439,7 @@ if __name__ == "__main__":
         cmd_pack(a[1], a[2])
     elif cmd == "video":
         opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d  # noqa: E731
-        cmd_video(a[1], a[2], float(opt("--fps", 24)), float(opt("--start", 0)), opt("--dur"), opt("--figure"))
+        cmd_video(a[1], a[2], float(opt("--fps", 24)), float(opt("--start", 0)), opt("--dur"), opt("--figure"), opt("--crop"))
     elif cmd == "split":
         for f in a[1:-1]:
             cmd_split(f, a[-1])
