@@ -1,7 +1,8 @@
 /**
  * Landscape in a browser that can't rotate. The in-app browsers of X, YouTube, Instagram... are often locked to
  * portrait, so the "rotate your device" screen never went away. "PLAY ANYWAY" turns the whole game 90° on the
- * screen instead: the player holds the phone sideways and plays as usual.
+ * screen instead (automatically, whenever a touch screen is upright): the player holds the phone sideways and
+ * plays as usual.
  *
  * Layout sizes (clientWidth / clientHeight) ignore CSS transforms, so the renderer and HUD need nothing special.
  * Raw pointer coordinates are still in screen space: touch code maps them with toApp().
@@ -33,7 +34,11 @@ function apply() {
 }
 
 export function setupOrientation() {
-  try { turned = sessionStorage.getItem(KEY) === '1'; } catch { /* storage blocked: ask again */ }
+  // Turn automatically: in X's browser the phone can be rotated but the page stays upright, so waiting for a
+  // rotation (or a tap on a button the player may never notice) lost people. Where the browser does rotate,
+  // the portrait media query stops matching and the game drops the turn by itself.
+  turned = true;
+  try { if (sessionStorage.getItem(KEY) === '0') turned = false; } catch { /* storage blocked: keep the default */ }
   const rot = document.getElementById('rotate')!;
   rot.insertAdjacentHTML('beforeend', `
     <button class="rot-play">PLAY ANYWAY</button>
