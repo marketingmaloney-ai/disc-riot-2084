@@ -481,14 +481,11 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .mini { padding: 3px 8px; font-size: 9px; }
 }
 
-/* ---------- portrait-locked browsers: "PLAY ANYWAY" turns the game 90° (ui/orient.ts) ---------- */
-body.turned #app { position: fixed; top: 0; transform-origin: 0 0; transform: rotate(90deg); }
-body.turned #rotate { display: none !important; }
-.rot-play { margin-top: 14px; pointer-events: auto; font-family: 'Russo One'; font-size: 22px; letter-spacing: 0.1em; color: #fff; padding: 12px 28px; border: 3px solid #fff;
+/* ---------- rotate screen: in-app browsers that can't rotate (ui/orient.ts) ---------- */
+.rot-play { margin-top: 6px; pointer-events: auto; font-family: 'Russo One'; font-size: 22px; letter-spacing: 0.1em; color: #fff; padding: 12px 28px; border: 3px solid #fff;
   background: linear-gradient(90deg, var(--pink), #b0247a); box-shadow: 0 0 22px var(--pink); transform: skewX(-10deg); }
 .rot-tip { max-width: 86vw; text-align: center; font-family: 'Orbitron'; font-size: 11px; line-height: 1.6; letter-spacing: 0.08em; opacity: 0.85; font-weight: 700; }
 .rot-tip b { color: var(--yellow); }
 .boot-fail { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9999; max-width: 86vw; display: flex; flex-direction: column; gap: 8px; text-align: center;
   padding: 18px 22px; background: #12052a; border: 2px solid #ff2e9a; color: #fff; font: 700 14px/1.5 sans-serif; }
 .boot-fail small { opacity: 0.6; font-weight: 400; }
-#turn-diag { position: fixed; left: 4px; bottom: 4px; right: 4px; z-index: 99999; font: 11px/1.3 monospace; color: #fff; background: rgba(150,0,60,0.85); padding: 4px 6px; pointer-events: none; }
