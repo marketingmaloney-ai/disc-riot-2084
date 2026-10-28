@@ -46,6 +46,14 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Launch on X (2026-10-28)
+- The repo is public, and GitHub Pages deploys every push to main: https://marketingmaloney-ai.github.io/disc-riot-2084/ (owner verified it works).
+- Promo video kit in `tools/store/promo`:
+  - `intro.html`, `endcard.html`, `caption.html`.
+  - `record.mjs`: virtual-clock gameplay capture with an event log.
+  - `mix.py`: picks the best window per clip, cuts with flash transitions, and rebuilds the soundtrack from events.
+  - The 41 s cut was made from `?quick=1&auto=1` matches on all 4 arenas.
+
 ## Run cycles (2026-10-22, v43)
 - Album items 32-35 were run clips after all: turnaround videos with the fighter several times side by side (Zara's has a clean single-figure run). They are now `raw/<id>/vid_R_v1.mp4`, extracted with the new `"crop": [x0, x1]` (process.py `--crop`).
 - Diesel's source is only 568x320 and the copies overlap, so a few frames have a stray sliver. A clean single-figure run clip would improve him.
