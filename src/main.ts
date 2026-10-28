@@ -912,19 +912,6 @@ if (touch) {
   pauseBtn = pb;
 }
 
-// iOS Safari ignores user-scalable=no in the viewport tag. Block its zoom gestures directly: a second tap within
-// 350 ms (double-tap zoom: tapping A fast to power up), pinch, and Safari's own gesture events.
-let lastTouchEnd = 0;
-document.addEventListener('touchend', (e) => {
-  const now = performance.now();
-  // menu controls keep their fast double taps (CSS touch-action already stops zoom on them)
-  const control = (e.target as HTMLElement | null)?.closest?.('input, textarea, button, a, .card, .arena-card, .cs-dots i, .shop-card');
-  if (now - lastTouchEnd < 350 && e.cancelable && !control) e.preventDefault();
-  lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, { passive: false });
-for (const ev of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
-
 // Browsers only allow audio after a user gesture: unlock on the first key, tap or click anywhere.
 // Leaving the app (home button, app switcher, lock): pause the match and go silent; resume on return.
 document.addEventListener('visibilitychange', () => {
