@@ -12,9 +12,20 @@ const KEY = 'discriot2084.turned';
 
 export const isTurned = () => turned;
 
+let screenW = 0; // width of the visible area when the turn was applied (toApp needs the same number)
+
+/** The area actually on screen. X's in-app browser reports window.innerWidth / innerHeight that don't match
+ * what's visible, so prefer visualViewport (what WebKit really shows), then the layout viewport. */
+function visible() {
+  const vv = window.visualViewport;
+  if (vv && vv.width > 0 && vv.height > 0) return { w: vv.width, h: vv.height, x: vv.offsetLeft, y: vv.offsetTop };
+  const de = document.documentElement;
+  return { w: de.clientWidth || window.innerWidth, h: de.clientHeight || window.innerHeight, x: 0, y: 0 };
+}
+
 /** Screen (client) point -> point in the game's own landscape coordinates. */
 export function toApp(x: number, y: number) {
-  return turned ? { x: y, y: window.innerWidth - x } : { x, y };
+  return turned && document.body.classList.contains('turned') ? { x: y, y: screenW - x } : { x, y };
 }
 
 const portrait = matchMedia('(orientation: portrait)');
@@ -24,13 +35,27 @@ function apply() {
   document.body.classList.toggle('turned', on);
   const app = document.getElementById('app')!;
   if (on) {
-    // the game's width runs down the screen: size it to the screen turned sideways
-    app.style.width = `${window.innerHeight}px`;
-    app.style.height = `${window.innerWidth}px`;
-    app.style.left = `${window.innerWidth}px`;
+    // the game's width runs down the screen: size it to the visible area turned sideways
+    const v = visible();
+    screenW = v.w;
+    Object.assign(app.style, { width: `${v.h}px`, height: `${v.w}px`, left: `${v.x + v.w}px`, top: `${v.y}px`, right: 'auto', bottom: 'auto' });
+    requestAnimationFrame(check);
   } else {
-    app.style.width = app.style.height = app.style.left = '';
+    for (const k of ['width', 'height', 'left', 'top', 'right', 'bottom'] as const) app.style[k] = '';
   }
+}
+
+/** After turning: the game must exactly cover the visible area. If a browser still disagrees, show the numbers
+ * (a screenshot of them tells us what that browser reports) instead of silently showing a cropped game. */
+function check() {
+  const el = document.getElementById('turn-diag');
+  if (!document.body.classList.contains('turned')) { el?.remove(); return; }
+  const r = document.getElementById('app')!.getBoundingClientRect(), v = visible();
+  const off = Math.abs(r.left - v.x) > 3 || Math.abs(r.top - v.y) > 3 || Math.abs(r.width - v.w) > 3 || Math.abs(r.height - v.h) > 3;
+  if (!off) { el?.remove(); return; }
+  const d = el ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'turn-diag' }));
+  const vv = window.visualViewport;
+  d.textContent = `layout ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} | vis ${Math.round(v.w)}x${Math.round(v.h)} | inner ${innerWidth}x${innerHeight} | doc ${document.documentElement.clientWidth}x${document.documentElement.clientHeight} | vv ${vv ? `${Math.round(vv.width)}x${Math.round(vv.height)}@${vv.scale}` : '-'} | dpr ${devicePixelRatio}`;
 }
 
 export function setupOrientation() {
@@ -50,5 +75,8 @@ export function setupOrientation() {
   });
   portrait.addEventListener('change', apply); // the phone really rotated: drop the turn (and bring it back in portrait)
   window.addEventListener('resize', apply);
+  window.visualViewport?.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', () => setTimeout(apply, 300));
+  setTimeout(apply, 500); // in-app browsers settle their toolbars after load
   apply();
 }
