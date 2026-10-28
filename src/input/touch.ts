@@ -1,5 +1,6 @@
 import type { InputFrame } from '../sim/types';
 import type { InputSource } from './input';
+import { toApp } from '../ui/orient';
 
 /**
  * On-screen floating joystick (left half) + A/B buttons (right side).
@@ -32,14 +33,15 @@ export class TouchSource implements InputSource {
     zone.addEventListener('pointerdown', (e) => {
       this.stickId = e.pointerId;
       zone.setPointerCapture(e.pointerId);
-      this.origin = { x: e.clientX, y: e.clientY };
-      this.base.style.left = `${e.clientX}px`;
-      this.base.style.top = `${e.clientY}px`;
+      const p = toApp(e.clientX, e.clientY); // the game may be turned 90° on screen (see ui/orient.ts)
+      this.origin = { x: p.x, y: p.y };
+      this.base.style.left = `${p.x}px`;
+      this.base.style.top = `${p.y}px`;
       this.base.classList.add('on');
-      this.move(e.clientX, e.clientY);
+      this.move(p.x, p.y);
     });
     zone.addEventListener('pointermove', (e) => {
-      if (e.pointerId === this.stickId) this.move(e.clientX, e.clientY);
+      if (e.pointerId === this.stickId) { const p = toApp(e.clientX, e.clientY); this.move(p.x, p.y); }
     });
     const end = (e: PointerEvent) => {
       if (e.pointerId !== this.stickId) return;

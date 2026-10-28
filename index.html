@@ -17,6 +17,19 @@
         <div>ROTATE YOUR DEVICE</div>
       </div>
     </div>
+    <script>
+      // If the game hasn't started after 12 s (a script error, or a browser that blocks something it needs),
+      // say so instead of leaving a blank screen. main.ts sets window.__booted once the attract demo is running.
+      window.addEventListener('error', function (e) { window.__bootError = e.message; });
+      setTimeout(function () {
+        if (window.__booted) return;
+        var d = document.createElement('div');
+        d.className = 'boot-fail';
+        d.innerHTML = '<b>THE GAME DIDN\'T START IN THIS BROWSER</b><span>Open the link in Safari or Chrome (tap \u22EF or the share button, then "Open in browser").</span>' +
+          (window.__bootError ? '<small>' + String(window.__bootError).slice(0, 160) + '</small>' : '');
+        document.body.appendChild(d);
+      }, 12000);
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

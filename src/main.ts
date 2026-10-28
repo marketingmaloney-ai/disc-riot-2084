@@ -30,6 +30,7 @@ import type { Achievement } from './meta/achievements';
 import { charProfile, freePoints, totalLevel } from './meta/progress';
 import { upgradeScreen } from './ui/upgrades';
 import { Hype } from './ui/hype';
+import { setupOrientation, toApp } from './ui/orient';
 import * as SC from './sim/constants';
 import { RollbackSession, type NetMsg } from './net/rollback';
 import { cleanCode, newRoomCode, RoomLink, type Msg } from './net/online';
@@ -591,10 +592,12 @@ async function charSelect(startId?: string) {
   };
   car.addEventListener('pointerdown', (e) => {
     if ((e.target as HTMLElement).closest('.cs-arrow, .cs-peek, button')) return; // those have their own clicks
-    down = true; sx = lx = e.clientX; sy = ly = e.clientY;
+    down = true;
+    ({ x: sx, y: sy } = toApp(e.clientX, e.clientY));
+    lx = sx; ly = sy;
   });
-  car.addEventListener('pointermove', (e) => { if (down) { lx = e.clientX; ly = e.clientY; } });
-  car.addEventListener('pointerup', (e) => { lx = e.clientX; ly = e.clientY; finish(e.target, true); });
+  car.addEventListener('pointermove', (e) => { if (down) ({ x: lx, y: ly } = toApp(e.clientX, e.clientY)); });
+  car.addEventListener('pointerup', (e) => { ({ x: lx, y: ly } = toApp(e.clientX, e.clientY)); finish(e.target, true); });
   // the browser may take over a drag (scroll / image drag): still count the swipe it had made so far
   car.addEventListener('pointercancel', () => finish(null, false));
   paint();
@@ -946,8 +949,10 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) Object.assign(window, { __game: () => game, __net: () => session });
 if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, showResults, hype, arenas: ARENAS, hud, audio } });
+setupOrientation();
 void initStore(); // apps only: real prices + re-sync owned fighters
 await startDemo();
+(window as unknown as { __booted?: boolean }).__booted = true; // index.html's start-up watchdog
 requestAnimationFrame(frame);
 if (params.get('room')) {
   // test shortcut: ?room=ABCD&p1=nova joins that room and auto-picks (the host also picks &arena=)
