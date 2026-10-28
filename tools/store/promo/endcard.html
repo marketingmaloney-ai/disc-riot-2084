@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Promo end card</title>
+<!-- Rendered frame by frame by record.mjs: window.render(t) draws the intro at time t (seconds). Served by
+     `vite` from the repo root so the font and asset paths resolve. Duration: window.DURATION. -->
+<style>
+  @import '/node_modules/@fontsource/monoton/index.css';
+  @import '/node_modules/@fontsource/russo-one/index.css';
+  @import '/node_modules/@fontsource/orbitron/700.css';
+  @import '/node_modules/@fontsource/orbitron/900.css';
+  :root { --pink: #ff2e9a; --cyan: #19e6ff; --yellow: #ffe600; --ink: #12052a; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #07020f; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .sky { position: absolute; inset: 0; background: linear-gradient(180deg, #07020f 0%, #1b0638 38%, #5a0f5e 52%, #ff2e9a 58%, #07020f 58.2%); }
+  .sun { position: absolute; left: 50%; width: 420px; height: 420px; margin-left: -210px; border-radius: 50%;
+    background: linear-gradient(180deg, #ffe600 0%, #ff8a3d 45%, #ff2e9a 80%);
+    -webkit-mask: repeating-linear-gradient(180deg, #000 0 26px, transparent 26px 34px); mask: repeating-linear-gradient(180deg, #000 0 26px, transparent 26px 34px);
+    filter: drop-shadow(0 0 40px #ff2e9a); }
+  .floor { position: absolute; left: -50%; right: -50%; top: 58%; height: 900px; transform-origin: 50% 0; transform: perspective(380px) rotateX(72deg);
+    background-image: linear-gradient(var(--cyan) 2px, transparent 2px), linear-gradient(90deg, var(--cyan) 2px, transparent 2px);
+    background-size: 80px 80px; filter: drop-shadow(0 0 6px var(--cyan)); opacity: 0.8; }
+  .floorfade { position: absolute; left: 0; right: 0; top: 58%; height: 42%; background: linear-gradient(180deg, rgba(7,2,15,0.9), transparent 45%); }
+  .stars { position: absolute; inset: 0 0 42% 0; }
+  .star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; }
+  .laser { position: absolute; left: 0; right: 0; height: 4px; top: 360px; background: #fff; box-shadow: 0 0 18px var(--cyan), 0 0 40px var(--cyan); transform-origin: 50% 50%; }
+  .logo { position: absolute; left: 0; right: 0; text-align: center; transform-origin: 50% 50%; }
+  .l1 { font-family: 'Monoton'; font-size: 150px; color: var(--cyan); letter-spacing: 0.06em; line-height: 1;
+    text-shadow: 0 0 10px var(--cyan), 0 0 34px var(--cyan), 0 0 80px #0077ff; }
+  .l2 { font-family: 'Russo One'; font-size: 120px; line-height: 1; color: #fff; letter-spacing: 0.08em;
+    background: linear-gradient(180deg, #fff 0%, #ffd1ef 40%, #ff2e9a 55%, #7a0a52 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(4px 4px 0 var(--ink)) drop-shadow(0 0 24px var(--pink)); }
+  .sub { position: absolute; left: 0; right: 0; text-align: center; font-family: 'Orbitron'; font-weight: 900; font-size: 26px; letter-spacing: 0.5em; color: var(--yellow); text-shadow: 0 0 14px #ff7a1a, 3px 3px 0 var(--ink); }
+  .roster { position: absolute; inset: 0; }
+  .panel { position: absolute; top: -40px; height: 800px; width: 190px; overflow: hidden; transform: skewX(-10deg); border-left: 4px solid #fff; border-right: 4px solid #fff;
+    background: var(--c); box-shadow: 0 0 30px var(--c); }
+  .panel img { position: absolute; bottom: 60px; left: 50%; height: 640px; transform: translateX(-50%) skewX(10deg); }
+  .panel .nm { position: absolute; left: 0; right: 0; bottom: 70px; transform: skewX(10deg); text-align: center; font-family: 'Russo One'; font-size: 20px; color: #fff;
+    text-shadow: 2px 2px 0 var(--ink), 0 0 10px var(--c); background: rgba(10,4,30,0.75); padding: 6px 0; }
+  .big { position: absolute; left: 0; right: 0; top: 50%; text-align: center; font-family: 'Russo One'; font-size: 150px; line-height: 1; color: var(--yellow);
+    text-shadow: 6px 6px 0 var(--pink), 0 0 40px #ff7a1a; letter-spacing: 0.04em; transform-origin: 50% 50%; }
+  .big small { display: block; font-family: 'Orbitron'; font-weight: 900; font-size: 30px; letter-spacing: 0.4em; color: #fff; text-shadow: 0 0 12px var(--cyan), 3px 3px 0 var(--ink); margin-top: 10px; }
+  .dim { position: absolute; inset: 0; background: #07020f; }
+  .flash { position: absolute; inset: 0; background: #fff; }
+  .scan { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 4px); pointer-events: none; }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.6)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="sky"></div>
+  <div class="stars" id="stars"></div>
+  <div class="sun" id="sun" style="top:240px"></div>
+  <div class="floor" id="floor"></div>
+  <div class="floorfade"></div>
+  <div class="logo" id="logo" style="top:120px"><div class="l1">DISC RIOT</div><div class="l2">2084</div></div>
+  <div class="cta" id="cta">PLAY FREE IN YOUR BROWSER</div>
+  <div class="link" id="link">LINK IN THE REPLY &#8595;</div>
+  <div class="credits" id="credits">Music: “DangerZone (Electro Leto ver. 3.0)” by Electron Project, CC BY 3.0 · SFX: Kenney (CC0), Gregor Quendel (CC BY 4.0)</div>
+  <div class="vignette"></div>
+  <div class="scan"></div>
+  <div class="flash" id="flash"></div>
+</div>
+<style>
+  .cta { position: absolute; left: 0; right: 0; top: 478px; text-align: center; font-family: 'Russo One'; font-size: 44px; color: #fff; letter-spacing: 0.06em;
+    text-shadow: 0 0 16px var(--cyan), 4px 4px 0 var(--ink); }
+  .link { position: absolute; left: 50%; top: 552px; transform: translateX(-50%); font-family: 'Orbitron'; font-weight: 900; font-size: 26px; letter-spacing: 0.25em;
+    color: var(--ink); background: var(--yellow); padding: 10px 26px; box-shadow: 0 0 26px #ff7a1a; white-space: nowrap; }
+  .credits { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-family: 'Orbitron'; font-weight: 700; font-size: 12px; color: rgba(255,255,255,0.75); letter-spacing: 0.04em; }
+</style>
+<script>
+const $ = (id) => document.getElementById(id);
+for (let i = 0; i < 90; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.left = `${(i * 137.5) % 1280}px`;
+  s.style.top = `${(i * 71.3) % 410}px`;
+  s.dataset.k = String(i);
+  $('stars').appendChild(s);
+}
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const outExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
+window.DURATION = 5.0;
+window.render = (t) => {
+  $('floor').style.backgroundPosition = `0 ${(t * 160) % 80}px`;
+  document.querySelectorAll('.star').forEach((s) => { s.style.opacity = String(0.3 + 0.7 * Math.abs(Math.sin(t * 2 + Number(s.dataset.k)))); });
+  const k = outExpo(seg(t, 0.0, 0.35));
+  $('logo').style.transform = `scale(${2.2 - 1.2 * k}) translateY(${(1 - k) * 20}px)`;
+  $('logo').style.opacity = String(k);
+  $('cta').style.opacity = String(seg(t, 0.5, 0.8));
+  $('cta').style.transform = `translateY(${(1 - outExpo(seg(t, 0.5, 0.8))) * 30}px)`;
+  const pulse = 1 + 0.05 * Math.sin(t * 7) * seg(t, 1.2, 1.5);
+  $('link').style.opacity = String(seg(t, 0.9, 1.2));
+  $('link').style.transform = `translateX(-50%) scale(${(0.6 + 0.4 * outExpo(seg(t, 0.9, 1.2))) * pulse})`;
+  $('credits').style.opacity = String(seg(t, 1.0, 1.4));
+  $('flash').style.opacity = String(1 - seg(t, 0, 0.25));
+};
+window.render(0);
+</script>
+</body>
+</html>

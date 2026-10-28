@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Promo intro</title>
+<!-- Rendered frame by frame by record.mjs: window.render(t) draws the intro at time t (seconds). Served by
+     `vite` from the repo root so the font and asset paths resolve. Duration: window.DURATION. -->
+<style>
+  @import '/node_modules/@fontsource/monoton/index.css';
+  @import '/node_modules/@fontsource/russo-one/index.css';
+  @import '/node_modules/@fontsource/orbitron/700.css';
+  @import '/node_modules/@fontsource/orbitron/900.css';
+  :root { --pink: #ff2e9a; --cyan: #19e6ff; --yellow: #ffe600; --ink: #12052a; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #07020f; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .sky { position: absolute; inset: 0; background: linear-gradient(180deg, #07020f 0%, #1b0638 38%, #5a0f5e 52%, #ff2e9a 58%, #07020f 58.2%); }
+  .sun { position: absolute; left: 50%; width: 420px; height: 420px; margin-left: -210px; border-radius: 50%;
+    background: linear-gradient(180deg, #ffe600 0%, #ff8a3d 45%, #ff2e9a 80%);
+    -webkit-mask: repeating-linear-gradient(180deg, #000 0 26px, transparent 26px 34px); mask: repeating-linear-gradient(180deg, #000 0 26px, transparent 26px 34px);
+    filter: drop-shadow(0 0 40px #ff2e9a); }
+  .floor { position: absolute; left: -50%; right: -50%; top: 58%; height: 900px; transform-origin: 50% 0; transform: perspective(380px) rotateX(72deg);
+    background-image: linear-gradient(var(--cyan) 2px, transparent 2px), linear-gradient(90deg, var(--cyan) 2px, transparent 2px);
+    background-size: 80px 80px; filter: drop-shadow(0 0 6px var(--cyan)); opacity: 0.8; }
+  .floorfade { position: absolute; left: 0; right: 0; top: 58%; height: 42%; background: linear-gradient(180deg, rgba(7,2,15,0.9), transparent 45%); }
+  .stars { position: absolute; inset: 0 0 42% 0; }
+  .star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; }
+  .laser { position: absolute; left: 0; right: 0; height: 4px; top: 360px; background: #fff; box-shadow: 0 0 18px var(--cyan), 0 0 40px var(--cyan); transform-origin: 50% 50%; }
+  .logo { position: absolute; left: 0; right: 0; text-align: center; transform-origin: 50% 50%; }
+  .l1 { font-family: 'Monoton'; font-size: 150px; color: var(--cyan); letter-spacing: 0.06em; line-height: 1;
+    text-shadow: 0 0 10px var(--cyan), 0 0 34px var(--cyan), 0 0 80px #0077ff; }
+  .l2 { font-family: 'Russo One'; font-size: 120px; line-height: 1; color: #fff; letter-spacing: 0.08em;
+    background: linear-gradient(180deg, #fff 0%, #ffd1ef 40%, #ff2e9a 55%, #7a0a52 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(4px 4px 0 var(--ink)) drop-shadow(0 0 24px var(--pink)); }
+  .sub { position: absolute; left: 0; right: 0; text-align: center; font-family: 'Orbitron'; font-weight: 900; font-size: 26px; letter-spacing: 0.5em; color: var(--yellow); text-shadow: 0 0 14px #ff7a1a, 3px 3px 0 var(--ink); }
+  .roster { position: absolute; inset: 0; }
+  .panel { position: absolute; top: -40px; height: 800px; width: 176px; overflow: hidden; transform: skewX(-10deg); border-left: 4px solid #fff; border-right: 4px solid #fff;
+    background: var(--c); box-shadow: 0 0 30px var(--c); }
+  .panel img { position: absolute; bottom: 60px; left: 50%; height: 640px; transform: translateX(-50%) skewX(10deg); }
+  .panel .nm { position: absolute; left: -16px; right: 0; bottom: 70px; transform: skewX(10deg); text-align: center; font-family: 'Russo One'; font-size: 16px; color: #fff;
+    text-shadow: 2px 2px 0 var(--ink), 0 0 10px var(--c); background: rgba(10,4,30,0.75); padding: 6px 0; white-space: nowrap; }
+  .big { position: absolute; left: 0; right: 0; top: 50%; text-align: center; font-family: 'Russo One'; font-size: 150px; line-height: 1; color: var(--yellow);
+    text-shadow: 6px 6px 0 var(--pink), 0 0 40px #ff7a1a; letter-spacing: 0.04em; transform-origin: 50% 50%; }
+  .big small { display: block; font-family: 'Orbitron'; font-weight: 900; font-size: 30px; letter-spacing: 0.4em; color: #fff; text-shadow: 0 0 12px var(--cyan), 3px 3px 0 var(--ink); margin-top: 10px; }
+  .dim { position: absolute; inset: 0; background: #07020f; }
+  .flash { position: absolute; inset: 0; background: #fff; }
+  .scan { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 4px); pointer-events: none; }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.6)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="sky"></div>
+  <div class="stars" id="stars"></div>
+  <div class="sun" id="sun"></div>
+  <div class="floor" id="floor"></div>
+  <div class="floorfade"></div>
+  <div class="roster" id="roster"></div>
+  <div class="laser" id="laser"></div>
+  <div class="logo" id="logo"><div class="l1">DISC RIOT</div><div class="l2" id="l2">2084</div></div>
+  <div class="sub" id="sub">THE ARCADE DISC BRAWLER</div>
+  <div class="dim" id="dim"></div>
+  <div class="big" id="big"></div>
+  <div class="vignette"></div>
+  <div class="scan"></div>
+  <div class="flash" id="flash"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const FIGHTERS = [
+  ['vega', 'VEGA STARR', '#ff2e9a'], ['kaito', 'KAITO MORI', '#19e6ff'], ['roxy', 'ROXY VOLTAGE', '#2f6bff'], ['brick', 'BRICK DIAMOND', '#ff7a1a'],
+  ['nova', 'NOVA KAIN', '#9b5cff'], ['diesel', 'DIESEL REYES', '#39ff6a'], ['saki', 'SAKI VANCE', '#5effd0'], ['zara', 'ZARA VOLKOV', '#6fd8ff'],
+];
+const roster = $('roster');
+const panels = FIGHTERS.map(([id, name, c], i) => {
+  const p = document.createElement('div');
+  p.className = 'panel';
+  p.style.setProperty('--c', c);
+  p.innerHTML = `<img src="/assets/characters/${id}/portrait.png"><div class="nm">${name}</div>`;
+  roster.appendChild(p);
+  return p;
+});
+for (let i = 0; i < 90; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.left = `${(i * 137.5) % 1280}px`;
+  s.style.top = `${(i * 71.3) % 410}px`;
+  s.dataset.k = String(i);
+  $('stars').appendChild(s);
+}
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a)); // 0..1 progress of t through [a, b]
+const outBack = (x) => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const outExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
+const shakeAt = (t, t0, amt, len = 0.35) => { const k = seg(t, t0, t0 + len); return k <= 0 || k >= 1 ? 0 : amt * (1 - k) * Math.sin(t * 90); };
+
+window.DURATION = 8.0;
+window.render = (t) => {
+  // background: grid scrolls toward the camera, sun rises, stars twinkle
+  $('floor').style.backgroundPosition = `0 ${(t * 160) % 80}px`;
+  const rise = outExpo(seg(t, 0, 1.6));
+  $('sun').style.top = `${470 - rise * 230}px`;
+  document.querySelectorAll('.star').forEach((s) => { s.style.opacity = String(0.3 + 0.7 * Math.abs(Math.sin(t * 2 + Number(s.dataset.k)))); });
+
+  // laser sweep, then the logo slams in with a flash and shake
+  const lz = seg(t, 0.45, 0.8);
+  $('laser').style.transform = `scaleX(${outExpo(lz)})`;
+  $('laser').style.opacity = String(t < 0.45 ? 0 : t < 0.95 ? 1 : clamp(1 - (t - 0.95) / 0.2));
+  const slam = seg(t, 0.85, 1.1);
+  const logoOut = seg(t, 2.25, 2.55); // logo leaves for the roster
+  const sx = shakeAt(t, 1.1, 14) + shakeAt(t, 1.45, 9) + shakeAt(t, 4.9, 10);
+  $('stage').style.transform = `translate(${sx}px, ${sx * 0.6}px)`;
+  const ls = t < 0.85 ? 0 : 3.2 - 2.2 * outExpo(slam);
+  $('logo').style.top = `${170 - logoOut * 60}px`;
+  $('logo').style.opacity = String(t < 0.85 ? 0 : 1 - logoOut);
+  $('logo').style.transform = `scale(${ls * (1 - logoOut * 0.3)})`;
+  const yr = seg(t, 1.3, 1.5);
+  $('l2').style.transform = `translateY(${(1 - outBack(yr)) * -260}px)`;
+  $('l2').style.opacity = String(yr > 0 ? 1 : 0);
+  const subIn = seg(t, 1.6, 2.0);
+  $('sub').style.top = '520px';
+  const txt = 'THE ARCADE DISC BRAWLER';
+  $('sub').textContent = txt.slice(0, Math.round(txt.length * subIn));
+  $('sub').style.opacity = String(1 - logoOut);
+
+  // roster: eight slanted panels whip in, alternating from top and bottom, then hold
+  const W = 158;
+  panels.forEach((p, i) => {
+    const a = 2.45 + i * 0.26;
+    const k = outExpo(seg(t, a, a + 0.32));
+    const from = i % 2 === 0 ? -900 : 900;
+    p.style.left = `${40 + i * W}px`;
+    p.style.transform = `skewX(-10deg) translateY(${(1 - k) * from}px)`;
+    p.style.opacity = String(k > 0 ? 1 : 0);
+    const flash = seg(t, a + 0.05, a + 0.3);
+    p.style.filter = `brightness(${1 + (1 - flash) * (k > 0 ? 1.5 : 0)})`;
+  });
+  const rosterOut = seg(t, 5.15, 5.4);
+  roster.style.opacity = String(1 - rosterOut * 0.75);
+  roster.style.transform = `scale(${1 + rosterOut * 0.08})`;
+
+  // kinetic stats over the dimmed roster
+  $('dim').style.opacity = String(seg(t, 5.15, 5.4) * 0.55);
+  const cards = [[5.35, '8 FIGHTERS', 'PICK YOUR STYLE'], [5.95, '24 SUPERS', 'WAVE · ZIGZAG · METEOR · ORBIT'], [6.55, '4 ARENAS', 'BUMPERS · SPLIT GOALS · NEON']];
+  let html = '', sc = 1, op = 0;
+  for (const [a, big, small] of cards) {
+    if (t >= a && t < a + 0.6) {
+      const k = seg(t, a, a + 0.16);
+      html = `${big}<small>${small}</small>`;
+      sc = 2.4 - 1.4 * outExpo(k);
+      op = k > 0 ? 1 : 0;
+      if (t > a + 0.5) op = 1 - seg(t, a + 0.5, a + 0.6);
+    }
+  }
+  if (t >= 7.15) {
+    const k = seg(t, 7.15, 7.35);
+    html = 'GET READY';
+    sc = 2.6 - 1.6 * outExpo(k);
+    op = 1;
+  }
+  $('big').innerHTML = html;
+  $('big').style.opacity = String(op);
+  $('big').style.transform = `translateY(-50%) scale(${sc})`;
+
+  // white flashes: on the slam, and into the gameplay at the end
+  const f1 = t >= 1.05 && t < 1.35 ? 1 - seg(t, 1.05, 1.35) : 0;
+  const f2 = seg(t, 7.7, 8.0);
+  $('flash').style.opacity = String(Math.max(f1 * 0.9, f2));
+};
+window.render(0);
+</script>
+</body>
+</html>
