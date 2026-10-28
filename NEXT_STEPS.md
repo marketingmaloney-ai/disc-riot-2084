@@ -46,6 +46,16 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Easy CPU made weaker: slower reactions, more aim error, no supersonic shots, rarely dashes.
 - Owner to check on iPhone: does Easy now feel winnable?
 
+## Unlocks + purchases (2026-10-28)
+- Free: Vega, Kaito, Nova, Saki. Locked: Roxy, Brick, Diesel, Zara.
+- **Earn:** beat a locked fighter in VS CPU on HARD. The select screen has a **CHALLENGE** button that sets up that match; the results screen shows "NEW FIGHTER UNLOCKED".
+- **Buy (iOS / Android apps only):** $0.99 each or $2.99 Full Roster (non-consumable).
+  - Code: `src/meta/store.ts` with `@capgo/native-purchases` (no server).
+  - The Unlock Fighters screen has Restore Purchases.
+  - The web build is earn-only.
+- Store setup steps: `RELEASE.md` §4b. Product IDs: `tools/store/LISTING.md`.
+- Dev: `?store=mock` fakes the store in a browser; `?unlockall` unlocks everything; `?quick=1&diff=hard`.
+
 ## Launch on X (2026-10-28)
 - The repo is public, and GitHub Pages deploys every push to main: https://marketingmaloney-ai.github.io/disc-riot-2084/ (owner verified it works).
 - Promo video kit in `tools/store/promo`:
@@ -100,7 +110,7 @@ Owner chose: **both** local and online · **free tier only** · **friend room co
    - (a) local same-device 2P on iPad/phone;
    - (b) **online versus**. The sim is deterministic at 60 Hz, which suits rollback netcode: a small relay/WebRTC server, with Game Center / Play Games matchmaking later.
    - Ask whether online play needs ranked/friends, and whether the owner will pay for a server (about $5–20/month).
-4. **Unlocks + purchases:** profile flags for unlocked fighters, unlock-by-play goals, purchase hooks. Native store integration via RevenueCat or StoreKit/Play Billing in the Capacitor app.
+4. ~~**Unlocks + purchases:**~~ (done 2026-10-28; see below) profile flags for unlocked fighters, unlock-by-play goals, purchase hooks. Native store integration via RevenueCat or StoreKit/Play Billing in the Capacitor app.
    - Because it adds in-app purchases, update `tools/store/LISTING.md` (in-app purchases: yes) and the privacy answers.
 5. **Integrate the new fighters' Flow art** when the owner shares it (same pipeline as Roxy and Brick).
 6. Republish the playable build (https://claude.ai/artifact/AqhyW8e7KXJJEYVT5a2grU), update `PROJECT_MEMORY.md`, commit and push.
