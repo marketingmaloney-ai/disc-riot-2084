@@ -8,6 +8,10 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: #07020f; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* touch-action isn't inherited: without this every element inside (canvas, joystick zone, buttons) kept Safari's
+   double-tap-to-zoom, and tapping A fast to power up zoomed the page in. :where() keeps it overridable. */
+:where(#app, #app *) { touch-action: manipulation; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+:where(#stage, #stage *, .touch-ui, .touch-ui *) { touch-action: none; }
 body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 #app { position: fixed; inset: 0; }
 #stage { position: absolute; inset: 0; }
