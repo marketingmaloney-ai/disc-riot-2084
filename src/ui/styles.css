@@ -441,38 +441,3 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
   .cs-go .btn { padding: 5px 16px; min-width: 180px; }
 }
 .cs-car img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
-
-/* ---------- locked fighters / unlocks ---------- */
-.card.locked img { filter: grayscale(0.85) brightness(0.55); }
-.card .lock { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%) skewX(-10deg); font-family: 'Russo One'; font-size: clamp(14px, 2.4vw, 30px);
-  letter-spacing: 0.15em; color: #fff; background: rgba(10, 4, 30, 0.85); border: 2px solid var(--yellow); padding: 4px 14px; box-shadow: 0 0 16px rgba(255, 230, 0, 0.5); }
-.card .lock::before { content: '🔒 '; }
-.card.shake { animation: lockShake 0.35s; }
-@keyframes lockShake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-.cs-lock { border: 2px solid var(--yellow); background: rgba(10, 4, 30, 0.8); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
-  font-family: 'Orbitron'; font-weight: 700; font-size: clamp(9px, 1.1vw, 14px); letter-spacing: 0.06em; }
-.cs-lock-h { font-family: 'Russo One'; color: var(--yellow); font-size: 1.3em; letter-spacing: 0.2em; }
-.cs-lock b { color: var(--pink); }
-.cs-lock-btns { display: flex; flex-wrap: wrap; gap: 6px; }
-.mini { pointer-events: auto; font-family: 'Orbitron'; font-weight: 900; font-size: clamp(9px, 1.1vw, 13px); letter-spacing: 0.06em; color: #fff; cursor: pointer;
-  background: rgba(25, 230, 255, 0.15); border: 2px solid var(--cyan); padding: 6px 10px; transform: skewX(-10deg); }
-.mini.hot { background: linear-gradient(90deg, var(--pink), #b0247a); border-color: #fff; }
-.mini:active { transform: skewX(-10deg) scale(0.94); }
-.cs-web { font-size: 0.85em; opacity: 0.75; }
-.cs-go .btn.off { opacity: 0.5; filter: grayscale(0.7); }
-.vic-unlock { display: flex; flex-direction: column; align-items: center; padding: 6px 18px; background: linear-gradient(90deg, rgba(255,230,0,0.15), rgba(255,46,154,0.35), rgba(255,230,0,0.15));
-  border: 2px solid var(--yellow); box-shadow: 0 0 24px rgba(255, 230, 0, 0.45); animation: achPop 0.5s cubic-bezier(.2,1.4,.4,1) 0.5s both; }
-.vic-unlock span { font-family: 'Orbitron'; font-weight: 900; font-size: clamp(10px, 1.2vw, 15px); letter-spacing: 0.3em; color: var(--yellow); }
-.vic-unlock b { font-family: 'Russo One'; font-size: clamp(18px, 2.6vw, 34px); color: #fff; text-shadow: 0 0 14px var(--pink), 3px 3px 0 var(--ink); }
-.vic-unlock.miss { border-color: rgba(255,255,255,0.4); box-shadow: none; background: rgba(10, 4, 30, 0.7); }
-.vic-unlock.miss b { font-size: clamp(12px, 1.5vw, 18px); }
-.shop-row { display: flex; gap: 2vw; justify-content: center; }
-.shop-card { width: clamp(90px, 15vw, 200px); cursor: pointer; border-color: var(--cc); }
-.shop-card .nm i { display: block; font-style: normal; font-size: 0.75em; color: var(--yellow); letter-spacing: 0.05em; }
-.shop-card .nm i.ok { color: #6dff9b; }
-.shop-note { font-family: 'Orbitron'; font-weight: 700; font-size: clamp(10px, 1.2vw, 14px); letter-spacing: 0.1em; text-align: center; max-width: 90vw; }
-@media (max-height: 520px) {
-  .shop-card { width: 21vh; }
-  .cs-lock { padding: 4px 8px; gap: 3px; font-size: 9px; }
-  .mini { padding: 3px 8px; font-size: 9px; }
-}

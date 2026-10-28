@@ -50,24 +50,6 @@ Open it, choose **Share → Anyone with the link**, and use that link as both th
    - Review usually takes 1–3 days.
    - Test on your own iPhone first through **TestFlight**: same upload, no review needed for internal testers.
 
-## 4b. In-app purchases (fighter unlocks)
-The app sells 5 **non-consumable** products; IDs and prices are in `tools/store/LISTING.md`. The code is in `src/meta/store.ts` (plugin `@capgo/native-purchases`: StoreKit 2 / Play Billing on the device, no server).
-
-**iOS (App Store Connect):**
-1. Business → **Agreements, Tax, and Banking**: accept the *Paid Apps* agreement and add bank + tax info. Purchases don't work, even in TestFlight, until this is active.
-2. Xcode → App target → *Signing & Capabilities* → **+ Capability → In-App Purchase**.
-3. App Store Connect → your app → **Monetization → In-App Purchases → +** → type **Non-Consumable**. Create all 5 with the exact product IDs, price, display name, description, and a review screenshot (any screenshot of the locked fighter screen).
-4. Submit the in-app purchases **with the first app version** (select them on the version page under *In-App Purchases*).
-5. Test in TestFlight: purchases are free there with a Sandbox account (Users and Access → Sandbox Testers).
-
-**Android (Play Console):**
-1. Set up a **payments profile** (merchant account) under Settings → Payments profile.
-2. Upload a build with the plugin first (Play only offers products once the app has billing in a build).
-3. **Monetize → Products → In-app products → Create product** for each of the 5 IDs, price, then **Activate**.
-4. Add your testers as **License testers** (Settings → License testing) so test purchases aren't charged.
-
-**Restore Purchases** is on the *Unlock Fighters* screen (Apple requires it). Prices shown in the game come from the store, localised; `$0.99` / `$2.99` are only the fallback while offline.
-
 ## 5. Android: Google Play
 1. `npm run app:android` opens Android Studio. Let Gradle finish syncing.
 2. **Build → Generate Signed App Bundle / APK → Android App Bundle**.

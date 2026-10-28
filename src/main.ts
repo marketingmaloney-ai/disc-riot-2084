@@ -13,10 +13,6 @@ import { GameRenderer } from './render/scene';
 import { ARENAS } from './render/arena';
 import { frameDataURL, loadCharacterArt, uiImageURL } from './render/characterArt';
 import { winQuote } from './ui/victory';
-import {
-  buy, earnUnlock, fighterProduct, initStore, isLockedFighter, isUnlocked, LOCKED_FIGHTERS, priceOf, restorePurchases,
-  ROSTER_PRODUCT, storeAvailable, unlockedBy, allUnlocked,
-} from './meta/store';
 import { CpuPlayer, DIFFICULTIES } from './ai/cpu';
 import {
   connectedPads, endTick, GamepadSource, KeyboardSource, MenuInput, MergedSource,
@@ -75,7 +71,6 @@ let remotePick: string | null = null;
 let waitingToGo = false; // host: arena chosen, waiting for the opponent's fighter
 let votes = { me: false, them: false }; // rematch
 let resultsShown = false;
-let challenge: string | null = null; // VS CPU: the locked fighter to beat on HARD (picked from the select screen)
 const hype = new Hype();
 let timeScale = 1; // < 1 during a slow-motion finish
 let slowUntil = 0;
@@ -351,14 +346,12 @@ async function refreshArtBadge(el: HTMLElement) {
 }
 
 function modeScreen() {
-  challenge = null;
   const s = show(`<div class="title-h">SELECT MODE</div>`);
   menu(s, [
     { label: 'VS CPU', action: () => { mode = '1p'; difficultyScreen(); } },
     { label: '2 PLAYER VERSUS', action: () => { mode = '2p'; shareScreen = false; if (touch) twoPlayerScreen(); else void charSelect(); } },
     { label: 'ONLINE VERSUS', action: () => onlineScreen() },
     { label: 'FIGHTER UPGRADES', action: () => openUpgrades(modeScreen) },
-    { label: allUnlocked() ? 'FIGHTERS · ALL UNLOCKED' : 'UNLOCK FIGHTERS', action: () => void unlockScreen() },
     { label: 'HOW TO PLAY', action: () => howTo() },
     { label: 'CREDITS', action: () => void creditsScreen() },
   ], titleScreen);
@@ -471,7 +464,7 @@ async function cardVisual(id: string): Promise<string> {
   return `<img src="${frameDataURL(art, 'idle')}" alt="">`;
 }
 
-async function charSelect(startId?: string) {
+async function charSelect() {
   audio.play('choose');
   // Carousel: one fighter at a time, big in the middle with their stats; arrows / swipe / ←→ to browse,
   // faded neighbours peek in at the edges so it's clear there are more.
@@ -496,80 +489,40 @@ async function charSelect(startId?: string) {
   const dots = s.querySelector('.cs-dots') as HTMLElement;
   const goBtn = s.querySelector('.cs-go .btn') as HTMLElement;
   dots.innerHTML = CHARACTERS.map(() => '<i></i>').join('');
-  const start = startId ? Math.max(0, CHARACTERS.findIndex((c) => c.id === startId)) : 0;
-  let cursor = [start, start === 1 ? 0 : 1];
+  let cursor = [0, 1];
   let who = 0; // which player is picking
   const title = s.querySelector('[data-t]')!;
   const paint = (dir = 0) => {
-    title.textContent = who === 0
-      ? (challenge ? `CHALLENGE ${charById(challenge).name.split(' ')[0]} · PICK YOUR FIGHTER` : mode === '2p' ? 'PLAYER 1 · SELECT' : 'SELECT YOUR FIGHTER')
-      : 'PLAYER 2 · SELECT';
+    title.textContent = who === 0 ? (mode === '2p' ? 'PLAYER 1 · SELECT' : 'SELECT YOUR FIGHTER') : 'PLAYER 2 · SELECT';
     const i = cursor[who];
     const ch = CHARACTERS[i];
-    const locked = !isUnlocked(ch.id);
     const cp = charProfile(ch.id);
     const badge = mode === '1p' ? `<div class="lvl">LV ${totalLevel(cp)}${freePoints(cp) > 0 ? ` <b>+${freePoints(cp)}</b>` : ''}</div>` : '';
     const tag = mode === '2p' ? `<div class="tag ${who ? 't2' : 't1'}">${who ? '2P' : '1P'}</div>` : '';
-    main.innerHTML = `<div class="card ${who ? 'p2' : 'p1'} ${locked ? 'locked' : ''} ${dir ? (dir > 0 ? 'in-r' : 'in-l') : ''}" style="--cc:${ch.colors.primary}">${visuals[i]}${locked ? '' : badge}${tag}${locked ? '<div class="lock">LOCKED</div>' : ''}</div>`;
+    main.innerHTML = `<div class="card ${who ? 'p2' : 'p1'} ${dir ? (dir > 0 ? 'in-r' : 'in-l') : ''}" style="--cc:${ch.colors.primary}">${visuals[i]}${badge}${tag}</div>`;
     peekL.innerHTML = visuals[(i + n - 1) % n];
     peekR.innerHTML = visuals[(i + 1) % n];
-    goBtn.textContent = locked ? 'LOCKED' : 'SELECT';
-    goBtn.classList.toggle('off', locked);
     // base bar + bonus segment from upgrades (VS CPU only)
     const lv = mode === '1p' && who === 0 ? cp.levels : { speed: 0, power: 0, technique: 0, reflex: 0 };
     const w = (v: number, lo: number, hi: number) => Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20));
     const bar = (v: number, lo: number, hi: number, bonus: number) =>
       `<div class="bar"><i style="width:${w(v, lo, hi)}%"></i>${bonus > 0 ? `<em style="width:${w(v * (1 + bonus), lo, hi) - w(v, lo, hi)}%"></em>` : ''}</div>`;
     panel.innerHTML = `<div class="cs-name ${who ? 'p2c' : 'p1c'}">${ch.name}</div>
-      ${locked ? '' : `<div class="cs-nation">${ch.nation} · ${ch.tagline.toUpperCase()}</div>`}
+      <div class="cs-nation">${ch.nation} · ${ch.tagline.toUpperCase()}</div>
       <div class="stats"><span>SPEED</span>${bar(ch.speed, 6, 8.6, SC.ATTR_SPEED * lv.speed)}<span>POWER</span>${bar(ch.power, 20, 26, SC.ATTR_POWER * lv.power)}<span>TECHNIQUE</span>${bar(ch.curve, 0.6, 1.6, SC.ATTR_TECH_CURVE * lv.technique)}<span>REFLEX</span>${bar(ch.reach ?? 1, 0.8, 1.3, SC.ATTR_REFLEX_REACH * lv.reflex)}</div>
-      ${locked ? lockBox(ch.id) : `<div class="cs-supers">${superNames(ch).map((nm, k) => `<div><kbd>${['A', '↑↓+A', 'B'][k]}</kbd><b>${nm}</b></div>`).join('')}</div>`}`;
+      <div class="cs-supers">${superNames(ch).map((nm, k) => `<div><kbd>${['A', '↑↓+A', 'B'][k]}</kbd><b>${nm}</b></div>`).join('')}</div>`;
     panel.classList.remove('in'); void panel.offsetWidth; panel.classList.add('in');
     dots.querySelectorAll('i').forEach((d, k) => d.classList.toggle('on', k === i));
   };
-  // Locked fighter: how to unlock, a one-tap challenge (VS CPU) and, in the apps, the purchase buttons
-  const lockBox = (id: string) => {
-    const nm = charById(id).name.split(' ')[0];
-    const canChallenge = mode === '1p' && who === 0;
-    return `<div class="cs-lock"><div class="cs-lock-h">LOCKED</div><div>BEAT ${nm} ON <b>HARD</b> IN VS CPU TO UNLOCK</div>
-      <div class="cs-lock-btns">
-        ${canChallenge ? `<button class="mini hot" data-act="challenge">CHALLENGE ${nm}</button>` : ''}
-        ${storeAvailable() ? `<button class="mini" data-act="buy">UNLOCK · ${priceOf(fighterProduct(id))}</button><button class="mini" data-act="roster">ALL 4 · ${priceOf(ROSTER_PRODUCT)}</button>` : ''}
-      </div>${storeAvailable() ? '' : '<div class="cs-web">OR UNLOCK INSTANTLY IN THE IPHONE / ANDROID APP</div>'}</div>`;
-  };
-  panel.addEventListener('click', (e) => {
-    const act = (e.target as HTMLElement).closest('button')?.dataset.act;
-    const id = CHARACTERS[cursor[who]].id;
-    if (act === 'challenge') {
-      audio.play('confirm');
-      challenge = id;
-      difficulty = 'hard';
-      cursor[0] = CHARACTERS.findIndex((c) => isUnlocked(c.id)); // now pick who to fight with
-      paint();
-    } else if (act === 'buy' || act === 'roster') {
-      void (async () => {
-        const r = await buy(act === 'roster' ? ROSTER_PRODUCT : fighterProduct(id));
-        if (r === 'bought') { audio.play('super'); paint(); }
-        else if (r === 'error') panel.querySelector('.cs-lock-btns')?.insertAdjacentHTML('afterend', '<div class="cs-web">THE STORE ISN\'T REACHABLE RIGHT NOW. TRY AGAIN LATER.</div>');
-      })();
-    }
-  });
   const move = (d: number) => { cursor[who] = (cursor[who] + d + n) % n; audio.play('menu'); paint(d); };
   const confirm = () => {
-    if (!isUnlocked(CHARACTERS[cursor[who]].id)) {
-      audio.play('back');
-      main.querySelector('.card')?.classList.add('shake');
-      window.setTimeout(() => main.querySelector('.card')?.classList.remove('shake'), 400);
-      return;
-    }
     audio.play('confirm');
     if (mode === 'online') { onlinePicked(CHARACTERS[cursor[0]].id); return; }
     if (who === 0 && mode === '2p') { picks[0] = CHARACTERS[cursor[0]].id; who = 1; paint(); return; }
     if (who === 0) {
       picks[0] = CHARACTERS[cursor[0]].id;
       const others = CHARACTERS.filter((c) => c.id !== picks[0]);
-      picks[1] = challenge && challenge !== picks[0] ? challenge : others[Math.floor(Math.random() * others.length)].id;
-      if (challenge) difficulty = 'hard';
+      picks[1] = others[Math.floor(Math.random() * others.length)].id;
     } else picks[1] = CHARACTERS[cursor[1]].id;
     arenaSelect();
   };
@@ -590,7 +543,7 @@ async function charSelect(startId?: string) {
     else if (tapOk && Math.abs(dx) < 10 && Math.abs(dy) < 10 && main.contains(target as Node)) confirm();
   };
   car.addEventListener('pointerdown', (e) => {
-    if ((e.target as HTMLElement).closest('.cs-arrow, .cs-peek, button')) return; // those have their own clicks
+    if ((e.target as HTMLElement).closest('.cs-arrow, .cs-peek')) return; // those have their own clicks
     down = true; sx = lx = e.clientX; sy = ly = e.clientY;
   });
   car.addEventListener('pointermove', (e) => { if (down) { lx = e.clientX; ly = e.clientY; } });
@@ -598,9 +551,7 @@ async function charSelect(startId?: string) {
   // the browser may take over a drag (scroll / image drag): still count the swipe it had made so far
   car.addEventListener('pointercancel', () => finish(null, false));
   paint();
-  const goBack = () => {
-    if (who === 1) { who = 0; paint(); } else if (challenge) { challenge = null; paint(); } else if (mode === 'online') leaveOnline(); else modeScreen();
-  };
+  const goBack = () => { if (who === 1) { who = 0; paint(); } else if (mode === 'online') leaveOnline(); else modeScreen(); };
   setBack(goBack);
   onMenuInput = (e) => {
     if (e.l) move(-1);
@@ -608,37 +559,6 @@ async function charSelect(startId?: string) {
     if (e.ok) confirm();
     if (e.back) goBack();
   };
-}
-
-// ---------------------------------------------------------------- unlock fighters
-async function unlockScreen() {
-  const visuals = await Promise.all(LOCKED_FIGHTERS.map((id) => cardVisual(id)));
-  const status = (id: string) => {
-    const by = unlockedBy(id);
-    return by ? `<i class="ok">✓ ${by === 'bought' ? 'OWNED' : 'UNLOCKED'}</i>` : `<i>BEAT ON HARD${storeAvailable() ? ` · ${priceOf(fighterProduct(id))}` : ''}</i>`;
-  };
-  const s = show(`<div class="title-h">UNLOCK FIGHTERS</div>
-    <div class="shop-row">${LOCKED_FIGHTERS.map((id, k) => `<div class="card shop-card ${isUnlocked(id) ? '' : 'locked'}" data-id="${id}" style="--cc:${charById(id).colors.primary}">${visuals[k]}<div class="nm">${charById(id).name.split(' ')[0]}${status(id)}</div></div>`).join('')}</div>
-    <div class="shop-note">${allUnlocked() ? 'ALL 8 FIGHTERS UNLOCKED. THANK YOU!' : `TAP A FIGHTER TO CHALLENGE THEM ON HARD${storeAvailable() ? ' OR BUY THEM' : ' · INSTANT UNLOCKS IN THE IPHONE / ANDROID APP'}`}</div>`);
-  s.querySelectorAll('.shop-card').forEach((c) => c.addEventListener('click', () => {
-    audio.play('confirm');
-    mode = '1p';
-    void charSelect((c as HTMLElement).dataset.id);
-  }));
-  const items: { label: string; action: () => void }[] = [];
-  if (storeAvailable() && !allUnlocked()) {
-    items.push({ label: `FULL ROSTER · ALL 4 · ${priceOf(ROSTER_PRODUCT)}`, action: () => void buy(ROSTER_PRODUCT).then((r) => { if (r === 'bought') audio.play('super'); void unlockScreen(); }) });
-  }
-  if (storeAvailable()) {
-    items.push({ label: 'RESTORE PURCHASES', action: () => void restorePurchases().then((r) => {
-      void unlockScreen().then(() => {
-        const msg = r === 'error' ? "COULDN'T REACH THE STORE. TRY AGAIN LATER." : r === 0 ? 'NOTHING TO RESTORE ON THIS ACCOUNT.' : typeof r === 'number' ? `RESTORED ${r} FIGHTER${r > 1 ? 'S' : ''}.` : '';
-        if (msg) screens.querySelector('.shop-note')!.textContent = msg;
-      });
-    }) });
-  }
-  items.push({ label: 'BACK', action: modeScreen });
-  menu(s, items, modeScreen);
 }
 
 // ---------------------------------------------------------------- online versus
@@ -848,15 +768,6 @@ function showResults() {
   const w = charById(game.players[wi].charId);
   const me = mode === 'online' && link ? link.idx : mode === '1p' ? 0 : -1;
   const headline = me < 0 ? `PLAYER ${wi + 1} WINS` : wi === me ? 'YOU WIN!' : 'YOU LOSE';
-  // VS CPU on HARD: beating a locked fighter unlocks them
-  const foe = picks[1];
-  const earned = mode === '1p' && wi === 0 && difficulty === 'hard' && isLockedFighter(foe) && earnUnlock(foe);
-  const unlockHtml = earned
-    ? `<div class="vic-unlock"><span>NEW FIGHTER UNLOCKED</span><b>${charById(foe).name}</b></div>`
-    : mode === '1p' && wi !== 0 && challenge && !isUnlocked(challenge)
-      ? `<div class="vic-unlock miss"><span>SO CLOSE</span><b>BEAT ${charById(challenge).name.split(' ')[0]} ON HARD TO UNLOCK</b></div>`
-      : '';
-  if (earned) { audio.play('super'); challenge = null; }
   const st = hype.stats;
   const shortName = (p: number) => charById(game.players[p].charId).name.split(' ')[0];
   const stats = [
@@ -878,7 +789,6 @@ function showResults() {
         <div class="winner">${w.name}</div>
         <div class="vic-quote">“${winQuote(w.id)}”</div>
         <div class="vic-sets">SETS ${game.sets[0]} - ${game.sets[1]}</div>
-        ${unlockHtml}
         <div class="vic-stats">${stats}</div>
         ${ach}
       </div>
@@ -933,7 +843,6 @@ for (const ev of ['keydown', 'pointerdown', 'touchend'] as const) window.addEven
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) Object.assign(window, { __game: () => game, __net: () => session });
 if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, showResults, hype, arenas: ARENAS, hud, audio } });
-void initStore(); // apps only: real prices + re-sync owned fighters
 await startDemo();
 requestAnimationFrame(frame);
 if (params.get('room')) {
@@ -949,7 +858,6 @@ if (params.get('room')) {
   picks = [params.get('p1') ?? 'vega', params.get('p2') ?? 'roxy'];
   arenaIdx = Number(params.get('arena') ?? 0);
   mode = params.get('share') ? '2p' : '1p'; // &share=1: shared-screen 2P (touch devices)
-  if (params.get('diff') === 'hard' || params.get('diff') === 'easy') difficulty = params.get('diff') as 'hard' | 'easy';
   shareScreen = mode === '2p';
   beginVersus();
 } else titleScreen();

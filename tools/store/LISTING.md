@@ -4,19 +4,7 @@ Copy and paste into App Store Connect / Google Play Console. Character limits ar
 Graphics are in `tools/store/out/` (regenerate with `node tools/store/render.mjs` and `node tools/store/render_shots.mjs`).
 
 ## Shared facts
-- **Price:** Free download. **In-app purchases: yes** (optional fighter unlocks, see below). No ads, no accounts.
-- **In-app purchases** (non-consumable, all also unlockable for free by playing):
-
-  | Product ID | Name | Price |
-  |---|---|---|
-  | `com.maloneymarketing.discriot2084.fighter_roxy` | Roxy Voltage | $0.99 (Tier 1) |
-  | `com.maloneymarketing.discriot2084.fighter_brick` | Brick Diamond | $0.99 |
-  | `com.maloneymarketing.discriot2084.fighter_diesel` | Diesel Reyes | $0.99 |
-  | `com.maloneymarketing.discriot2084.fighter_zara` | Zara Volkov | $0.99 |
-  | `com.maloneymarketing.discriot2084.full_roster` | Full Roster (all 4) | $2.99 |
-
-  Description for each: "Unlock <name> instantly. You can also unlock them for free by beating them on Hard." Full Roster: "Unlock Roxy, Brick, Diesel and Zara instantly."
-
+- **Price:** Free. No ads, no in-app purchases, no accounts.
 - **App ID / bundle ID / package name:** `com.maloneymarketing.discriot2084` (permanent once uploaded)
 - **Orientation:** landscape only. **Devices:** iPhone (not iPad), Android phones.
 - **Data:** none collected. Upgrade progress is stored only on the device.
@@ -63,8 +51,7 @@ Unlock achievements against the CPU to earn upgrade points for Speed, Power, Tec
 PLAY YOUR WAY
 • VS CPU at Easy, Normal or Hard
 • 2-player versus with game controllers
-• 8 fighters: 4 free from the start, 4 more to unlock by beating them on Hard, or instantly with an optional purchase
-• Fully offline. No ads, no account.
+• Fully offline. No ads, no in-app purchases, no account.
 
 Music by SEVEN SPACE, The Dog Above, Electron Project, OptiKill and zero-project (CC BY 3.0). Sound effects by Kenney (CC0) and Gregor Quendel (CC BY 4.0). Full credits in the game.
 ```
@@ -88,7 +75,7 @@ Music by SEVEN SPACE, The Dog Above, Electron Project, OptiKill and zero-project
 | User-generated content, chat, messaging | No |
 
 ### App Privacy
-**Data Not Collected.** No tracking, no analytics or ad SDKs. Purchases go through Apple / Google directly; the app keeps only an on-device list of unlocked fighters, which isn't "collected" (it never leaves the device).
+**Data Not Collected.** No tracking, no third-party SDKs.
 
 ### Export compliance
 Already answered in the app (`ITSAppUsesNonExemptEncryption = NO`): the app uses no encryption beyond the operating system's.
