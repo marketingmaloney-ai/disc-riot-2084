@@ -3,9 +3,10 @@
  * messages between the two players in a room; the match itself runs on both phones (rollback.ts).
  */
 
-/** Where the relay lives: VITE_NET_URL at build time, `?net=` to override, or a local `wrangler dev`. */
+/** Where the relay lives: VITE_NET_URL at build time, or a local `wrangler dev`. The `?net=` override
+ *  works in dev builds only: in a public build a link could otherwise point the game at anyone's server. */
 export function relayUrl(): string {
-  const q = new URLSearchParams(location.search).get('net');
+  const q = import.meta.env.DEV ? new URLSearchParams(location.search).get('net') : null;
   if (q) return q;
   const env = import.meta.env.VITE_NET_URL as string | undefined;
   if (env) return env;

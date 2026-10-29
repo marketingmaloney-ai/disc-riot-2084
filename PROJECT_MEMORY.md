@@ -143,6 +143,7 @@ Companion docs in this repo: `CHECKLIST.md` (task status and resume protocol), `
 - Deploy steps are in `server/README.md`; the game reads the relay URL from `VITE_NET_URL`.
 
 ## 9. Gotchas learned
+- **Security (audit 2026-10-29):** the repo and the GitHub Pages build are public. Treat everything from the network as untrusted: fighter ids from the other player went into HTML (portrait `<img src>`, and `../` in an id still reached a real file), so `onNetMessage` now accepts only roster ids and in-range arena numbers. `?net=` works in dev builds only. Controller names are HTML-escaped. History scanned: no secrets in any commit. The relay (`server/`) forwards opaque strings ≤16 KB between two seats and stores nothing.
 - Flow often draws a character twice. Use `process.py split`, or `"figure"` in `approved.json`.
 - Flow's mobile version produces portrait images. Courts get rotated automatically; backdrops must be landscape.
 - Audio sources: Openverse API needs a User-Agent header and allows only 20 results per page anonymously. Jamendo, kenney.nl and opengameart.org downloads work from the cloud; Freesound (403) and Wikimedia (429) don't. The owner asked to use Agent-Reach to get past those blocks; Claude declined to route around site blocks via proxies and used CC0 packs instead. Only CC0 / CC BY assets are used, and every one is credited in `CREDITS.md` and the in-game CREDITS screen.

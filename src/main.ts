@@ -404,7 +404,9 @@ function controllerScreen() {
     lastN = n;
     inner(performance.now() < lock ? { ...e, ok: false } : e);
   };
-  const padName = (p: Gamepad) => (p.id.replace(/\s*\(.*$/, '').trim() || 'CONTROLLER').toUpperCase().slice(0, 34);
+  // A controller reports its own name, so it's escaped before going into HTML.
+  const padName = (p: Gamepad) => (p.id.replace(/\s*\(.*$/, '').trim() || 'CONTROLLER').toUpperCase().slice(0, 34)
+    .replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
   let seenN = connectedPads().length, lastHtml = '';
   const paint = () => {
     const all = navigator.getGamepads?.() ?? [];
@@ -698,17 +700,26 @@ async function connectRoom(code: string, creating: boolean) {
     : `<div class="sub blink">WAITING FOR THE OTHER PLAYER…</div>`;
 }
 
+/** A fighter id from the network, or null unless it's one of ours. */
+const fighterId = (v: unknown): string | null => (typeof v === 'string' && CHARACTERS.some((c) => c.id === v) ? v : null);
+
 function onNetMessage(m: Msg) {
   if (m.t === 'in' || m.t === 'sync') {
     if (m.g !== matchGen) return;
     if (session) session.receive(m as NetMsg);
     else netBuffer.push(m as NetMsg);
   } else if (m.t === 'pick') {
-    remotePick = String(m.c);
+    // Everything from the other player is untrusted: fighter ids reach HTML (portrait URLs), so only
+    // ids from the roster are accepted.
+    const c = fighterId(m.c);
+    if (!c) return;
+    remotePick = c;
     if (waitingToGo) arenaChosen();
   } else if (m.t === 'go' && link?.idx === 1) {
-    picks = [String(m.p1), String(m.p2)];
-    arenaIdx = Number(m.arena) % ARENAS.length;
+    const p1 = fighterId(m.p1), p2 = fighterId(m.p2), arena = Number(m.arena);
+    if (!p1 || !p2 || !Number.isInteger(arena) || arena < 0 || arena >= ARENAS.length) return;
+    picks = [p1, p2];
+    arenaIdx = arena;
     startOnline();
   } else if (m.t === 'again') {
     votes.them = true;
