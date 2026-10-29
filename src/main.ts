@@ -292,6 +292,34 @@ function setBack(fn: (() => void) | null) {
   backBtn.classList.toggle('hidden', !fn);
 }
 
+// Always-available exit button back to the 3D Bargain Hunt store
+const DEFAULT_STORE_URL = 'https://bf365-store-3d.pages.dev/?resume=1';
+function getStoreReturnUrl(): string {
+  try {
+    const raw = new URLSearchParams(location.search).get('return');
+    if (raw) {
+      const u = new URL(raw);
+      if (u.protocol === 'https:' || u.protocol === 'http:') return u.href;
+    }
+  } catch {
+    // ignore malformed return param
+  }
+  return DEFAULT_STORE_URL;
+}
+function returnToStore() {
+  audio.play('back');
+  location.href = getStoreReturnUrl();
+}
+const storeBtn = document.createElement('a');
+storeBtn.className = 'store-btn';
+storeBtn.href = getStoreReturnUrl();
+storeBtn.textContent = '← 3D STORE';
+storeBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  returnToStore();
+});
+document.getElementById('app')!.appendChild(storeBtn);
+
 function openUpgrades(back: () => void, startChar?: string) {
   upgradeScreen(show, clearScreens, (h) => (onMenuInput = h), cardVisual, back, startChar);
   setBack(back);
@@ -362,6 +390,7 @@ function modeScreen() {
     { label: allUnlocked() ? 'FIGHTERS · ALL UNLOCKED' : 'UNLOCK FIGHTERS', action: () => void unlockScreen() },
     { label: 'HOW TO PLAY', action: () => howTo() },
     { label: 'CREDITS', action: () => void creditsScreen() },
+    { label: '← BACK TO 3D STORE', action: () => returnToStore() },
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
 }
@@ -843,6 +872,7 @@ function togglePause() {
     menu(s, [
       { label: 'KEEP PLAYING', action: () => clearScreens() },
       { label: 'QUIT MATCH', action: () => leaveOnline() },
+      { label: '← BACK TO 3D STORE', action: () => returnToStore() },
     ], () => clearScreens());
     return;
   }
@@ -852,6 +882,7 @@ function togglePause() {
     menu(s, [
       { label: 'RESUME', action: () => { paused = false; clearScreens(); } },
       { label: 'QUIT TO TITLE', action: () => { paused = false; void startDemo(); titleScreen(); } },
+      { label: '← BACK TO 3D STORE', action: () => returnToStore() },
     ], () => { paused = false; clearScreens(); });
   } else clearScreens();
 }
@@ -913,6 +944,7 @@ function showResults() {
     { label: 'REMATCH', action: () => beginVersus() },
     { label: 'CHARACTER SELECT', action: () => { audio.startTitleMusic(); void startDemo(); charSelect(); } },
     { label: 'TITLE', action: () => { void startDemo(); titleScreen(); } },
+    { label: '← 3D STORE', action: () => returnToStore() },
   ]);
 }
 

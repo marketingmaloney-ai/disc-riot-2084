@@ -256,6 +256,19 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 }
 /* Over a live match (pause menu) the HUD's player name sits where BACK goes: drop BACK below the name block. */
 #hud:not(.hidden) ~ .back-btn { top: calc(max(10px, env(safe-area-inset-top)) + 15vh); }
+
+.store-btn {
+  position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); z-index: 60;
+  pointer-events: auto; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 11px; letter-spacing: 0.08em;
+  color: #111; background: var(--yellow); border: 2px solid #fff; padding: 6px 11px; transform: skewX(-10deg);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.6); text-decoration: none; cursor: pointer;
+}
+.store-btn:hover, .store-btn:active { background: #fff; color: #111; }
+/* During a live match, move next to the bottom-center pause button so Player 2's top-right score is unobstructed */
+#hud:not(.hidden) ~ .store-btn {
+  top: auto; right: auto; bottom: 8px; left: calc(50% + 26px);
+  font-size: 10px; padding: 5px 9px;
+}
 .controls-help { max-width: min(1000px, 92vw); }
 .controls-help span { overflow-wrap: anywhere; }
 @media (max-height: 520px) {
