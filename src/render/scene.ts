@@ -28,6 +28,10 @@ class PlayerView {
     this.tex = art.texture.clone();
     this.tex.needsUpdate = true;
     this.tex.magFilter = THREE.LinearFilter;
+    // No mipmaps: their shrunken levels blend each frame with its neighbours in the packed atlas, which drew a
+    // faint box around fighters on phones. Sprites are shown near full size, so plain linear filtering is enough.
+    this.tex.generateMipmaps = false;
+    this.tex.minFilter = THREE.LinearFilter;
     // highp: iPhones default fragment shaders to mediump, too coarse for uv maths on a 4k atlas
     const mat = new THREE.SpriteMaterial({ map: this.tex, transparent: true, alphaTest: 0.05, precision: 'highp' });
     // A sprite is a camera-facing quad: it leans back with the view, so a disc behind the fighter but up at
