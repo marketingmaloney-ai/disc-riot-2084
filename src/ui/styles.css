@@ -85,7 +85,7 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .card .tag.t2 { right: 10%; background: var(--cyan); color: var(--ink); }
 .card.locked::after { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.12); }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: clamp(9px, 1.1vw, 14px); min-width: min(360px, 60vw); }
-.bar { height: 10px; background: rgba(255, 255, 255, 0.12); transform: skewX(-20deg); align-self: center; }
+.bar { height: 10px; background: rgba(255, 255, 255, 0.12); transform: skewX(-20deg); align-self: center; display: flex; overflow: hidden; }
 .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--pink), var(--yellow)); }
 .cs-info { display: flex; gap: 4vw; align-items: flex-start; justify-content: center; }
 .cs-info .who { text-align: center; }
@@ -206,8 +206,8 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 /* ---------- progression ---------- */
 .card .lvl { position: absolute; top: 6px; right: 12%; background: rgba(0,0,0,0.65); border: 1px solid var(--yellow); color: var(--yellow); font-weight: 900; font-size: clamp(9px, 1.1vw, 14px); padding: 2px 8px; transform: skewX(-10deg); }
 .card .lvl b { color: #fff; background: var(--pink); padding: 0 4px; margin-left: 4px; }
-.bar > em { display: inline-block; height: 100%; background: linear-gradient(90deg, #19e6ff, #b6ff2e); box-shadow: 0 0 8px #19e6ff; vertical-align: top; }
-.bar > i { display: inline-block; vertical-align: top; }
+.bar > em { flex: none; display: block; height: 100%; background: linear-gradient(90deg, #19e6ff, #b6ff2e); box-shadow: 0 0 8px #19e6ff; vertical-align: top; }
+.bar > i { flex: none; display: block; }
 .ach-unlocked { background: rgba(10, 2, 24, 0.75); border: 2px solid var(--yellow); box-shadow: 0 0 24px rgba(255, 230, 0, 0.35); padding: 1.2vh 1.6vw; min-width: min(560px, 86vw); animation: achPop 0.45s cubic-bezier(.2,1.4,.4,1) 0.3s both; }
 @keyframes achPop { from { transform: scale(1.25); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .ach-h { font-family: 'Russo One'; color: var(--yellow); letter-spacing: 0.15em; font-size: clamp(12px, 1.6vw, 20px); margin-bottom: 6px; }

@@ -549,7 +549,8 @@ async function charSelect(startId?: string) {
     goBtn.classList.toggle('off', locked);
     // base bar + bonus segment from upgrades (VS CPU only)
     const lv = mode === '1p' && who === 0 ? cp.levels : { speed: 0, power: 0, technique: 0, reflex: 0 };
-    const w = (v: number, lo: number, hi: number) => Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20));
+    // capped at 100%: a near-max stat plus its upgrade bonus overflowed and the bonus wrapped onto the next bar
+    const w = (v: number, lo: number, hi: number) => Math.min(100, Math.max(8, Math.round(((v - lo) / (hi - lo)) * 75 + 20)));
     const bar = (v: number, lo: number, hi: number, bonus: number) =>
       `<div class="bar"><i style="width:${w(v, lo, hi)}%"></i>${bonus > 0 ? `<em style="width:${w(v * (1 + bonus), lo, hi) - w(v, lo, hi)}%"></em>` : ''}</div>`;
     panel.innerHTML = `<div class="cs-name ${who ? 'p2c' : 'p1c'}">${ch.name}</div>

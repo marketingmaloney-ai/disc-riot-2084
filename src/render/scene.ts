@@ -55,7 +55,9 @@ class PlayerView {
         .replace('void main() {', `uniform vec2 uOutline; uniform vec4 uRect; uniform float uStride; uniform float uFootX;
         float inkA( vec2 uv ) {
           if ( uv.x < uRect.x || uv.y < uRect.y || uv.x > uRect.z || uv.y > uRect.w ) return 0.0;
-          return texture2D( map, uv ).a;
+          // full-size level only: phones sample shrunken mip levels here, which blend in the neighbouring frames
+          // of the atlas, and the outline traced that bleed as a box around the fighter
+          return textureLod( map, uv, 0.0 ).a;
         }
         void main() {`)
         // Sample through our own uv: (1) a placeholder stride for fighters without run art — the legs below the
