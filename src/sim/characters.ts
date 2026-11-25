@@ -107,7 +107,7 @@ export const CHARACTERS: CharacterDef[] = [
     speed: 6.9, power: 22.4, curve: 0.9, reach: 1.12,
     supers: [{ name: 'PERMAFROST', kind: 'straight', speed: 1.36, stun: 0.6 }, { name: 'BLIZZARD', kind: 'wave', speed: 1.05, stun: 0.4 }],
     lobSuper: { name: 'AVALANCHE', kind: 'corner', stun: 0.4 },
-    colors: { primary: '#6fd8ff', secondary: '#ffffff', skin: '#f5ddd0', hair: '#f3eccf' },
+    colors: { primary: '#6fd8ff', secondary: '#ffffff', skin: '#f5ddd0', hair: '#14141e' },
   },
 ];
 

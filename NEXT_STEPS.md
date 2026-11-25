@@ -68,7 +68,7 @@ game should be polished and have more fighters, more supers and **multiplayer**.
 - Album items 32-35 were run clips after all: turnaround videos with the fighter several times side by side (Zara's has a clean single-figure run). They are now `raw/<id>/vid_R_v1.mp4`, extracted with the new `"crop": [x0, x1]` (process.py `--crop`).
 - Diesel's source is only 568x320 and the copies overlap, so a few frames have a stray sliver. A clean single-figure run clip would improve him.
 - Nova's dash, lob, block and Diesel's dash, lob, block, win are real art (2026-11-25, `vid_B_v1`, `vid_W_v1`).
-- Still missing (procedural fallback): dash, lob, block and win for Zara. Flow refused her dash/lob/block clip twice ("interests of third-party content providers", refunded); the win clip was not tried.
+- Zara was redesigned as a street-hockey goalie (2026-11-25, owner's pick) because Flow refused her old look over third-party content. All 10 animations and the portrait are real art (`raw/zara/*_v2`). Every fighter now has all 10.
 - One clip has one frame folder: every anim cut from the same video must use the same fps/start/dur, or the last one overwrites the others.
 
 ## Arena rules + contrast (2026-10-21, v40)
