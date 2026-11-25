@@ -490,3 +490,6 @@ body { font-family: 'Orbitron', 'Arial Black', sans-serif; color: #fff; }
 .boot-fail { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9999; max-width: 86vw; display: flex; flex-direction: column; gap: 8px; text-align: center;
   padding: 18px 22px; background: #12052a; border: 2px solid #ff2e9a; color: #fff; font: 700 14px/1.5 sans-serif; }
 .boot-fail small { opacity: 0.6; font-weight: 400; }
+
+.fs-hint { font-size: clamp(10px, 1.6vw, 15px); letter-spacing: 0.08em; opacity: 0.85; }
+.fs-hint b { color: var(--yellow); }

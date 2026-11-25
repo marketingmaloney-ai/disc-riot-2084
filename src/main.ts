@@ -30,6 +30,7 @@ import type { Achievement } from './meta/achievements';
 import { charProfile, freePoints, totalLevel } from './meta/progress';
 import { upgradeScreen } from './ui/upgrades';
 import { Hype } from './ui/hype';
+import { fullscreenOn, fullscreenSupported, homeScreenHint, isIphone, isStandalone, setupFullscreen, toggleFullscreen } from './ui/fullscreen';
 import { setupOrientation, toApp } from './ui/orient';
 import * as SC from './sim/constants';
 import { RollbackSession, type NetMsg } from './net/rollback';
@@ -306,6 +307,8 @@ function returnToStore() {
   audio.play('back');
   if (storeUrl) location.href = storeUrl;
 }
+// full screen on/off, where the browser can do it (not from the Home Screen icon, which already is)
+const fullItem = (after: () => void) => (fullscreenSupported() && !isStandalone() ? [{ label: fullscreenOn() ? 'EXIT FULL SCREEN' : 'FULL SCREEN', action: () => { toggleFullscreen(); after(); } }] : []);
 const storeItem = () => (storeUrl ? [{ label: '← BACK TO 3D STORE', action: () => returnToStore() }] : []);
 
 function openUpgrades(back: () => void, startChar?: string) {
@@ -354,6 +357,7 @@ function titleScreen() {
   const s = show(`
     <div class="logo"><div class="l1">DISC RIOT</div><div class="l2">2084</div></div>
     <div class="sub blink">PRESS START</div>
+    ${homeScreenHint({ iphone: isIphone(), standalone: isStandalone() }) ? '<div class="fs-hint">FOR FULL SCREEN: TAP SHARE, THEN <b>ADD TO HOME SCREEN</b></div>' : ''}
     <div class="art-badge"></div>`, 'clear');
   const go = () => { audio.unlock(); audio.play('confirm'); modeScreen(); };
   s.addEventListener('click', go);
@@ -378,6 +382,7 @@ function modeScreen() {
     { label: allUnlocked() ? 'FIGHTERS · ALL UNLOCKED' : 'UNLOCK FIGHTERS', action: () => void unlockScreen() },
     { label: 'HOW TO PLAY', action: () => howTo() },
     { label: 'CREDITS', action: () => void creditsScreen() },
+    ...fullItem(() => window.setTimeout(modeScreen, 250)),
     ...storeItem(),
   ], titleScreen);
   s.insertAdjacentHTML('beforeend', `<div class="hint">↑↓ / D-PAD · ENTER / Ⓐ TO SELECT · ESC / Ⓑ BACK</div>`);
@@ -870,6 +875,7 @@ function togglePause() {
     const s = show(`<div class="title-h">PAUSED</div>`, 'clear');
     menu(s, [
       { label: 'RESUME', action: () => { paused = false; clearScreens(); } },
+      ...fullItem(() => { paused = false; clearScreens(); }),
       { label: 'QUIT TO TITLE', action: () => { paused = false; void startDemo(); titleScreen(); } },
       ...storeItem(),
     ], () => { paused = false; clearScreens(); });
@@ -982,6 +988,7 @@ const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV) Object.assign(window, { __game: () => game, __net: () => session });
 if (import.meta.env.DEV) Object.assign(window, { __dbg: { renderer, startDemo, beginVersus, showResults, hype, arenas: ARENAS, hud, audio } });
 setupOrientation();
+setupFullscreen(isTouchDevice());
 void initStore(); // apps only: real prices + re-sync owned fighters
 await startDemo();
 (window as unknown as { __booted?: boolean }).__booted = true; // index.html's start-up watchdog
