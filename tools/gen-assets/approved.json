@@ -628,6 +628,53 @@
           "playFps": 14,
           "scale": 0.96,
           "figure": "largest"
+        },
+        "dash": {
+          "video": "raw/nova/vid_B_v1.mp4",
+          "fps": 24,
+          "frames": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            13,
+            34,
+            36
+          ],
+          "playFps": 14,
+          "refFrame": 0,
+          "figure": "largest"
+        },
+        "lob": {
+          "video": "raw/nova/vid_B_v1.mp4",
+          "fps": 24,
+          "frames": [
+            54,
+            58,
+            60,
+            62,
+            66,
+            68,
+            72
+          ],
+          "playFps": 14,
+          "refFrame": 0,
+          "figure": "largest"
+        },
+        "block": {
+          "video": "raw/nova/vid_B_v1.mp4",
+          "fps": 24,
+          "frames": [
+            118,
+            122,
+            124,
+            126,
+            128
+          ],
+          "playFps": 14,
+          "refFrame": 0,
+          "figure": "largest"
         }
       }
     },
@@ -734,6 +781,71 @@
           ],
           "playFps": 14,
           "scale": 0.96,
+          "figure": "largest"
+        },
+        "dash": {
+          "video": "raw/diesel/vid_B_v1.mp4",
+          "fps": 12,
+          "frames": [
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17
+          ],
+          "playFps": 14,
+          "refFrame": 0,
+          "figure": "largest"
+        },
+        "lob": {
+          "video": "raw/diesel/vid_B_v1.mp4",
+          "fps": 12,
+          "frames": [
+            40,
+            35,
+            36,
+            37,
+            39
+          ],
+          "playFps": 12,
+          "refFrame": 0,
+          "figure": "largest"
+        },
+        "block": {
+          "video": "raw/diesel/vid_B_v1.mp4",
+          "fps": 12,
+          "frames": [
+            54,
+            55,
+            56,
+            57,
+            60
+          ],
+          "playFps": 14,
+          "refFrame": 0,
+          "figure": "largest"
+        },
+        "win": {
+          "video": "raw/diesel/vid_W_v1.mp4",
+          "fps": 12,
+          "frames": [
+            13,
+            15,
+            17,
+            20,
+            22,
+            25,
+            26,
+            28,
+            41,
+            43,
+            45,
+            48
+          ],
+          "playFps": 6,
+          "refFrame": 0,
           "figure": "largest"
         }
       }
